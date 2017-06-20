@@ -1,6 +1,7 @@
 import os
 import cv2
 import pickle
+import numpy as np
 
 from PIL import Image
 from collections import namedtuple, defaultdict
