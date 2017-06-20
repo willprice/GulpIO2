@@ -148,4 +148,4 @@ if __name__ == '__main__':
     for idx, df_sub in df.groupby(np.arange(len(df)) // args.vid_per_chunk):
         input_data = [df_sub, args.output_folder, idx, args.img_size]
         inputs.append(input_data)
-        parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
+    parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
