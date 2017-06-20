@@ -66,7 +66,8 @@ class GulpVideoIO(object):
         record = self.f.read(meta_info.length)
         img_str = record[:-meta_info.pad]
         nparr = np.fromstring(img_str, np.uint8)
-        img = cv2.imdecode(nparr, cv2.CV_LOAD_IMAGE_COLOR)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         return Image.fromarray(img)
 
     def reset(self):
