@@ -10,6 +10,19 @@ from gulpio import GulpVideoIO
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
+def resize_by_short_edge(img, size):
+    h, w = img.shape[0], img.shape[1]    
+    if h < w:
+       scale = w / float(h)
+       new_width = int(size * scale)
+       img = cv2.resize(img, (new_width, size))
+    else:
+       scale = h / float(w)
+       new_height = int(size * scale)
+       img = cv2.resize(img, (size, new_height))
+    return img
+
+
 def shuffle(df, n=1, axis=0):     
     df = df.copy()
     for _ in range(n):
@@ -21,6 +34,7 @@ def create_chunk(inputs):
 	df = inputs[0]
 	output_folder = inputs[1]
 	chunk_no = inputs[2]
+	img_size = inputs[3]
 	bin_file_path = os.path.join(output_folder, 'data{}.bin'.format(chunk_no))
 	meta_file_path = os.path.join(output_folder, 'meta{}.bin'.format(chunk_no))
 	gulp_file = GulpVideoIO(bin_file_path, 'wb', meta_file_path)
@@ -34,6 +48,7 @@ def create_chunk(inputs):
 		imgs = glob.glob(folder_name+'/*.jpg')
 		for img in imgs:
 			img = cv2.imread(img)
+   			img = resize_by_short_edge(img, img_size)
 			label_idx = labels2idx[label]
 			gulp_file.write(label_idx, video_id, img)
 	gulp_file.close()
@@ -99,6 +114,8 @@ if __name__ == '__main__':
 				   help='number of videos in a chunk')
 	p.add_argument('num_workers', type=int,
 				   help='number of workers.')
+	p.add_argument('img_size', type=int,
+		       help='shortest img size to resize all input images.')
 	args = p.parse_args()
 
 	# read data csv list
@@ -126,11 +143,7 @@ if __name__ == '__main__':
 	# set input array
 	inputs = []
 	for idx, df_sub in df.groupby(np.arange(len(df))//args.vid_per_chunk):
-		input_data = [df_sub, args.output_folder, idx]
+		input_data = [df_sub, args.output_folder, idx, args.img_size]
 		inputs.append(input_data)
 		parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
-
-
-
-
 
