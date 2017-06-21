@@ -10,7 +10,7 @@ def save_video():
 
 
 if __name__ == "__main__":
-    path_to_chunk = "/media/4TBSATA/kinetics/gulpio/validation/"
+    path_to_chunk = "/media/4TBSATA/kinetics/binary_data/from_videos/validation/"
     path_bin = os.path.join(path_to_chunk, "data0.bin")
     path_meta = os.path.join(path_to_chunk, "meta0.bin")
 
