@@ -1,7 +1,8 @@
 import os
+import sys
 
 from pprint import pprint
-from gulp_io import GulpVideoIO
+from gulpio import GulpVideoIO
 
 
 def save_video():
@@ -9,9 +10,9 @@ def save_video():
 
 
 if __name__ == "__main__":
-    path_to_chunk = "/media/4TBSATA/kinetics/binary_data/chunk_gulp_1"
-    path_bin = os.path.join(path_to_chunk, "train_data.bin")
-    path_meta = os.path.join(path_to_chunk, "train_meta.pkl")
+    path_to_chunk = "/media/4TBSATA/kinetics/gulpio/validation/"
+    path_bin = os.path.join(path_to_chunk, "data0.bin")
+    path_meta = os.path.join(path_to_chunk, "meta0.bin")
 
     vid_id = "3yaoNwz99xM"
     vid_path = os.path.join("sample_vids", vid_id)
@@ -19,7 +20,7 @@ if __name__ == "__main__":
 
     gulp_file = GulpVideoIO(path_bin, 'rb', path_meta)
     gulp_file.open()
-
+    pprint(gulp_file.meta_dict['3yaoNwz99xM'])
     for i in range(len(gulp_file.meta_dict[vid_id])):
         img = gulp_file.read(gulp_file.meta_dict[vid_id][i])
-        img.save(os.path.join(vid_path, "frame%04d.jpg" % i))
+        img.save(os.path.join(vid_path, "frame%04d.jpg" % (i + 1)))
