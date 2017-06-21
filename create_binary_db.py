@@ -55,7 +55,7 @@ def create_chunk(inputs):
     gulp_file.close()
 
 
-def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=3):
+def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=0):
     """
         A parallel version of the map function with a progress bar. 
         Args:
