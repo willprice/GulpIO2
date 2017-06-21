@@ -47,13 +47,14 @@ def create_chunk(inputs):
         end_t = row.time_end
         folder_name = os.path.join(
             args.frames_path, label, video_id) + "_{:06d}_{:06d}".format(start_t, end_t)
-        imgs = glob.glob(folder_name + '/*.jpg')
+        imgs = sorted(glob.glob(folder_name + '/*.jpg'))
         for img in imgs:
             img = cv2.imread(img)
             img = resize_by_short_edge(img, img_size)
             label_idx = labels2idx[label]
             gulp_file.write(label_idx, video_id, img)
     gulp_file.close()
+    return True
 
 
 def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=0):
@@ -148,8 +149,10 @@ if __name__ == '__main__':
     df = shuffle(df)
 
     # set input array
+    print(" > Setting up data chunks")
     inputs = []
     for idx, df_sub in df.groupby(np.arange(len(df)) // args.vid_per_chunk):
         input_data = [df_sub, args.output_folder, idx, args.img_size]
         inputs.append(input_data)
+    print(" > Chunking started!")
     parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
