@@ -127,9 +127,6 @@ if __name__ == '__main__':
     print(" > Reading data list (csv)")
     df = pd.read_csv(args.input_csv)
 
-    print(df)
-    sys.exit()
-
     # create output folder if not there
     os.makedirs(args.output_folder, exist_ok=True)
 
