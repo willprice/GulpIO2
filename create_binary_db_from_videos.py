@@ -10,7 +10,7 @@ import skvideo.io
 
 from tqdm import tqdm
 from gulpio import GulpVideoIO
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from joblib import Parallel, delayed
 
 
 def resize_by_short_edge(img, size):
@@ -53,65 +53,29 @@ def create_chunk(inputs):
 
         outputparameters = {"-r": "%d" % 8,
                             "-q:v": "%d" % 1}
-        reader = skvideo.io.FFmpegReader(vid_path,
-                                         outputdict=outputparameters)
         try:
+            if not os.path.isfile(vid_path):
+                print("Path doesn't exists ...")
+                continue
+            vid_stats = skvideo.io.ffprobe(vid_path)
+            if not vid_stats or 'video' not in vid_stats:
+                print("No video metadata ...")
+                continue
+            if float(vid_stats['video']['@duration']) < 0.5:
+                print("Duration less than 0.5 secs ...")
+                continue
+            reader = skvideo.io.FFmpegReader(vid_path,
+                                             outputdict=outputparameters)
             for img in reader.nextFrame():
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
                 img = resize_by_short_edge(img, img_size)
                 label_idx = labels2idx[label]
                 gulp_file.write(label_idx, video_id, img)
-        except RuntimeError:
-            pass
-    gulp_file.close()
-
-
-def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=0):
-    """
-        A parallel version of the map function with a progress bar. 
-        Args:
-            array (array-like): An array to iterate over.
-            function (function): A python function to apply to the elements of array
-            n_jobs (int, default=16): The number of cores to use
-            use_kwargs (boolean, default=False): Whether to consider the elements of array as dictionaries of 
-                keyword arguments to function 
-            front_num (int, default=3): The number of iterations to run serially before kicking off the parallel job. 
-                Useful for catching bugs
-        Returns:
-            [function(array[0]), function(array[1]), ...]
-    """
-    # We run the first few iterations serially to catch bugs
-    if front_num > 0:
-        front = [function(**a) if use_kwargs else function(a)
-                 for a in array[:front_num]]
-    # If we set n_jobs to 1, just run a list comprehension. This is useful for
-    # benchmarking and debugging.
-    if n_jobs == 1:
-        return front + [function(**a) if use_kwargs else function(a) for a in tqdm(array[front_num:])]
-    # Assemble the workers
-    with ProcessPoolExecutor(max_workers=n_jobs) as pool:
-        # Pass the elements of array into function
-        if use_kwargs:
-            futures = [pool.submit(function, **a) for a in array[front_num:]]
-        else:
-            futures = [pool.submit(function, a) for a in array[front_num:]]
-        kwargs = {
-            'total': len(futures),
-            'unit': 'it',
-            'unit_scale': True,
-            'leave': True
-        }
-        # Print out the progress as tasks complete
-        for f in tqdm(as_completed(futures), **kwargs):
-            pass
-    out = []
-    # Get the results from the futures.
-    for i, future in tqdm(enumerate(futures)):
-        try:
-            out.append(future.result())
         except Exception as e:
-            out.append(e)
-    return front + out
+            error_out = repr(e)
+            if not error_out == "RuntimeError('',)":
+                print(repr(e))
+    gulp_file.close()
 
 
 if __name__ == '__main__':
@@ -159,4 +123,5 @@ if __name__ == '__main__':
     for idx, df_sub in df.groupby(np.arange(len(df)) // args.vid_per_chunk):
         input_data = [df_sub, args.output_folder, idx, args.img_size]
         inputs.append(input_data)
-    parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
+
+    results = Parallel(n_jobs=args.num_workers)(delayed(create_chunk)(i) for i in tqdm(inputs))
