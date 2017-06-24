@@ -62,8 +62,8 @@ def create_chunk(inputs, shm_dir_path):
     output_folder = inputs[1]
     chunk_no = inputs[2]
     img_size = inputs[3]
-    bin_file_path = os.path.join(output_folder, 'data{}.bin'.format(chunk_no))
-    meta_file_path = os.path.join(output_folder, 'meta{}.bin'.format(chunk_no))
+    bin_file_path = os.path.join(output_folder, 'data%03d.bin' % chunk_no)
+    meta_file_path = os.path.join(output_folder, 'meta%03d.bin' % chunk_no)
     gulp_file = GulpVideoIO(bin_file_path, 'wb', meta_file_path)
     gulp_file.open()
     for idx, row in df.iterrows():
