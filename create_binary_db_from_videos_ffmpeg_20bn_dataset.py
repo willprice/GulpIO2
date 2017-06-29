@@ -117,7 +117,7 @@ if __name__ == '__main__':
     args = p.parse_args()
 
     # read json using tbntools
-    data_storage = data.RawDataset.load(args.input_csv, label='template').storage
+    data_storage = data.RawDataset.load(args.input_json, label='template').storage
 
     # create output folder if not there
     os.makedirs(args.output_folder, exist_ok=True)
