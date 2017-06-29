@@ -52,6 +52,7 @@ def burst_frames_to_shm(vid_path, shm_dir_path):
     try:
         sh.ffmpeg('-i', vid_path,
                   '-q:v', str(1),
+          '-threads', 1,
                   '-r', 20,
                   '-f', 'image2', target_mask)
     except Exception as e:
@@ -107,7 +108,7 @@ def optical_flow(imgs):
     return out_imgs
 
 
-def create_chunk(inputs, shm_dir_path):
+def create_chunk(inputs, shm_dir_path, is_test):
     df = inputs[0]
     output_folder = inputs[1]
     chunk_no = inputs[2]
@@ -118,11 +119,18 @@ def create_chunk(inputs, shm_dir_path):
     gulp_file.open()
     for idx, row in df.iterrows():
         video_id = row.youtube_id
-        label = row.label
+        if not is_test:
+            label = row.label
         start_t = row.time_start
         end_t = row.time_end
-        folder_name = os.path.join(
-            args.videos_path, label, video_id) + "_{:06d}_{:06d}".format(start_t, end_t)
+        if not is_test:
+            folder_name = os.path.join(
+                args.videos_path, label, video_id) + "_{:06d}_{:06d}".format(start_t, end_t)
+            label_idx = labels2idx[label]
+        else:
+            folder_name = os.path.join(
+                args.videos_path, video_id) + "_{:06d}_{:06d}".format(start_t, end_t)
+            label_idx = None
         vid_path = folder_name + ".mp4"
 
         if not os.path.isfile(vid_path):
@@ -135,19 +143,16 @@ def create_chunk(inputs, shm_dir_path):
             print("No images bursted ...")
             shutil.rmtree(temp_dir)
             continue
-        label_idx = labels2idx[label]
         try:
             for img in imgs:
                 img = cv2.imread(img)
                 img = resize_by_short_edge(img, img_size)
                 imgs_array.append(img)
-                # gulp_file.write(label_idx, video_id, img)
         except Exception as e:
             print(repr(e))
         shutil.rmtree(temp_dir)
         flow_array = optical_flow(imgs_array)
         # sample_img_path = "sample_imgs"
-        # os.makedirs(sample_img_path, exist_ok=True)
         try:
             for i, img in enumerate(flow_array):
                 # cv2.imwrite(os.path.join(sample_img_path, "frame%03d.jpg" % i), img)
@@ -176,6 +181,8 @@ if __name__ == '__main__':
                    help='shortest img size to resize all input images.')
     p.add_argument('shm_dir_path', type=str,
                    help='path to the temp directory in shared memory.')
+    p.add_argument('--is_test', type=int, default=0,
+           help='is given data test set')
     args = p.parse_args()
 
     # read data csv list
@@ -187,14 +194,15 @@ if __name__ == '__main__':
 
     # create label to idx map
     print(" > Creating label dictionary")
-    labels = sorted(pd.unique(df['label']))
-    assert len(labels) == 400
-    labels2idx = {}
-    label_counter = 0
-    for label in labels:
-        labels2idx[label] = label_counter
-        label_counter += 1
-    pickle.dump(labels2idx, open(args.output_folder + '/label2idx.pkl', 'wb'))
+    if not args.is_test:
+        labels = sorted(pd.unique(df['label']))
+        assert len(labels) == 400
+        labels2idx = {}
+        label_counter = 0
+        for label in labels:
+            labels2idx[label] = label_counter
+            label_counter += 1
+        pickle.dump(labels2idx, open(args.output_folder + '/label2idx.pkl', 'wb'))
 
     # shuffle df and write binary file
     print(" > Shuffling data list")
@@ -206,4 +214,4 @@ if __name__ == '__main__':
         input_data = [df_sub, args.output_folder, idx, args.img_size]
         inputs.append(input_data)
 
-    results = Parallel(n_jobs=args.num_workers)(delayed(create_chunk)(i, args.shm_dir_path) for i in tqdm(inputs))
+    results = Parallel(n_jobs=args.num_workers)(delayed(create_chunk)(i, args.shm_dir_path, args.is_test) for i in tqdm(inputs))
