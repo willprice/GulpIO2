@@ -1,20 +1,15 @@
 import os
-import sys
 import argparse
 import pickle
 import glob
-import sh
 import shutil
-import random
 import cv2
 import pandas as pd
 import numpy as np
 
 from tqdm import tqdm
-from pprint import pprint
 from gulpio import GulpVideoIO
 from joblib import Parallel, delayed
-
 
 
 def create_chunk(inputs, shm_dir_path):

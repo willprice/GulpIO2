@@ -1,7 +1,5 @@
 import os
-import sys
 import argparse
-import pickle
 import glob
 import sh
 import shutil
@@ -11,29 +9,10 @@ import pandas as pd
 import numpy as np
 
 from tqdm import tqdm
-from pprint import pprint
-from gulpio import GulpVideoIO
 from joblib import Parallel, delayed
 
-
-def resize_by_short_edge(img, size):
-    h, w = img.shape[0], img.shape[1]
-    if h < w:
-        scale = w / float(h)
-        new_width = int(size * scale)
-        img = cv2.resize(img, (new_width, size))
-    else:
-        scale = h / float(w)
-        new_height = int(size * scale)
-        img = cv2.resize(img, (size, new_height))
-    return img
-
-
-def shuffle(df, n=1, axis=0):
-    df = df.copy()
-    for _ in range(n):
-        df.apply(np.random.shuffle, axis=axis)
-    return df
+from gulpio.gulpio import GulpVideoIO
+from gulpio.utils import resize_by_short_edge, shuffle
 
 
 def burst_frames_to_shm(vid_path, shm_dir_path):

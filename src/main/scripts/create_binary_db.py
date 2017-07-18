@@ -1,58 +1,70 @@
 import os
-import sys
 import argparse
 import pickle
 import glob
 import cv2
+
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-from gulpio import GulpVideoIO
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-
-def resize_by_short_edge(img, size):
-    h, w = img.shape[0], img.shape[1]
-    if h < w:
-        scale = w / float(h)
-        new_width = int(size * scale)
-        img = cv2.resize(img, (new_width, size))
-    else:
-        scale = h / float(w)
-        new_height = int(size * scale)
-        img = cv2.resize(img, (size, new_height))
-    return img
+from gulpio.gulpio import GulpVideoIO
+from gulpio.utils import resize_by_short_edge, shuffle
 
 
-def shuffle(df, n=1, axis=0):
-    df = df.copy()
-    for _ in range(n):
-        df.apply(np.random.shuffle, axis=axis)
-    return df
+def initialize_filenames(output_folder, chunk_no):
+    bin_file_path = os.path.join(output_folder, 'data{}.bin'.format(chunk_no))
+    meta_file_path = os.path.join(output_folder, 'meta{}.bin'.format(chunk_no))
+    return bin_file_path, meta_file_path
+
+
+def get_video_as_label_and_frames(entry):
+    #if("youtube_id" not in entry or  TODO: uncomment this
+    #   "label" not in entry or
+    #   "time_start" not in entry or
+    #   "end_time" not in entry):
+    #    print("{} is not complete!".format(entry))
+    video_id = entry.youtube_id
+    label = entry.label
+    start_t = entry.time_start
+    end_t = entry.time_end
+    folder = create_folder_name(video_id,
+                                label,
+                                start_t,
+                                end_t)
+    imgs = find_jpgs_in_folder(folder)
+    return video_id, label, imgs
+
+
+def create_folder_name(video_id, label, start_t, end_t):
+    return os.path.join(args.frames_path,
+                        label,
+                        video_id) + "_{:06d}_{:06d}".format(start_t, end_t)
+
+
+def find_jpgs_in_folder(folder):
+    return sorted(glob.glob(folder + '/*.jpg'))
+
+
+def get_resized_image(imgs, img_size):
+    for img in imgs:
+        img = cv2.imread(img)
+        img = resize_by_short_edge(img, img_size)
+        yield img
 
 
 def create_chunk(inputs):
-    df = inputs[0]
-    output_folder = inputs[1]
-    chunk_no = inputs[2]
-    img_size = inputs[3]
-    bin_file_path = os.path.join(output_folder, 'data{}.bin'.format(chunk_no))
-    meta_file_path = os.path.join(output_folder, 'meta{}.bin'.format(chunk_no))
+    df, output_folder, chunk_no, img_size = inputs
+    bin_file_path, meta_file_path = initialize_filenames(output_folder,
+                                                         chunk_no)
     gulp_file = GulpVideoIO(bin_file_path, 'wb', meta_file_path)
     gulp_file.open()
     for idx, row in df.iterrows():
-        video_id = row.youtube_id
-        label = row.label
-        start_t = row.time_start
-        end_t = row.time_end
-        folder_name = os.path.join(
-            args.frames_path, label, video_id) + "_{:06d}_{:06d}".format(start_t, end_t)
-        imgs = sorted(glob.glob(folder_name + '/*.jpg'))
-        for img in imgs:
-            img = cv2.imread(img)
-            img = resize_by_short_edge(img, img_size)
-            label_idx = labels2idx[label]
-            gulp_file.write(label_idx, video_id, img)
+        video_id, label, imgs = get_video_as_label_and_frames(row)
+        label_idx = labels2idx[label]
+        [gulp_file.write(label_idx, video_id, img)
+            for img in get_resized_image(imgs, img_size)]
     gulp_file.close()
     return True
 
