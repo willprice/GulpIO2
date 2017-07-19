@@ -1,17 +1,19 @@
 import os
-import argparse
 import pickle
 import glob
 import cv2
-
 import pandas as pd
 import numpy as np
+
 from tqdm import tqdm
+from joblib import Parallel, delayed
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from gulpio.gulpio import GulpVideoIO
-from gulpio.utils import resize_by_short_edge, shuffle
+from gulpio.utils import resize_by_short_edge, shuffle, burst_frames_to_shm
 
+
+#shm_dir_path (input docopt)
 
 def initialize_filenames(output_folder, chunk_no):
     bin_file_path = os.path.join(output_folder, 'data{}.bin'.format(chunk_no))
@@ -25,26 +27,58 @@ def get_video_as_label_and_frames(entry):
     #   "time_start" not in entry or
     #   "end_time" not in entry):
     #    print("{} is not complete!".format(entry))
-    video_id = entry.youtube_id
-    label = entry.label
-    start_t = entry.time_start
-    end_t = entry.time_end
+    video_id = entry['id']
+    label = entry['label']
     folder = create_folder_name(video_id,
-                                label,
-                                start_t,
-                                end_t)
+                                video_path=video_path,
+                                label=label,
+                                start_t=entry['start_time'],
+                                end_t=entry['end_time'])
     imgs = find_jpgs_in_folder(folder)
-    return video_id, label, imgs
+    if not check_frames_are_present(imgs):
+        if check_mp4_file_present(get_video_path(folder)):
+            imgs = burst_video_into_frames(get_video_path(folder)[0],
+                                           shm_dir_path)
+        else:
+            print("neither video nor frames are present in {}".format(folder))
+    if dump_labels2idx_in_pickel:
+        label_idx = labels2idx[label]
+    else:
+        label_idx = -1
+    return video_id, imgs, label_id, label
 
-
-def create_folder_name(video_id, label, start_t, end_t):
+def create_folder_name(video_id, video_path=None, label=None, start_t=None,
+                       end_t=None):
+    if video_path:
+        return os.path.join(vid_path, video_id)
     return os.path.join(args.frames_path,
                         label,
                         video_id) + "_{:06d}_{:06d}".format(start_t, end_t)
 
 
+
 def find_jpgs_in_folder(folder):
     return sorted(glob.glob(folder + '/*.jpg'))
+
+
+def check_frames_are_present(imgs, temp_dir=None):
+    if len(imgs) == 0:
+        print("No frames present...")
+        if temp_dir:
+            shutil.rmtree(temp_dir)
+        continue
+
+def get_video_path(folder):
+    return glob.glob(folder_name + "*.mp4")
+
+def check_one_mp4_file_present(vid_path):
+    if len(vid_path) > 1:
+        print("more than one video file in {}".format(vid_path))
+        return False
+    if not os.path.isfile(vid_path[0]):
+        print("no video file {}".format(vid_path))
+        return False
+    return True
 
 
 def get_resized_image(imgs, img_size):
@@ -54,15 +88,25 @@ def get_resized_image(imgs, img_size):
         yield img
 
 
+def burst_video_into_frames(vid_path, shm_dir_path):
+    temp_dir = burst_frames_to_shm(vid_path, shm_dir_path)
+    imgs = sorted(glob.glob(temp_dir + '/*.jpg'))
+    check_frames_are_present(imgs, temp_dir)
+    clear_temp_dir(temp_dir)
+    return imgs
+
+def clear_temp_dir(temp_dir):
+    shutil.rmtree(temp_dir)
+
 def create_chunk(inputs):
     df, output_folder, chunk_no, img_size = inputs
     bin_file_path, meta_file_path = initialize_filenames(output_folder,
                                                          chunk_no)
     gulp_file = GulpVideoIO(bin_file_path, 'wb', meta_file_path)
     gulp_file.open()
-    for idx, row in df.iterrows():
-        video_id, label, imgs = get_video_as_label_and_frames(row)
-        label_idx = labels2idx[label]
+    for idx, row in enumerate(df):
+        video_id, imgs, label_idx, label = get_video_as_label_and_frames(row)
+        #ensure_frames_are_present(imgs)
         [gulp_file.write(label_idx, video_id, img)
             for img in get_resized_image(imgs, img_size)]
     gulp_file.close()
@@ -83,21 +127,10 @@ def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=0):
         Returns:
             [function(array[0]), function(array[1]), ...]
     """
-    # We run the first few iterations serially to catch bugs
-    if front_num > 0:
-        front = [function(**a) if use_kwargs else function(a)
-                 for a in array[:front_num]]
-    # If we set n_jobs to 1, just run a list comprehension. This is useful for
-    # benchmarking and debugging.
-    if n_jobs == 1:
-        return front + [function(**a) if use_kwargs else function(a) for a in tqdm(array[front_num:])]
     # Assemble the workers
     with ProcessPoolExecutor(max_workers=n_jobs) as pool:
         # Pass the elements of array into function
-        if use_kwargs:
-            futures = [pool.submit(function, **a) for a in array[front_num:]]
-        else:
-            futures = [pool.submit(function, a) for a in array[front_num:]]
+        futures = [pool.submit(function, a) for a in array[front_num:]]
         kwargs = {
             'total': len(futures),
             'unit': 'it',
@@ -117,51 +150,122 @@ def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=0):
     return front + out
 
 
+def ensure_output_dir_exists(output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+
+class Input_from_csv(object):
+
+    def __init__(self, csv_file, num_labels=None):
+        self.num_labels = num_labels
+        self.data = self.read_input_from_csv(csv_file)
+        self.labels2idx = self.create_labels_dict()
+
+    def read_input_from_csv(self, csv_file):
+        print(" > Reading data list (csv)")
+        return pd.read_csv(csv_file)
+
+    def create_labels_dict(self):
+        labels = sorted(pd.unique(df['label']))
+        if self.num_labels:
+            assert len(labels) == self.num_labels
+        labels2idx = {}
+        for i, label in enumerate(labels):
+            labels2idx[label] = i
+        return labels2idx
+
+
+    def get_data():
+        output = []
+        for idx, row in self.data.iterrows():
+            entry_dict = {}
+            entry_dict['id'] = row.youtube_id
+            entry_dict['label'] = row.label
+            entry_dict['start_time'] = row.time_start
+            entry_dict['end_time'] = row.time_end
+            output.append(entry_dict)
+        return output
+
+class Input_from_json(object):
+    def __init__(self, json_file):
+        self.data = self.read_json_file(json_file)
+        self.labels2idx = self.create_labels_dict()
+
+    def read_json_file(self.json_file):
+        return data.RawDataset.load(json_file, label='template').storage
+
+    def create_labels_dict(self, key='template'):
+        labels = sorted(set([item[key] for item in self.data]))
+        labels2idx = {}
+        for i, label in enumerate(labels):
+            labels2idx[label] = i
+        return labels2idx
+
+    def get_data():
+        output = []
+        for entry in self.data:
+            entry['start_time'] = None
+            entry['end_time'] = None
+            output.append(entry)
+        return output
+
+
+
+def dump_labels_in_pickel(labels_idx):
+    pickle.dump(labels2idx, open(output_folder + '/label2idx.pkl', 'wb'))
+
+
 if __name__ == '__main__':
     description = 'Create a binary file including all video frames with RecordIO convention.'
-    p = argparse.ArgumentParser(description=description)
-    p.add_argument('frames_path', type=str,
-                   help=('Path to bursted frames'))
-    p.add_argument('input_csv', type=str,
-                   help=('Kinetics CSV file containing the following format: '
-                         'YouTube Identifier,Start time,End time,Class label'))
-    p.add_argument('output_folder', type=str,
-                   help='Output folder')
-    p.add_argument('vid_per_chunk', type=int,
-                   help='number of videos in a chunk')
-    p.add_argument('num_workers', type=int,
-                   help='number of workers.')
-    p.add_argument('img_size', type=int,
-                   help='shortest img size to resize all input images.')
-    args = p.parse_args()
+    frames_path = '.' #   help=('Path to bursted frames'))
+    input_csv = 'csv' #   help=('Kinetics CSV file containing the following format:                             'YouTube Identifier,Start time,End time,Class label'))
+    output_folder = './output_folder' #  help='Output folder')
+    vid_per_chunk = 20 # help='number of videos in a chunk')
+    num_workers = 4 # help='number of workers.')
+    img_size = 120 # help='shortest img size to resize all input images.')
 
-    # read data csv list
-    print(" > Reading data list (csv)")
-    df = pd.read_csv(args.input_csv)
+    videos_path = 'videos' # help=('Path to videos'))
+    input_json = 'input_json' #  help=('path to the json file to convert the videos for (train/validation/test)'))
+    shm_dir_path = "temp_dir" # help='path to the temp directory in shared memory.')
 
+    dump_label2idx = True
     # create output folder if not there
-    os.makedirs(args.output_folder, exist_ok=True)
+    ensure_output_dir_exists(output_folder)
 
+
+    # read data
+    if input_csv:
+        data_object = Input_from_csv(input_csv)
+    elif input_json:
+        data_object = Input_from_json(input_json)
     # create label to idx map
-    print(" > Creating label dictionary")
-    labels = sorted(pd.unique(df['label']))
-    assert len(labels) == 400
-    labels2idx = {}
-    label_counter = 0
-    for label in labels:
-        labels2idx[label] = label_counter
-        label_counter += 1
-    pickle.dump(labels2idx, open(args.output_folder + '/label2idx.pkl', 'wb'))
+    if dump_label2idx:
+        labels2idx = data_object.label2idx
+        print(" > Creating label dictionary")
+        dump_labels2idx_in_pickel(label2idx)
+
+    data = data_object.get_data()
+
+    num_chunks = len(data) // vid_per_chunk + 1
 
     # shuffle df and write binary file
     print(" > Shuffling data list")
-    df = shuffle(df)
+    data = shuffle(data)
 
     # set input array
     print(" > Setting up data chunks")
     inputs = []
-    for idx, df_sub in df.groupby(np.arange(len(df)) // args.vid_per_chunk):
-        input_data = [df_sub, args.output_folder, idx, args.img_size]
+
+    for chunk_id in range(num_chunks):
+        if chunk_id == num_chunks - 1:
+            df_sub = data[chunk_id * .vid_per_chunk:]
+        else:
+            df_sub = data[chunk_id * vid_per_chunk:
+                          (chunk_id + 1) * vid_per_chunk]
+        input_data = [df_sub, output_folder, chunk_id, img_size]
         inputs.append(input_data)
+
+
     print(" > Chunking started!")
-    parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
+    #parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
+    results = Parallel(n_jobs=num_workers)(delayed(create_chunk)(i)
+                                           for i in tqdm(inputs))

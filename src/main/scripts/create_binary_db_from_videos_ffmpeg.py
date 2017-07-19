@@ -8,17 +8,15 @@ import pandas as pd
 import numpy as np
 
 from tqdm import tqdm
-from gulpio import GulpVideoIO
 from joblib import Parallel, delayed
 
+from gulpio.gulpio import GulpVideoIO
+from gulpio.utils import burst_frames_to_shm
 
 def create_chunk(inputs, shm_dir_path):
-    df = inputs[0]
-    output_folder = inputs[1]
-    chunk_no = inputs[2]
-    img_size = inputs[3]
-    bin_file_path = os.path.join(output_folder, 'data%03d.bin' % chunk_no)
-    meta_file_path = os.path.join(output_folder, 'meta%03d.bin' % chunk_no)
+    df, output_folder, chunk_no, img_size = inputs
+    bin_file_path, meta_file_path = initialize_filenames(output_folder,
+                                                         chunk_no)
     gulp_file = GulpVideoIO(bin_file_path, 'wb', meta_file_path)
     gulp_file.open()
     for idx, row in df.iterrows():
@@ -26,14 +24,15 @@ def create_chunk(inputs, shm_dir_path):
         label = row.label
         start_t = row.time_start
         end_t = row.time_end
-        folder_name = os.path.join(
-            args.videos_path, label, video_id) + "_{:06d}_{:06d}".format(start_t, end_t)
+        folder_name = create_folder_name(video_id, label, start_t, end_t)
+
         vid_path = folder_name + ".mp4"
 
         if not os.path.isfile(vid_path):
             print("Path doesn't exists for {}".format(vid_path))
             continue
         temp_dir = burst_frames_to_shm(vid_path, shm_dir_path)
+
         imgs = sorted(glob.glob(temp_dir + '/*.jpg'))
         if len(imgs) == 0:
             print("No images bursted ...")

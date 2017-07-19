@@ -8,33 +8,12 @@ import cv2
 import pandas as pd
 import numpy as np
 
+from docopt import docopt
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
 from gulpio.gulpio import GulpVideoIO
 from gulpio.utils import resize_by_short_edge, shuffle
-
-
-def burst_frames_to_shm(vid_path, shm_dir_path):
-    """
-    - To burst frames in a temporary directory in shared memory.
-    - Directory name is chosen as random 128 bits so as to avoid clash during
-      parallelization
-    - Returns path to directory containing frames for the specific video
-    """
-    hash_str = str(random.getrandbits(128))
-    temp_dir = os.path.join(shm_dir_path, hash_str)
-    os.makedirs(temp_dir)  # creates error if paths conflict (unlikely)
-    target_mask = os.path.join(temp_dir, '%04d.jpg')
-    try:
-        sh.ffmpeg('-i', vid_path,
-                  '-q:v', str(1),
-                  '-r', 8,
-                  '-threads', 1,
-                  '-f', 'image2', target_mask)
-    except Exception as e:
-        print(repr(e))
-    return temp_dir
 
 
 def create_chunk(inputs, shm_dir_path):
