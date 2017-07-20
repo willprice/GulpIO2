@@ -28,14 +28,7 @@ if __name__ == '__main__':
         license = '',
         url = '',
         scripts = [
-            'scripts/create_binary_db_from_videos_skvideo.py',
-            'scripts/create_binary_db_from_videos_ffmpeg_20bn_dataset.py',
             'scripts/create_binary_db.py',
-            'scripts/create_binary_db_from_videos_ffmpeg.py',
-            'scripts/.create_binary_db.py.swp',
-            'scripts/create_binary_db_from_videos_ffmpeg_test_split.py',
-            'scripts/make_parent_dict.py',
-            'scripts/check_bin_file_sanity.py'
         ],
         packages = ['gulpio'],
         namespace_packages = [],

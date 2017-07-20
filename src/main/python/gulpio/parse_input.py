@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from tbntools import data
 import pandas as pd
 
