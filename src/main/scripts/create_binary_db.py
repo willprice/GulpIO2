@@ -2,14 +2,14 @@
 
 """Create a binary file including all video frames with RecordIO convention.
 Usage:
-  create_binary from_video [<videos_path>] [<csv_file>|<input_json>] [<output_folder>] [<video_per_chunk>] [<image_size>] [<temp_dir>] [<labels>]
-  create_binary from_frames [<frames_path>] [<csv_file>|<input_json>] [<output_folder>] [<video_per_chunk>] [<image_size>] [<labels>]
-  create_binary (-h | --help)
-  create_binary --version
+    create_binary from_video [<videos_path>] [<csv_file>|<input_json>] [<output_folder>] [<video_per_chunk>] [<image_size>] [<temp_dir>] [<labels>]
+    create_binary from_frames [<frames_path>] [<csv_file>|<input_json>] [<output_folder>] [<video_per_chunk>] [<image_size>] [<labels>]
+    create_binary (-h | --help)
+    create_binary --version
 Options:
-  -h --help     Show this screen.
-  --version     Show version.
-  json_file     paths to json files
+    -h --help     Show this screen.
+    --version     Show version.
+    json_file     paths to json files
 """
 
 import os
@@ -18,20 +18,20 @@ import glob
 import cv2
 import pandas as pd
 import numpy as np
-import docopt
+from docopt import docopt
 
 from tqdm import tqdm
 from joblib import Parallel, delayed
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from gulpio.gulpio import GulpVideoIO
+from gulpio.convert_binary import get_chunked_input
 from gulpio.utils import resize_by_short_edge, shuffle, burst_frames_to_shm
 from gulpio.parse_input import Input_from_csv, Input_from_json
-from gulpio.convert_binary import get_shuffled_data
 
 def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=0):
     """
-        A parallel version of the map function with a progress bar. 
+        A parallel version of the map function with a progress bar.
         Args:
             array (array-like): An array to iterate over.
             function (function): A python function to apply to the elements of array
@@ -68,14 +68,13 @@ def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=0):
 
 
 if __name__ == '__main__':
-	arguments = docopt(__doc__)
-	if arguments['from_video']:
-		videos_path = arguments['<video_path>'] # help=('Path to videos'))
-		shm_dir_path = arguments['<temp_dir>'] # help='path to the temp directory in shared memory.')
-	if arguments['from_frames']:
-		frames_path = arguments['<frames_path>'] # help=('Path to bursted frames'))
-
-	input_csv = arguments['<input_csv>'] # help=('Kinetics CSV file containing the following format:                             'YouTube Identifier,Start time,End time,Class label'))
+    arguments = docopt(__doc__)
+    if arguments['from_video']:
+        videos_path = arguments['<video_path>'] # help=('Path to videos'))
+        shm_dir_path = arguments['<temp_dir>']
+    if arguments['from_frames']:
+        frames_path = arguments['<frames_path>']
+    input_csv = arguments['<input_csv>']
     input_json = arguments['<input_json>'] #  help=('path to the json file to convert the videos for (train/validation/test)'))
     output_folder = arguments['<output_folder>'] #  help='Output folder')
     vid_per_chunk = arguments['<videos_per_chunk>'] # help='number of videos in a chunk')
@@ -85,8 +84,9 @@ if __name__ == '__main__':
 
     # create output folder if not there
     ensure_output_dir_exists(output_folder)
-    data = get_shuffled_data()
-    inputs = distribute_data_in_chunks(data, vid_per_chunk)
+
+    inputs = get_chunked_input(input_csv, input_json, vid_per_chunk,
+                               output_folder, img_size)
 
     #parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
     results = Parallel(n_jobs=num_workers)(delayed(create_chunk)(i)

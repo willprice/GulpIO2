@@ -55,7 +55,6 @@ def check_frames_are_present(imgs, temp_dir=None):
         print("No frames present...")
         if temp_dir:
             shutil.rmtree(temp_dir)
-        continue
 
 def get_video_path(folder):
     return glob.glob(folder_name + "*.mp4")
@@ -109,7 +108,7 @@ def ensure_output_dir_exists(output_dir):
 def dump_labels_in_pickel(labels_idx):
     pickle.dump(labels2idx, open(output_folder + '/label2idx.pkl', 'wb'))
 
-def get_shuffles_data():
+def get_shuffles_data(input_csv, input_json):
     # read data
     if input_csv:
         data_object = Input_from_csv(input_csv)
@@ -131,7 +130,7 @@ def compute_number_of_chunks(data, videos_per_chunk):
     return len(data) // videos_per_chunk + 1
 
 
-def distribute_data_in_chunks(data, videos_per_chunks):
+def distribute_data_in_chunks(data, videos_per_chunks, output_folder, img_size):
     num_chunks = compute_number_of_chunks(data, vid_per_chunk)
     # set input array
     print(" > Setting up data chunks")
@@ -139,7 +138,7 @@ def distribute_data_in_chunks(data, videos_per_chunks):
 
     for chunk_id in range(num_chunks):
         if chunk_id == num_chunks - 1:
-            df_sub = data[chunk_id * .vid_per_chunk:]
+            df_sub = data[chunk_id * vid_per_chunk:]
         else:
             df_sub = data[chunk_id * vid_per_chunk:
                           (chunk_id + 1) * vid_per_chunk]
@@ -147,4 +146,9 @@ def distribute_data_in_chunks(data, videos_per_chunks):
         inputs.append(input_data)
 
     return inputs
+
+def get_chunked_input(input_csv, input_json, videos_per_chunk):
+    data = get_shuffled_data(inpug_csv, input_json)
+    return distribute_data_in_chunks(data, vid_per_chunk)
+
 

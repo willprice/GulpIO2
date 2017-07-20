@@ -21,6 +21,7 @@ def set_properties(project):
     project.depends_on('opencv-python')
     project.depends_on('pandas')
     project.depends_on('docopt')
+    project.depends_on('joblib')
     project.depends_on('Pillow')
     project.depends_on('sh')
 
