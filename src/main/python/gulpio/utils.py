@@ -2,7 +2,7 @@ import os
 import sh
 import random
 import cv2
-import numpu as np
+import numpy as np
 
 def resize_by_short_edge(img, size):
     h, w = img.shape[0], img.shape[1]

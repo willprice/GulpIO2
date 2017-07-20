@@ -1,9 +1,23 @@
+#!/usr/bin/env python
+"""Create a binary file including all video frames with RecordIO convention.
+Usage:
+  create_binary from_video [<videos_path>] [<csv_file>|<input_json>] [<output_folder>] [<video_per_chunk>] [<image_size>] [<temp_dir>] [<labels>]
+  create_binary from_frames [<frames_path>] [<csv_file>|<input_json>] [<output_folder>] [<video_per_chunk>] [<image_size>] [<labels>]
+  create_binary (-h | --help)
+  create_binary --version
+Options:
+  -h --help     Show this screen.
+  --version     Show version.
+  json_file     paths to json files
+"""
+
 import os
 import pickle
 import glob
 import cv2
 import pandas as pd
 import numpy as np
+import docopt
 
 from tqdm import tqdm
 from joblib import Parallel, delayed
@@ -11,7 +25,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from gulpio.gulpio import GulpVideoIO
 from gulpio.utils import resize_by_short_edge, shuffle, burst_frames_to_shm
-
+from gulpio.parse_input import Input_from_csv, Input_from_json
 
 #shm_dir_path (input docopt)
 
@@ -153,61 +167,6 @@ def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=0):
 def ensure_output_dir_exists(output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
-class Input_from_csv(object):
-
-    def __init__(self, csv_file, num_labels=None):
-        self.num_labels = num_labels
-        self.data = self.read_input_from_csv(csv_file)
-        self.labels2idx = self.create_labels_dict()
-
-    def read_input_from_csv(self, csv_file):
-        print(" > Reading data list (csv)")
-        return pd.read_csv(csv_file)
-
-    def create_labels_dict(self):
-        labels = sorted(pd.unique(df['label']))
-        if self.num_labels:
-            assert len(labels) == self.num_labels
-        labels2idx = {}
-        for i, label in enumerate(labels):
-            labels2idx[label] = i
-        return labels2idx
-
-
-    def get_data():
-        output = []
-        for idx, row in self.data.iterrows():
-            entry_dict = {}
-            entry_dict['id'] = row.youtube_id
-            entry_dict['label'] = row.label
-            entry_dict['start_time'] = row.time_start
-            entry_dict['end_time'] = row.time_end
-            output.append(entry_dict)
-        return output
-
-class Input_from_json(object):
-    def __init__(self, json_file):
-        self.data = self.read_json_file(json_file)
-        self.labels2idx = self.create_labels_dict()
-
-    def read_json_file(self.json_file):
-        return data.RawDataset.load(json_file, label='template').storage
-
-    def create_labels_dict(self, key='template'):
-        labels = sorted(set([item[key] for item in self.data]))
-        labels2idx = {}
-        for i, label in enumerate(labels):
-            labels2idx[label] = i
-        return labels2idx
-
-    def get_data():
-        output = []
-        for entry in self.data:
-            entry['start_time'] = None
-            entry['end_time'] = None
-            output.append(entry)
-        return output
-
 
 
 def dump_labels_in_pickel(labels_idx):
@@ -215,19 +174,20 @@ def dump_labels_in_pickel(labels_idx):
 
 
 if __name__ == '__main__':
-    description = 'Create a binary file including all video frames with RecordIO convention.'
-    frames_path = '.' #   help=('Path to bursted frames'))
-    input_csv = 'csv' #   help=('Kinetics CSV file containing the following format:                             'YouTube Identifier,Start time,End time,Class label'))
-    output_folder = './output_folder' #  help='Output folder')
-    vid_per_chunk = 20 # help='number of videos in a chunk')
-    num_workers = 4 # help='number of workers.')
-    img_size = 120 # help='shortest img size to resize all input images.')
+	arguments = docopt(__doc__)
+	if arguments['from_video']:
+		videos_path = arguments['<video_path>'] # help=('Path to videos'))
+		shm_dir_path = arguments['<temp_dir>'] # help='path to the temp directory in shared memory.')
+	if arguments['from_frames']:
+		frames_path = arguments['<frames_path>'] # help=('Path to bursted frames'))
 
-    videos_path = 'videos' # help=('Path to videos'))
-    input_json = 'input_json' #  help=('path to the json file to convert the videos for (train/validation/test)'))
-    shm_dir_path = "temp_dir" # help='path to the temp directory in shared memory.')
-
-    dump_label2idx = True
+	input_csv = arguments['<input_csv>'] # help=('Kinetics CSV file containing the following format:                             'YouTube Identifier,Start time,End time,Class label'))
+    input_json = arguments['<input_json>'] #  help=('path to the json file to convert the videos for (train/validation/test)'))
+    output_folder = arguments['<output_folder>'] #  help='Output folder')
+    vid_per_chunk = arguments['<videos_per_chunk>'] # help='number of videos in a chunk')
+    num_workers = arguments['<num_workers>'] # help='number of workers.')
+    img_size = arguments['image_size'] # help='shortest img size to resize all input images.')
+    dump_label2idx = arguments['<label>']
     # create output folder if not there
     ensure_output_dir_exists(output_folder)
 
