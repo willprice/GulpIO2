@@ -2,10 +2,8 @@ import os
 import shutil
 import glob
 import cv2
-import pickle
 
 from gulpio.utils import resize_by_short_edge, shuffle, burst_frames_to_shm
-from gulpio.parse_input import Input_from_csv, Input_from_json
 from gulpio.gulpio import GulpVideoIO
 
 
@@ -31,7 +29,7 @@ def get_video_as_label_and_frames(entry, video_path, labels2idx):
         else:
             print("neither video nor frames are present in {}".format(folder))
     print(labels2idx)
-    if not labels2idx == None:
+    if not labels2idx == {}:
         label_idx = labels2idx[label]
     else:
         label_idx = -1
@@ -113,29 +111,6 @@ def create_chunk(inputs, path, labels2idx):
     return True
 
 
-def dump_labels2idx_in_pickel(labels2idx, output_folder):
-    pickle.dump(labels2idx, open(output_folder + '/label2idx.pkl', 'wb'))
-
-def get_shuffled_data(input_csv, input_json, labels_available,
-                      output_folder=None):
-    # read data
-    if input_csv:
-        data_object = Input_from_csv(input_csv)
-    elif input_json:
-        data_object = Input_from_json(input_json)
-    # create label to idx map
-    print(labels_available)
-    labels2idx = None
-    if labels_available:
-        labels2idx = data_object.label2idx
-        print(" > Creating label dictionary")
-        dump_labels2idx_in_pickel(labels2idx, output_folder)
-
-    data = data_object.get_data()
-    # shuffle df and write binary file
-    print(" > Shuffling data list")
-    return shuffle(data), labels2idx
-
 def compute_number_of_chunks(data, videos_per_chunk):
     return len(data) // videos_per_chunk + 1
 
@@ -145,21 +120,19 @@ def distribute_data_in_chunks(data, videos_per_chunk, output_folder, img_size):
     # set input array
     print(" > Setting up data chunks")
     inputs = []
-
     for chunk_id in range(num_chunks):
         if chunk_id == num_chunks - 1:
             df_sub = data[chunk_id * videos_per_chunk:]
         else:
             df_sub = data[chunk_id * videos_per_chunk:
                           (chunk_id + 1) * videos_per_chunk]
-        input_data = [df_sub, output_folder, chunk_id, img_size]
-        inputs.append(input_data)
+        inputs.append([df_sub, output_folder, chunk_id, img_size])
 
     return inputs
 
-def get_chunked_input(input_csv, input_json, videos_per_chunk, output_folder,
-                      img_size, dump_labels2idx):
-    data, labels2idx = get_shuffled_data(input_csv, input_json, dump_labels2idx,
-                             output_folder)
-    return distribute_data_in_chunks(data, videos_per_chunk, output_folder,
-                                     img_size), labels2idx
+def get_chunked_input(data, videos_per_chunk, output_folder, img_size):
+    data = shuffle(data)
+    return distribute_data_in_chunks(data,
+                                     videos_per_chunk,
+                                     output_folder,
+                                     img_size)

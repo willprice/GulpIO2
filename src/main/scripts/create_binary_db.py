@@ -9,7 +9,6 @@ Usage:
                   [--num_workers <num_workers>]
                   [--image_size <image_size>]
                   [--temp_dir <temp_dir>]
-                  [labels_available]
     create_binary (-h | --help)
     create_binary --version
 
@@ -39,8 +38,9 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+from gulpio.parse_input import Input_from_csv, Input_from_json
 from gulpio.convert_binary import get_chunked_input, create_chunk
-from gulpio.utils import resize_by_short_edge, shuffle, burst_frames_to_shm, ensure_output_dir_exists
+from gulpio.utils import resize_by_short_edge, shuffle, burst_frames_to_shm, ensure_output_dir_exists, dump_in_pickel
 
 def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=0):
     """
@@ -90,17 +90,24 @@ if __name__ == '__main__':
     vid_per_chunk = int(arguments['--videos_per_chunk']) # help='number of videos in a chunk')
     num_workers = int(arguments['--num_workers']) # help='number of workers.')
     img_size = int(arguments['--image_size']) # help='shortest img size to resize all input images.')
-    dump_label2idx = arguments['labels_available']
 
     # create output folder if not there
     ensure_output_dir_exists(output_folder)
 
-    inputs, labels2idx = get_chunked_input(input_csv,
-                                           input_json,
-                                           vid_per_chunk,
-                                           output_folder,
-                                           img_size,
-                                           dump_label2idx)
+    # read data
+    if input_csv:
+        data_object = Input_from_csv(input_csv)
+    elif input_json:
+        data_object = Input_from_json(input_json)
+    data, labels2idx = data_object.get_data()
+
+    if not label2idx == {}:
+        dump_in_pickel(labels2idx, output_folder, 'label2idx')
+
+    inputs = get_chunked_input(data,
+                               vid_per_chunk,
+                               output_folder,
+                               img_size)
 
     #parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
     results = Parallel(n_jobs=num_workers)(delayed(create_chunk)(i,

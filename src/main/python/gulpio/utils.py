@@ -4,6 +4,7 @@ import os
 import sh
 import random
 import cv2
+import pickle
 import numpy as np
 
 def resize_by_short_edge(img, size):
@@ -50,3 +51,7 @@ def burst_frames_to_shm(vid_path, shm_dir_path):
 
 def ensure_output_dir_exists(output_dir):
     os.makedirs(output_dir, exist_ok=True)
+
+
+def dump_in_pickel(data, output_folder, filename):
+    pickle.dump(data, open(output_folder + '/' + filename + '.pkl', 'wb'))

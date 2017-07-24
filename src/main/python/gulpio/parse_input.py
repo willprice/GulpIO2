@@ -13,8 +13,16 @@ class Input_from_json(object):
     def read_json_file(self, json_file):
         return data.RawDataset.load(json_file, label='template').storage
 
-    def create_labels_dict(self, key='template'):
-        labels = sorted(set([item[key] for item in self.data]))
+    def extract_labels(self, key='template')
+        labels = []
+        for item in self.data:
+            if key in item:
+                labels.append(item[key])
+        labels = sorted(set(labels))
+        return labels
+
+    def create_labels_dict(self):
+        labels = self.extract_labels()
         labels2idx = {}
         for i, label in enumerate(labels):
             labels2idx[label] = i
@@ -26,7 +34,7 @@ class Input_from_json(object):
             entry['start_time'] = None
             entry['end_time'] = None
             output.append(entry)
-        return output
+        return output, labels2idx
 
 
 class Input_from_csv(object):
@@ -59,6 +67,6 @@ class Input_from_csv(object):
             entry_dict['start_time'] = row.time_start
             entry_dict['end_time'] = row.time_end
             output.append(entry_dict)
-        return output
+        return output, labels2idx
 
 
