@@ -3,7 +3,11 @@ import shutil
 import glob
 import cv2
 
-from gulpio.utils import resize_by_short_edge, shuffle, burst_frames_to_shm
+from gulpio.utils import (resize_by_short_edge,
+                          shuffle,
+                          burst_frames_to_shm,
+                          clear_temp_dir,
+                         )
 from gulpio.gulpio import GulpVideoIO
 
 
@@ -14,8 +18,8 @@ def initialize_filenames(output_folder, chunk_no):
 
 
 def get_video_as_label_and_frames(entry, video_path, labels2idx):
-    video_id = entry['id_'] #TODO
-    label = entry['template'] #TODO
+    video_id = entry['id']
+    label = entry['label']
     folder = create_folder_name(video_id,
                                 video_path=video_path,
                                 label=label,
@@ -91,11 +95,8 @@ def burst_video_into_frames(vid_path, shm_dir_path):
     clear_temp_dir(temp_dir)
     return imgs
 
-def clear_temp_dir(temp_dir):
-    shutil.rmtree(temp_dir)
-
-def create_chunk(inputs, path, labels2idx):
-    df, output_folder, chunk_no, img_size = inputs
+def create_chunk(inputs, path, labels2idx, img_size, output_folder):
+    df, chunk_no = inputs
     bin_file_path, meta_file_path = initialize_filenames(output_folder,
                                                          chunk_no)
     gulp_file = GulpVideoIO(bin_file_path, 'wb', meta_file_path)
@@ -115,7 +116,7 @@ def compute_number_of_chunks(data, videos_per_chunk):
     return len(data) // videos_per_chunk + 1
 
 
-def distribute_data_in_chunks(data, videos_per_chunk, output_folder, img_size):
+def distribute_data_in_chunks(data, videos_per_chunk):
     num_chunks = compute_number_of_chunks(data, videos_per_chunk)
     # set input array
     print(" > Setting up data chunks")
@@ -126,13 +127,12 @@ def distribute_data_in_chunks(data, videos_per_chunk, output_folder, img_size):
         else:
             df_sub = data[chunk_id * videos_per_chunk:
                           (chunk_id + 1) * videos_per_chunk]
-        inputs.append([df_sub, output_folder, chunk_id, img_size])
+        inputs.append([df_sub, chunk_id])
 
     return inputs
 
-def get_chunked_input(data, videos_per_chunk, output_folder, img_size):
+def get_chunked_input(data, videos_per_chunk):
     data = shuffle(data)
     return distribute_data_in_chunks(data,
                                      videos_per_chunk,
-                                     output_folder,
-                                     img_size)
+                                     )

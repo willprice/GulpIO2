@@ -21,10 +21,6 @@ def resize_by_short_edge(img, size):
 
 
 def shuffle(df, n=1, axis=0):
-   # df = df.copy()
-   # for _ in range(n):
-   #     df.apply(np.random.shuffle, axis=axis)
-   # return df
     random.shuffle(df)
     return df
 
@@ -51,6 +47,10 @@ def burst_frames_to_shm(vid_path, shm_dir_path):
 
 def ensure_output_dir_exists(output_dir):
     os.makedirs(output_dir, exist_ok=True)
+
+
+def clear_temp_dir(temp_dir):
+    shutil.rmtree(temp_dir)
 
 
 def dump_in_pickel(data, output_folder, filename):

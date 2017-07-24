@@ -8,12 +8,12 @@ class Input_from_json(object):
 
     def __init__(self, json_file):
         self.data = self.read_json_file(json_file)
-        self.label2idx = self.create_labels_dict()
+        self.labels2idx = self.create_labels_dict()
 
     def read_json_file(self, json_file):
         return data.RawDataset.load(json_file, label='template').storage
 
-    def extract_labels(self, key='template')
+    def extract_labels(self, key='template'):
         labels = []
         for item in self.data:
             if key in item:
@@ -31,10 +31,13 @@ class Input_from_json(object):
     def get_data(self):
         output = []
         for entry in self.data:
-            entry['start_time'] = None
-            entry['end_time'] = None
-            output.append(entry)
-        return output, labels2idx
+            row = {}
+            row['start_time'] = None
+            row['end_time'] = None
+            row['id'] = entry['id_']
+            row['label'] = entry['template']
+            output.append(row)
+        return output, self.labels2idx
 
 
 class Input_from_csv(object):
@@ -42,7 +45,7 @@ class Input_from_csv(object):
     def __init__(self, csv_file, num_labels=None):
         self.num_labels = num_labels
         self.data = self.read_input_from_csv(csv_file)
-        self.label2idx = self.create_labels_dict()
+        self.labels2idx = self.create_labels_dict()
 
     def read_input_from_csv(self, csv_file):
         print(" > Reading data list (csv)")
@@ -67,6 +70,6 @@ class Input_from_csv(object):
             entry_dict['start_time'] = row.time_start
             entry_dict['end_time'] = row.time_end
             output.append(entry_dict)
-        return output, labels2idx
+        return output, self.labels2idx
 
 
