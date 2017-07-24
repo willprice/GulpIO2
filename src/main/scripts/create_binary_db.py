@@ -2,21 +2,14 @@
 
 """Create a binary file including all video frames with RecordIO convention.
 Usage:
-    create_binary from_video [--videos_path <videos_path>]
-                             [--input_csv <input_csv>|--input_json <input_json>]
-                             [--output_folder <output_folder>]
-                             [--videos_per_chunk <videos_per_chunk>]
-                             [--num_workers <num_workers>]
-                             [--image_size <image_size>]
-                             [--temp_dir <temp_dir>]
-                             [--labels <labels>]
-    create_binary from_frames [--frames_path <frames_path>]
-                              [--input_csv <input_csv>|--input_json <input_json>]
-                              [--output_folder <output_folder>]
-                              [--videos_per_chunk <videos_per_chunk>]
-                              [--num_workers <num_workers>]
-                              [--image_size <image_size>]
-                              [--labels <labels>]
+    create_binary [--videos_path <videos_path>]
+                  [--input_csv <input_csv>|--input_json <input_json>]
+                  [--output_folder <output_folder>]
+                  [--videos_per_chunk <videos_per_chunk>]
+                  [--num_workers <num_workers>]
+                  [--image_size <image_size>]
+                  [--temp_dir <temp_dir>]
+                  [labels_available]
     create_binary (-h | --help)
     create_binary --version
 
@@ -32,7 +25,6 @@ Options:
     --num_workers=<num_workers>             Number of parallel processes
     --image_size=<image_size>               Size of smaller edge of resized frames
     --temp_dir=<temp_dir>                   Name of temporary directory for bursted frames
-    --labels=<labels>                       boolean, labels present or not
 """
 
 import os
@@ -91,27 +83,27 @@ def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=0):
 if __name__ == '__main__':
     arguments = docopt(__doc__)
     print(arguments)
-    if arguments['from_video']:
-        videos_path = arguments['--video_path'] # help=('Path to videos'))
-        shm_dir_path = arguments['--temp_dir']
-    if arguments['from_frames']:
-        frames_path = arguments['--frames_path']
+    videos_path = arguments['--videos_path'] # help=('Path to videos'))
     input_csv = arguments['--input_csv']
     input_json = arguments['--input_json'] #  help=('path to the json file to convert the videos for (train/validation/test)'))
     output_folder = arguments['--output_folder'] #  help='Output folder')
     vid_per_chunk = int(arguments['--videos_per_chunk']) # help='number of videos in a chunk')
     num_workers = int(arguments['--num_workers']) # help='number of workers.')
     img_size = int(arguments['--image_size']) # help='shortest img size to resize all input images.')
-    dump_label2idx = arguments['--labels']
+    dump_label2idx = arguments['labels_available']
 
     # create output folder if not there
     ensure_output_dir_exists(output_folder)
 
-    inputs = get_chunked_input(input_csv, input_json, vid_per_chunk,
-                               output_folder, img_size, dump_label2idx)
+    inputs, labels2idx = get_chunked_input(input_csv,
+                                           input_json,
+                                           vid_per_chunk,
+                                           output_folder,
+                                           img_size,
+                                           dump_label2idx)
 
     #parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
     results = Parallel(n_jobs=num_workers)(delayed(create_chunk)(i,
-                                                                 frames_path,
-                                                                 dump_label2idx)
+                                                                 videos_path,
+                                                                 labels2idx)
                                            for i in tqdm(inputs))

@@ -1,7 +1,8 @@
 import os
 import shutil
 import glob
-import cv2 
+import cv2
+import pickle
 
 from gulpio.utils import resize_by_short_edge, shuffle, burst_frames_to_shm
 from gulpio.parse_input import Input_from_csv, Input_from_json
@@ -14,14 +15,9 @@ def initialize_filenames(output_folder, chunk_no):
     return bin_file_path, meta_file_path
 
 
-def get_video_as_label_and_frames(entry, video_path, dump_labels2idx):
-    #if("youtube_id" not in entry or  TODO: uncomment this
-    #   "label" not in entry or
-    #   "time_start" not in entry or
-    #   "end_time" not in entry):
-    #    print("{} is not complete!".format(entry))
-    video_id = entry['id_']
-    label = entry['label']
+def get_video_as_label_and_frames(entry, video_path, labels2idx):
+    video_id = entry['id_'] #TODO
+    label = entry['template'] #TODO
     folder = create_folder_name(video_id,
                                 video_path=video_path,
                                 label=label,
@@ -34,7 +30,8 @@ def get_video_as_label_and_frames(entry, video_path, dump_labels2idx):
                                            shm_dir_path)
         else:
             print("neither video nor frames are present in {}".format(folder))
-    if dump_labels2idx:
+    print(labels2idx)
+    if not labels2idx == None:
         label_idx = labels2idx[label]
     else:
         label_idx = -1
@@ -99,7 +96,7 @@ def burst_video_into_frames(vid_path, shm_dir_path):
 def clear_temp_dir(temp_dir):
     shutil.rmtree(temp_dir)
 
-def create_chunk(inputs, frames_path, dump_labels2idx):
+def create_chunk(inputs, path, labels2idx):
     df, output_folder, chunk_no, img_size = inputs
     bin_file_path, meta_file_path = initialize_filenames(output_folder,
                                                          chunk_no)
@@ -107,8 +104,8 @@ def create_chunk(inputs, frames_path, dump_labels2idx):
     gulp_file.open()
     for idx, row in enumerate(df):
         video_id, imgs, label_idx, label = get_video_as_label_and_frames(row,
-                                                                         frames_path,
-                                                                         dump_labels2idx)
+                                                                         path,
+                                                                         labels2idx)
         #ensure_frames_are_present(imgs)
         [gulp_file.write(label_idx, video_id, img)
             for img in get_resized_image(imgs, img_size)]
@@ -116,27 +113,28 @@ def create_chunk(inputs, frames_path, dump_labels2idx):
     return True
 
 
-
-def dump_labels_in_pickel(labels_idx):
+def dump_labels2idx_in_pickel(labels2idx, output_folder):
     pickle.dump(labels2idx, open(output_folder + '/label2idx.pkl', 'wb'))
 
-def get_shuffled_data(input_csv, input_json, dump_labels2idx):
+def get_shuffled_data(input_csv, input_json, labels_available,
+                      output_folder=None):
     # read data
     if input_csv:
         data_object = Input_from_csv(input_csv)
     elif input_json:
         data_object = Input_from_json(input_json)
     # create label to idx map
-    if dump_labels2idx:
+    print(labels_available)
+    labels2idx = None
+    if labels_available:
         labels2idx = data_object.label2idx
         print(" > Creating label dictionary")
-        dump_labels2idx_in_pickel(label2idx)
+        dump_labels2idx_in_pickel(labels2idx, output_folder)
 
     data = data_object.get_data()
-    print(data)
     # shuffle df and write binary file
     print(" > Shuffling data list")
-    return shuffle(data)
+    return shuffle(data), labels2idx
 
 def compute_number_of_chunks(data, videos_per_chunk):
     return len(data) // videos_per_chunk + 1
@@ -161,8 +159,7 @@ def distribute_data_in_chunks(data, videos_per_chunk, output_folder, img_size):
 
 def get_chunked_input(input_csv, input_json, videos_per_chunk, output_folder,
                       img_size, dump_labels2idx):
-    data = get_shuffled_data(input_csv, input_json, dump_labels2idx)
+    data, labels2idx = get_shuffled_data(input_csv, input_json, dump_labels2idx,
+                             output_folder)
     return distribute_data_in_chunks(data, videos_per_chunk, output_folder,
-                                     img_size)
-
-
+                                     img_size), labels2idx

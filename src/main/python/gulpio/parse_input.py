@@ -8,7 +8,7 @@ class Input_from_json(object):
 
     def __init__(self, json_file):
         self.data = self.read_json_file(json_file)
-        self.labels2idx = self.create_labels_dict()
+        self.label2idx = self.create_labels_dict()
 
     def read_json_file(self, json_file):
         return data.RawDataset.load(json_file, label='template').storage
@@ -34,7 +34,7 @@ class Input_from_csv(object):
     def __init__(self, csv_file, num_labels=None):
         self.num_labels = num_labels
         self.data = self.read_input_from_csv(csv_file)
-        self.labels2idx = self.create_labels_dict()
+        self.label2idx = self.create_labels_dict()
 
     def read_input_from_csv(self, csv_file):
         print(" > Reading data list (csv)")
