@@ -24,6 +24,7 @@ Options:
     -h --help                               Show this screen.
     --version                               Show version.
     --videos_path=<videos_path>             Path to video files
+    --frames_path=<frames_path>             Path to frames files
     --input_csv=<input_csv>                 csv file with information about videos
     --input_json=<input_json>               json file with information about videos
     --output_folder=<output_folder>         Output folder for binary files
@@ -46,8 +47,7 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from gulpio.gulpio import GulpVideoIO
-from gulpio.convert_binary import get_chunked_input
+from gulpio.convert_binary import get_chunked_input, create_chunk
 from gulpio.utils import resize_by_short_edge, shuffle, burst_frames_to_shm, ensure_output_dir_exists
 
 def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=0):
@@ -99,9 +99,9 @@ if __name__ == '__main__':
     input_csv = arguments['--input_csv']
     input_json = arguments['--input_json'] #  help=('path to the json file to convert the videos for (train/validation/test)'))
     output_folder = arguments['--output_folder'] #  help='Output folder')
-    vid_per_chunk = arguments['--videos_per_chunk'] # help='number of videos in a chunk')
-    num_workers = arguments['--num_workers'] # help='number of workers.')
-    img_size = arguments['--image_size'] # help='shortest img size to resize all input images.')
+    vid_per_chunk = int(arguments['--videos_per_chunk']) # help='number of videos in a chunk')
+    num_workers = int(arguments['--num_workers']) # help='number of workers.')
+    img_size = int(arguments['--image_size']) # help='shortest img size to resize all input images.')
     dump_label2idx = arguments['--labels']
 
     # create output folder if not there
@@ -111,5 +111,7 @@ if __name__ == '__main__':
                                output_folder, img_size, dump_label2idx)
 
     #parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
-    results = Parallel(n_jobs=num_workers)(delayed(create_chunk)(i)
+    results = Parallel(n_jobs=num_workers)(delayed(create_chunk)(i,
+                                                                 frames_path,
+                                                                 dump_label2idx)
                                            for i in tqdm(inputs))

@@ -24,7 +24,8 @@ def shuffle(df, n=1, axis=0):
    # for _ in range(n):
    #     df.apply(np.random.shuffle, axis=axis)
    # return df
-    return random.shuffle(df)
+    random.shuffle(df)
+    return df
 
 def burst_frames_to_shm(vid_path, shm_dir_path):
     """

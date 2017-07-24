@@ -1,8 +1,12 @@
 import os
 import shutil
+import glob
+import cv2 
 
 from gulpio.utils import resize_by_short_edge, shuffle, burst_frames_to_shm
 from gulpio.parse_input import Input_from_csv, Input_from_json
+from gulpio.gulpio import GulpVideoIO
+
 
 def initialize_filenames(output_folder, chunk_no):
     bin_file_path = os.path.join(output_folder, 'data{}.bin'.format(chunk_no))
@@ -10,44 +14,49 @@ def initialize_filenames(output_folder, chunk_no):
     return bin_file_path, meta_file_path
 
 
-def get_video_as_label_and_frames(entry):
+def get_video_as_label_and_frames(entry, video_path, dump_labels2idx):
     #if("youtube_id" not in entry or  TODO: uncomment this
     #   "label" not in entry or
     #   "time_start" not in entry or
     #   "end_time" not in entry):
     #    print("{} is not complete!".format(entry))
-    video_id = entry['id']
+    video_id = entry['id_']
     label = entry['label']
     folder = create_folder_name(video_id,
                                 video_path=video_path,
                                 label=label,
                                 start_t=entry['start_time'],
                                 end_t=entry['end_time'])
-    imgs = find_jpgs_in_folder(folder)
+    imgs = find_images_in_folder(folder)
     if not check_frames_are_present(imgs):
-        if check_mp4_file_present(get_video_path(folder)):
+        if check_one_mp4_file_present(get_video_path(folder)):
             imgs = burst_video_into_frames(get_video_path(folder)[0],
                                            shm_dir_path)
         else:
             print("neither video nor frames are present in {}".format(folder))
-    if dump_labels2idx_in_pickel:
+    if dump_labels2idx:
         label_idx = labels2idx[label]
     else:
         label_idx = -1
-    return video_id, imgs, label_id, label
+    return video_id, imgs, label_idx, label
 
 def create_folder_name(video_id, video_path=None, label=None, start_t=None,
                        end_t=None):
     if video_path:
-        return os.path.join(vid_path, video_id)
+        print(video_path, video_id)
+        return os.path.join(video_path, video_id)
     return os.path.join(args.frames_path,
                         label,
                         video_id) + "_{:06d}_{:06d}".format(start_t, end_t)
 
 
 
-def find_jpgs_in_folder(folder):
-    return sorted(glob.glob(folder + '/*.jpg'))
+def find_images_in_folder(folder, formats=['jpg', 'png']):
+    images = []
+    for format_ in formats:
+        files = glob.glob('{}/*.{}'.format(folder, format_))
+        images.extend(files)
+    return sorted(images)
 
 
 def check_frames_are_present(imgs, temp_dir=None):
@@ -55,15 +64,19 @@ def check_frames_are_present(imgs, temp_dir=None):
         print("No frames present...")
         if temp_dir:
             shutil.rmtree(temp_dir)
+        return False
+    return True
 
-def get_video_path(folder):
+
+def get_video_path(folder_name):
     return glob.glob(folder_name + "*.mp4")
+
 
 def check_one_mp4_file_present(vid_path):
     if len(vid_path) > 1:
         print("more than one video file in {}".format(vid_path))
         return False
-    if not os.path.isfile(vid_path[0]):
+    if len(vid_path) == 0 or not os.path.isfile(vid_path[0]):
         print("no video file {}".format(vid_path))
         return False
     return True
@@ -86,14 +99,16 @@ def burst_video_into_frames(vid_path, shm_dir_path):
 def clear_temp_dir(temp_dir):
     shutil.rmtree(temp_dir)
 
-def create_chunk(inputs):
+def create_chunk(inputs, frames_path, dump_labels2idx):
     df, output_folder, chunk_no, img_size = inputs
     bin_file_path, meta_file_path = initialize_filenames(output_folder,
                                                          chunk_no)
     gulp_file = GulpVideoIO(bin_file_path, 'wb', meta_file_path)
     gulp_file.open()
     for idx, row in enumerate(df):
-        video_id, imgs, label_idx, label = get_video_as_label_and_frames(row)
+        video_id, imgs, label_idx, label = get_video_as_label_and_frames(row,
+                                                                         frames_path,
+                                                                         dump_labels2idx)
         #ensure_frames_are_present(imgs)
         [gulp_file.write(label_idx, video_id, img)
             for img in get_resized_image(imgs, img_size)]
@@ -118,7 +133,7 @@ def get_shuffled_data(input_csv, input_json, dump_labels2idx):
         dump_labels2idx_in_pickel(label2idx)
 
     data = data_object.get_data()
-
+    print(data)
     # shuffle df and write binary file
     print(" > Shuffling data list")
     return shuffle(data)
@@ -135,10 +150,10 @@ def distribute_data_in_chunks(data, videos_per_chunk, output_folder, img_size):
 
     for chunk_id in range(num_chunks):
         if chunk_id == num_chunks - 1:
-            df_sub = data[chunk_id * vid_per_chunk:]
+            df_sub = data[chunk_id * videos_per_chunk:]
         else:
-            df_sub = data[chunk_id * vid_per_chunk:
-                          (chunk_id + 1) * vid_per_chunk]
+            df_sub = data[chunk_id * videos_per_chunk:
+                          (chunk_id + 1) * videos_per_chunk]
         input_data = [df_sub, output_folder, chunk_id, img_size]
         inputs.append(input_data)
 
