@@ -17,14 +17,7 @@ def initialize_filenames(output_folder, chunk_no):
     return bin_file_path, meta_file_path
 
 
-def get_video_as_label_and_frames(entry, video_path, labels2idx):
-    video_id = entry['id']
-    label = entry['label']
-    folder = create_folder_name(video_id,
-                                video_path=video_path,
-                                label=label,
-                                start_t=entry['start_time'],
-                                end_t=entry['end_time'])
+def extract_images_in_folder(folder, shm_dir_path):
     imgs = find_images_in_folder(folder)
     if not check_frames_are_present(imgs):
         if check_one_mp4_file_present(get_video_path(folder)):
@@ -32,20 +25,29 @@ def get_video_as_label_and_frames(entry, video_path, labels2idx):
                                            shm_dir_path)
         else:
             print("neither video nor frames are present in {}".format(folder))
-    print(labels2idx)
+    return imgs
+
+
+def get_video_as_label_and_frames(entry, video_path, labels2idx, shm_dir_path):
+    video_id = entry['id']
+    label = entry['label']
+    folder = create_folder_name(video_id,
+                                video_path=video_path,
+                                start_t=entry['start_time'],
+                                end_t=entry['end_time'])
+    imgs = extract_images_in_folder(folder, shm_dir_path)
     if not labels2idx == {}:
         label_idx = labels2idx[label]
     else:
         label_idx = -1
     return video_id, imgs, label_idx, label
 
-def create_folder_name(video_id, video_path=None, label=None, start_t=None,
+
+def create_folder_name(video_id, video_path=None, start_t=None,
                        end_t=None):
-    if video_path:
-        print(video_path, video_id)
+    if not start_t and not end_t:
         return os.path.join(video_path, video_id)
-    return os.path.join(args.frames_path,
-                        label,
+    return os.path.join(video_path,
                         video_id) + "_{:06d}_{:06d}".format(start_t, end_t)
 
 
@@ -60,7 +62,6 @@ def find_images_in_folder(folder, formats=['jpg', 'png']):
 
 def check_frames_are_present(imgs, temp_dir=None):
     if len(imgs) == 0:
-        print("No frames present...")
         if temp_dir:
             shutil.rmtree(temp_dir)
         return False
@@ -68,7 +69,7 @@ def check_frames_are_present(imgs, temp_dir=None):
 
 
 def get_video_path(folder_name):
-    return glob.glob(folder_name + "*.mp4")
+    return glob.glob("{}/*.mp4".format(folder_name))
 
 
 def check_one_mp4_file_present(vid_path):
@@ -90,21 +91,27 @@ def get_resized_image(imgs, img_size):
 
 def burst_video_into_frames(vid_path, shm_dir_path):
     temp_dir = burst_frames_to_shm(vid_path, shm_dir_path)
-    imgs = sorted(glob.glob(temp_dir + '/*.jpg'))
-    check_frames_are_present(imgs, temp_dir)
-    clear_temp_dir(temp_dir)
+    imgs = find_images_in_folder(temp_dir, formats=['jpg'])
+    if not (check_frames_are_present(imgs, temp_dir)):
+        print("not frames bursted in {}...".format(vid_path))
+    # clear_temp_dir(temp_dir)
     return imgs
 
-def create_chunk(inputs, path, labels2idx, img_size, output_folder):
-    df, chunk_no = inputs
+def write_chunk(input_chunk, path, labels2idx, img_size, output_folder,
+                shm_dir_path):
+    df, chunk_no = input_chunk
     bin_file_path, meta_file_path = initialize_filenames(output_folder,
                                                          chunk_no)
     gulp_file = GulpVideoIO(bin_file_path, 'wb', meta_file_path)
     gulp_file.open()
     for idx, row in enumerate(df):
-        video_id, imgs, label_idx, label = get_video_as_label_and_frames(row,
-                                                                         path,
-                                                                         labels2idx)
+        video_id, imgs, label_idx, label = get_video_as_label_and_frames(
+            row,
+            path,
+            labels2idx,
+            shm_dir_path
+           )
+
         #ensure_frames_are_present(imgs)
         [gulp_file.write(label_idx, video_id, img)
             for img in get_resized_image(imgs, img_size)]

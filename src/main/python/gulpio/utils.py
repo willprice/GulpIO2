@@ -6,6 +6,7 @@ import random
 import cv2
 import pickle
 import numpy as np
+import shutil
 
 def resize_by_short_edge(img, size):
     h, w = img.shape[0], img.shape[1]

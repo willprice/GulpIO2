@@ -8,7 +8,6 @@ Usage:
                   [--videos_per_chunk <videos_per_chunk>]
                   [--num_workers <num_workers>]
                   [--image_size <image_size>]
-                  [--temp_dir <temp_dir>]
     create_binary (-h | --help)
     create_binary --version
 
@@ -23,7 +22,6 @@ Options:
     --videos_per_chunk=<videos_per_chunk>   Number of videos in one chunk
     --num_workers=<num_workers>             Number of parallel processes
     --image_size=<image_size>               Size of smaller edge of resized frames
-    --temp_dir=<temp_dir>                   Name of temporary directory for bursted frames
 """
 
 import os
@@ -36,7 +34,7 @@ from gulpio.parse_input import (Input_from_csv,
                                 Input_from_json,
                                )
 from gulpio.convert_binary import (get_chunked_input,
-                                   create_chunk,
+                                   write_chunk,
                                   )
 from gulpio.utils import (ensure_output_dir_exists,
                           dump_in_pickel,
@@ -57,6 +55,8 @@ if __name__ == '__main__':
     input_csv = arguments['--input_csv']
     input_json = arguments['--input_json']
 
+    shm_dir_path = "temp_bursted_frames"
+
     if input_csv:
         data_object = Input_from_csv(input_csv)
     elif input_json:
@@ -70,16 +70,17 @@ if __name__ == '__main__':
     if not labels2idx == {}:
         dump_in_pickel(labels2idx, output_folder, 'label2idx')
 
-    # transform input into chunks and resize frames
+    # transform input into chunks
     inputs = get_chunked_input(data,
                                vid_per_chunk,
                                )
 
-    #parallel_process(inputs, create_chunk, n_jobs=args.num_workers)
-    results = Parallel(n_jobs=num_workers)(delayed(create_chunk)(i,
-                                                                 videos_path,
-                                                                 labels2idx,
-                                                                 img_size,
-                                                                 output_folder,
-                                                                 )
+    # 
+    results = Parallel(n_jobs=num_workers)(delayed(write_chunk)(i,
+                                                                videos_path,
+                                                                labels2idx,
+                                                                img_size,
+                                                                output_folder,
+                                                                shm_dir_path
+                                                                )
                                            for i in tqdm(inputs))
