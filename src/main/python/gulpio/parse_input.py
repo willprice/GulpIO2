@@ -20,7 +20,7 @@ class Input_from_json(object):
             labels2idx[label] = i
         return labels2idx
 
-    def get_data():
+    def get_data(self):
         output = []
         for entry in self.data:
             entry['start_time'] = None
@@ -50,7 +50,7 @@ class Input_from_csv(object):
         return labels2idx
 
 
-    def get_data():
+    def get_data(self):
         output = []
         for idx, row in self.data.iterrows():
             entry_dict = {}

@@ -20,11 +20,11 @@ def resize_by_short_edge(img, size):
 
 
 def shuffle(df, n=1, axis=0):
-    df = df.copy()
-    for _ in range(n):
-        df.apply(np.random.shuffle, axis=axis)
-    return df
-
+   # df = df.copy()
+   # for _ in range(n):
+   #     df.apply(np.random.shuffle, axis=axis)
+   # return df
+    return random.shuffle(df)
 
 def burst_frames_to_shm(vid_path, shm_dir_path):
     """
@@ -47,3 +47,5 @@ def burst_frames_to_shm(vid_path, shm_dir_path):
     return temp_dir
 
 
+def ensure_output_dir_exists(output_dir):
+    os.makedirs(output_dir, exist_ok=True)

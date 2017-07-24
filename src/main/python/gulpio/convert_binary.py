@@ -2,7 +2,7 @@ import os
 import shutil
 
 from gulpio.utils import resize_by_short_edge, shuffle, burst_frames_to_shm
-
+from gulpio.parse_input import Input_from_csv, Input_from_json
 
 def initialize_filenames(output_folder, chunk_no):
     bin_file_path = os.path.join(output_folder, 'data{}.bin'.format(chunk_no))
@@ -100,22 +100,19 @@ def create_chunk(inputs):
     gulp_file.close()
     return True
 
-def ensure_output_dir_exists(output_dir):
-    os.makedirs(output_dir, exist_ok=True)
-
 
 
 def dump_labels_in_pickel(labels_idx):
     pickle.dump(labels2idx, open(output_folder + '/label2idx.pkl', 'wb'))
 
-def get_shuffles_data(input_csv, input_json):
+def get_shuffled_data(input_csv, input_json, dump_labels2idx):
     # read data
     if input_csv:
         data_object = Input_from_csv(input_csv)
     elif input_json:
         data_object = Input_from_json(input_json)
     # create label to idx map
-    if dump_label2idx:
+    if dump_labels2idx:
         labels2idx = data_object.label2idx
         print(" > Creating label dictionary")
         dump_labels2idx_in_pickel(label2idx)
@@ -130,8 +127,8 @@ def compute_number_of_chunks(data, videos_per_chunk):
     return len(data) // videos_per_chunk + 1
 
 
-def distribute_data_in_chunks(data, videos_per_chunks, output_folder, img_size):
-    num_chunks = compute_number_of_chunks(data, vid_per_chunk)
+def distribute_data_in_chunks(data, videos_per_chunk, output_folder, img_size):
+    num_chunks = compute_number_of_chunks(data, videos_per_chunk)
     # set input array
     print(" > Setting up data chunks")
     inputs = []
@@ -147,8 +144,10 @@ def distribute_data_in_chunks(data, videos_per_chunks, output_folder, img_size):
 
     return inputs
 
-def get_chunked_input(input_csv, input_json, videos_per_chunk):
-    data = get_shuffled_data(inpug_csv, input_json)
-    return distribute_data_in_chunks(data, vid_per_chunk)
+def get_chunked_input(input_csv, input_json, videos_per_chunk, output_folder,
+                      img_size, dump_labels2idx):
+    data = get_shuffled_data(input_csv, input_json, dump_labels2idx)
+    return distribute_data_in_chunks(data, videos_per_chunk, output_folder,
+                                     img_size)
 
 
