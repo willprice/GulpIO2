@@ -1,12 +1,34 @@
 #!/usr/bin/env python
+import os
 
 from tbntools import data
 import pandas as pd
 
+from gulpio.utils import (find_images_in_folder, get_video_path)
+class MetaDataIterator(object):
+
+    def iter_meta(self):
+        """ 
+        """
+        return NotImplementedError
+
+    def iter_data():
+        """ ({meta: dict with meta information,
+              files: [frames or mp3 with path]},
+              id: unique id to find the video again
+             {...}
+             ...)
+        """
+        return NotImplementedError
+
+    def __getitem__(self, i):
+        return NotImplementedError
+
 
 class Input_from_json(object):
 
-    def __init__(self, json_file):
+    def __init__(self, json_file, folder):
+        self.folder = folder
         self.data = self.read_json_file(json_file)
         self.labels2idx = self.create_labels_dict()
 
@@ -38,6 +60,12 @@ class Input_from_json(object):
             row['label'] = entry['template']
             output.append(row)
         return output, self.labels2idx
+
+    def iter_data(self):
+        meta_data, _ = self.get_data()
+        sub_folders = (os.path.join(self.folder, md['id']) for md in meta_data)
+        return iter([{'meta': md, 'files': get_video_path(sub_folder), 'id': md['id']}
+            for md, sub_folder in zip(meta_data, sub_folders)])
 
 
 class Input_from_csv(object):
