@@ -26,15 +26,11 @@ def check_frames_are_present(imgs, temp_dir=None):
     return True
 
 
-###############################################################################
-#                                    Bursting                                 #
-###############################################################################
-
 def burst_frames_to_shm(vid_path, shm_dir_path):
     """
     - To burst frames in a temporary directory in shared memory.
-    - Directory name is chosen as random 128 bits so as to avoid clash during
-      parallelization
+    - Directory name is chosen as random 128 bits so as to avoid clash
+      during parallelization
     - Returns path to directory containing frames for the specific video
     """
     hash_str = str(random.getrandbits(128))
@@ -51,25 +47,6 @@ def burst_frames_to_shm(vid_path, shm_dir_path):
     return temp_dir
 
 
-def burst_video_into_frames(vid_path, shm_dir_path):
-    temp_dir = burst_frames_to_shm(vid_path, shm_dir_path)
-    imgs = find_images_in_folder(temp_dir, formats=['jpg'])
-    if not (check_frames_are_present(imgs, temp_dir)):
-        print("not frames bursted in {}...".format(vid_path))
-    return imgs
-
-
-###############################################################################
-#                                Resizing Frames                              #
-###############################################################################
-
-def get_resized_image(imgs, img_size):
-    for img in imgs:
-        img = cv2.imread(img)
-        img = resize_by_short_edge(img, img_size)
-        yield img
-
-
 def resize_by_short_edge(img, size):
     h, w = img.shape[0], img.shape[1]
     if h < w:
@@ -81,6 +58,8 @@ def resize_by_short_edge(img, size):
         new_height = int(size * scale)
         img = cv2.resize(img, (size, new_height))
     return img
+
+
 
 
 ###############################################################################

@@ -9,18 +9,25 @@ from PIL import Image
 from collections import namedtuple, defaultdict
 
 
-MetaInfo = namedtuple('MetaInfo', ['loc', 'label', 'idx', 'pad', 'length'])
+ImgInfo = namedtuple('ImgInfo', ['id_',
+                                 'loc',
+                                 'pad',
+                                 'length'])
+MetaInfo = namedtuple('MetaInfo', ['id_',
+                                   'meta_data'])
 
 
 class GulpVideoIO(object):
 
-    def __init__(self, path, flag, meta_path):
+    def __init__(self, path, flag, meta_path, img_info_path):
         self.meta_path = meta_path
+        self.img_info_path = img_info_path
         self.path = path
         self.flag = flag
         self.is_open = False
         self.is_writable = False
         self.f = None
+        self.img_dict = None
         self.meta_dict = None
 
     def open(self):
@@ -28,6 +35,11 @@ class GulpVideoIO(object):
             self.meta_dict = pickle.load(open(self.meta_path, 'rb'))
         else:
             self.meta_dict = defaultdict()
+
+        if os.path.exists(self.img_info_path):
+            self.img_dict = pickle.load(open(self.img_info_path, 'rb'))
+        else:
+            self.img_dict = defaultdict()
 
         if self.flag == 'wb':
             self.f = open(self.path, self.flag)
@@ -40,30 +52,39 @@ class GulpVideoIO(object):
     def close(self):
         if self.is_open:
             pickle.dump(self.meta_dict, open(self.meta_path, 'wb'))
+            pickle.dump(self.img_dict, open(self.img_info_path, 'wb'))
             self.f.close()
             self.is_open = False
         else:
             return
 
-    def write(self, label, vid_idx, image):
+    def write_meta(self, vid_idx, id_, meta_data):
+        assert self.is_writable
+        meta_info = MetaInfo(meta_data=list(meta_data),
+                             id_=id_)
+        self.meta_dict[vid_idx] = [meta_info]
+
+    def write(self, vid_idx, id_, image):
         assert self.is_writable
         loc = self.f.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
         pad = 4 - (len(img_str) % 4)
         record = img_str.ljust(len(img_str) + pad, b'\0')
-        meta_info = MetaInfo(loc=loc, length=len(
-            record), label=label, idx=vid_idx, pad=pad)
+        img_info = ImgInfo(id_=id_,
+                           loc=loc,
+                           length=len(record),
+                           pad=pad)
         try:
-            self.meta_dict[vid_idx].append(meta_info)
+            self.img_dict[vid_idx].append(img_info)
         except KeyError:
-            self.meta_dict[vid_idx] = [meta_info]
+            self.img_dict[vid_idx] = [img_info]
         self.f.write(record)
 
-    def read(self, meta_info):
+    def read(self, img_info):
         assert not self.is_writable
-        self.f.seek(meta_info.loc)
-        record = self.f.read(meta_info.length)
-        img_str = record[:-meta_info.pad]
+        self.f.seek(img_info.loc)
+        record = self.f.read(img_info.length)
+        img_str = record[:-img_info.pad]
         nparr = np.fromstring(img_str, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

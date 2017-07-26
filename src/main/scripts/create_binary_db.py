@@ -19,28 +19,25 @@ Options:
     --input_csv=<input_csv>                 csv file with information about videos
     --input_json=<input_json>               json file with information about videos
     --output_folder=<output_folder>         Output folder for binary files
-    --videos_per_chunk=<videos_per_chunk>   Number of videos in one chunk
-    --num_workers=<num_workers>             Number of parallel processes
-    --image_size=<image_size>               Size of smaller edge of resized frames
+    --videos_per_chunk=<videos_per_chunk>   Number of videos in one chunk [default: 100]
+    --num_workers=<num_workers>             Number of parallel processes [default: 4]
+    --image_size=<image_size>               Size of smaller edge of resized frames [default: -1]
 """
 
-import os
 import sys
-import pickle
 from docopt import docopt
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
 from gulpio.parse_input import (Input_from_csv,
                                 Input_from_json,
-                               )
+                                )
 from gulpio.convert_binary import (Chunking,
                                    WriteChunks,
-                                  )
+                                   )
 from gulpio.utils import (ensure_output_dir_exists,
-                          dump_in_pickel,
                           clear_temp_dir,
-                         )
+                          )
 
 
 if __name__ == '__main__':
@@ -63,7 +60,6 @@ if __name__ == '__main__':
         data_object = Input_from_csv(input_csv)
     elif input_json:
         data_object = Input_from_json(input_json, videos_path)
-    # data, labels2idx = data_object.get_data()
 
     iter_data = data_object.iter_data()
 
@@ -72,20 +68,17 @@ if __name__ == '__main__':
     # create output folder if not there
     ensure_output_dir_exists(output_folder)
 
-    # save label to index dictionary if it exists
-    #if not labels2idx == {}:
-    #    dump_in_pickel(labels2idx, output_folder, 'label2idx')
-    chunk_writer = WriteChunks({}, img_size, output_folder, shm_dir_path)
+    chunk_writer = WriteChunks(img_size, output_folder, shm_dir_path)
 
     #
     for chunk in chunks:
         chunk_writer.write_chunk(chunk)
     sys.exit()
-    results = Parallel(n_jobs=num_workers)(delayed(chunk_writer.write_chunk)(i,
-                                                                {},
-                                                                img_size,
-                                                                output_folder,
-                                                                shm_dir_path
-                                                                )
+    results = Parallel(n_jobs=num_workers)(delayed(chunk_writer.write_chunk)(
+        i,
+        img_size,
+        output_folder,
+        shm_dir_path
+        )
                                             for i in chunks)
     clear_temp_dir(shm_dir_path)
