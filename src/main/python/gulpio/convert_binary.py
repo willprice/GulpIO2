@@ -45,7 +45,7 @@ class WriteChunks(object):
             frames = fg.extract_frames(self.img_size, self.shm_dir_path)
 
             gulp_file.write_meta(self.count_videos, id_, meta_information)
-            [gulp_file.write(self.count_videos, id_, img) for img in frames]
+            [gulp_file.write(self.count_videos, img) for img in frames]
 
             self.count_videos += 1
         gulp_file.close()

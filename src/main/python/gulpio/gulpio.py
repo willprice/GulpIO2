@@ -9,8 +9,7 @@ from PIL import Image
 from collections import namedtuple, defaultdict
 
 
-ImgInfo = namedtuple('ImgInfo', ['id_',
-                                 'loc',
+ImgInfo = namedtuple('ImgInfo', ['loc',
                                  'pad',
                                  'length'])
 MetaInfo = namedtuple('MetaInfo', ['id_',
@@ -30,16 +29,14 @@ class GulpVideoIO(object):
         self.img_dict = None
         self.meta_dict = None
 
-    def open(self):
-        if os.path.exists(self.meta_path):
-            self.meta_dict = pickle.load(open(self.meta_path, 'rb'))
-        else:
-            self.meta_dict = defaultdict()
+    def get_or_create_dict(self, path):
+        if os.path.exists(path):
+            return pickle.load(open(path, 'rb'))
+        return defaultdict()
 
-        if os.path.exists(self.img_info_path):
-            self.img_dict = pickle.load(open(self.img_info_path, 'rb'))
-        else:
-            self.img_dict = defaultdict()
+    def open(self):
+        self.meta_dict = self.get_or_create_dict(self.meta_path, 'rb')
+        self.img_dict = self.get_or_create_dict(self.img_info_path, 'rb')
 
         if self.flag == 'wb':
             self.f = open(self.path, self.flag)
@@ -70,8 +67,7 @@ class GulpVideoIO(object):
         img_str = cv2.imencode('.jpg', image)[1].tostring()
         pad = 4 - (len(img_str) % 4)
         record = img_str.ljust(len(img_str) + pad, b'\0')
-        img_info = ImgInfo(id_=id_,
-                           loc=loc,
+        img_info = ImgInfo(loc=loc,
                            length=len(record),
                            pad=pad)
         try:

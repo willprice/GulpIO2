@@ -64,8 +64,10 @@ class Input_from_json(object):
     def iter_data(self):
         meta_data, _ = self.get_data()
         sub_folders = (os.path.join(self.folder, md['id']) for md in meta_data)
-        return iter([{'meta': md, 'files': get_video_path(sub_folder), 'id': md['id']}
-            for md, sub_folder in zip(meta_data, sub_folders)])
+        return iter([{'meta': md,
+                      'files': get_video_path(sub_folder),
+                      'id': md['id']}
+                    for md, sub_folder in zip(meta_data, sub_folders)])
 
 
 class Input_from_csv(object):
@@ -80,14 +82,13 @@ class Input_from_csv(object):
         return pd.read_csv(csv_file)
 
     def create_labels_dict(self):
-        labels = sorted(pd.unique(df['label']))
+        labels = sorted(pd.unique(self.data['label']))
         if self.num_labels:
             assert len(labels) == self.num_labels
         labels2idx = {}
         for i, label in enumerate(labels):
             labels2idx[label] = i
         return labels2idx
-
 
     def get_data(self):
         output = []
