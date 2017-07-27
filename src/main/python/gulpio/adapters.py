@@ -5,11 +5,11 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 
-from gulpio.utils import (get_single_video_path,
-                          resize_images,
-                          burst_video_into_frames,
-                          clear_temp_dir,
-                          )
+from .utils import (get_single_video_path,
+                    resize_images,
+                    burst_video_into_frames,
+                    clear_temp_dir,
+                    )
 
 
 class AbstractDatasetAdapter(ABC):

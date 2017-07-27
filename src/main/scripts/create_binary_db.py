@@ -27,7 +27,7 @@ from docopt import docopt
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
-from gulpio.parse_input import Custom20BNJsonAdapter
+from gulpio.adapters import Custom20BNJsonAdapter
 from gulpio.convert_binary import GulpIngestor
 
 if __name__ == '__main__':
