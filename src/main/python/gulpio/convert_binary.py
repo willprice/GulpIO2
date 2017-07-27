@@ -36,7 +36,6 @@ class WriteChunks(object):
 
             gulp_file.write_meta(self.count_videos, id_, meta_information)
             for frame in frames:
-                print(frame)
                 gulp_file.write(self.count_videos, id_, frame)
 
             self.count_videos += 1
