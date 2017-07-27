@@ -32,7 +32,7 @@ from joblib import Parallel, delayed
 from gulpio.parse_input import (Input_from_csv,
                                 Input_from_json,
                                 )
-from gulpio.convert_binary import (Chunking,
+from gulpio.convert_binary import (ChunkGenerator,
                                    WriteChunks,
                                    )
 from gulpio.utils import (ensure_output_dir_exists,
@@ -62,18 +62,21 @@ if __name__ == '__main__':
         data_object = Input_from_json(input_json, videos_path)
 
     iter_data = data_object.iter_data()
+    chunks = ChunkGenerator(iter_data, vid_per_chunk)
 
-    chunks = Chunking(iter_data, vid_per_chunk)
+
 
     # create output folder if not there
     ensure_output_dir_exists(output_folder)
 
-    chunk_writer = WriteChunks(img_size, output_folder, shm_dir_path)
+    chunk_writer = WriteChunks(img_size, output_folder)
 
     #
     for chunk in chunks:
         chunk_writer.write_chunk(chunk)
     sys.exit()
+    
+    
     results = Parallel(n_jobs=num_workers)(delayed(chunk_writer.write_chunk)(
         i,
         img_size,

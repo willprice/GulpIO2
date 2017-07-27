@@ -35,8 +35,8 @@ class GulpVideoIO(object):
         return defaultdict()
 
     def open(self):
-        self.meta_dict = self.get_or_create_dict(self.meta_path, 'rb')
-        self.img_dict = self.get_or_create_dict(self.img_info_path, 'rb')
+        self.meta_dict = self.get_or_create_dict(self.meta_path)
+        self.img_dict = self.get_or_create_dict(self.img_info_path)
 
         if self.flag == 'wb':
             self.f = open(self.path, self.flag)

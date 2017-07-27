@@ -27,8 +27,9 @@ class MetaDataIterator(object):
 
 class Input_from_json(object):
 
-    def __init__(self, json_file, folder):
+    def __init__(self, json_file, folder, shm_dir_path='/dev/shm'):
         self.folder = folder
+        self.shm_dir_path = shm_dir_path
         self.data = self.read_json_file(json_file)
         self.labels2idx = self.create_labels_dict()
 
@@ -65,8 +66,10 @@ class Input_from_json(object):
         meta_data, _ = self.get_data()
         sub_folders = (os.path.join(self.folder, md['id']) for md in meta_data)
         return iter(({'meta': md,
-                      'frames': (resize_images(burst_video_into_frames(vid))
-                                 for vid in get_video_path(sub_folder)),
+                      'frames':
+                      resize_images(burst_video_into_frames(get_video_path(sub_folder)[0],
+                                                                      self.shm_dir_path)
+                                ),
                       'id': md['id']}
                     for md, sub_folder in zip(meta_data, sub_folders)))
 
