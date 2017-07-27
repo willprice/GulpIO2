@@ -6,6 +6,7 @@ Usage:
     create_binary [--videos_per_chunk <videos_per_chunk>]
                   [--num_workers <num_workers>]
                   [--image_size <image_size>]
+                  [--shuffle ]
                   <input_json> <videos_directory> <output_directory>
     create_binary (-h | --help)
     create_binary --version
@@ -21,6 +22,7 @@ Options:
     --videos_per_chunk=<videos_per_chunk>   Number of videos in one chunk [default: 100]
     --num_workers=<num_workers>             Number of parallel processes [default: 4]
     --image_size=<image_size>               Size of smaller edge of resized frames [default: -1]
+    --shuffle                               Shuffle the dataset before ingestion
 """
 
 from docopt import docopt
@@ -40,9 +42,12 @@ if __name__ == '__main__':
     videos_per_chunk = int(arguments['--videos_per_chunk'])
     num_workers = int(arguments['--num_workers'])
     img_size = int(arguments['--image_size'])
+    shuffle = arguments['--shuffle']
 
     adapter = Custom20BNJsonAdapter(input_json, videos_path,
-                                    frame_size=img_size)
+                                    shuffle=shuffle,
+                                    frame_size=img_size,
+                                    )
     ingestor = GulpIngestor(adapter, output_folder, videos_per_chunk)
     ingestor.ingest()
 #    results = Parallel(n_jobs=num_workers)(delayed(chunk_writer.write_chunk)(

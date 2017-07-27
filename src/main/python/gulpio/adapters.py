@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import random
 import os
 import json
 from abc import ABC, abstractmethod
@@ -38,10 +39,11 @@ class AbstractDatasetAdapter(ABC):
 class Custom20BNJsonAdapter(object):
 
     def __init__(self, json_file, folder,
-                 frame_size=-1, shm_dir_path='/dev/shm'):
+                 shuffle=False, frame_size=-1, shm_dir_path='/dev/shm'):
         self.json_file = json_file
         self.data = self.read_json(json_file)
         self.folder = folder
+        self.shuffle = shuffle
         self.frame_size = frame_size
         self.shm_dir_path = shm_dir_path
 
@@ -55,7 +57,10 @@ class Custom20BNJsonAdapter(object):
                 for entry in self.data]
 
     def iter_data(self):
-        for meta in self.get_meta():
+        all_meta = self.get_meta()
+        if self.shuffle:
+            random.shuffle(all_meta)
+        for meta in all_meta:
             video_folder = os.path.join(self.folder, str(meta['id']))
             video_path = get_single_video_path(video_folder)
             tmp_path, frame_paths = burst_video_into_frames(video_path,
