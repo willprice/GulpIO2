@@ -1,20 +1,23 @@
 #!/usr/bin/env python
 
-"""Create a binary file including all video frames with RecordIO convention.
+"""gulp_20bn_json_videos
+
+Gulp a 20bn dataset that is specified using a JSON format and where the input
+data are video files.
 
 Usage:
-    create_binary [--videos_per_chunk <videos_per_chunk>]
-                  [--num_workers <num_workers>]
-                  [--image_size <image_size>]
-                  [--shuffle ]
-                  <input_json> <videos_directory> <output_directory>
-    create_binary (-h | --help)
-    create_binary --version
+    gulp_20bn_json_videos [--videos_per_chunk <videos_per_chunk>]
+                          [--num_workers <num_workers>]
+                          [--image_size <image_size>]
+                          [--shuffle ]
+                          <input_json> <videos_directory> <output_directory>
+    gulp_20bn_json_videos (-h | --help)
+    gulp_20bn_json_videos --version
 
 Arguments:
     input_json:                             Input JSON file
-    videos_directory                        Base directory for video files
-    output_directory                        Output directory for GulpIO files
+    videos_directory:                       Base directory for video files
+    output_directory:                       Output directory for GulpIO files
 
 Options:
     -h --help                               Show this screen.
