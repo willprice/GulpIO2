@@ -5,7 +5,7 @@ from tbntools import data
 import pandas as pd
 
 from gulpio.utils import (find_images_in_folder,
-                          get_video_path,
+                          get_single_video_path,
                           resize_images,
                           burst_video_into_frames)
 
@@ -27,51 +27,31 @@ class MetaDataIterator(object):
 
 class Input_from_json(object):
 
-    def __init__(self, json_file, folder, shm_dir_path='/dev/shm'):
+    def __init__(self, json_file, folder, frame_size=-1, shm_dir_path='/dev/shm'):
         self.folder = folder
         self.shm_dir_path = shm_dir_path
         self.data = self.read_json_file(json_file)
-        self.labels2idx = self.create_labels_dict()
+        self.frame_size = frame_size
 
     def read_json_file(self, json_file):
         return data.RawDataset.load(json_file, label='template').storage
 
-    def extract_labels(self, key='template'):
-        labels = []
-        for item in self.data:
-            if key in item:
-                labels.append(item[key])
-        labels = sorted(set(labels))
-        return labels
-
-    def create_labels_dict(self):
-        labels = self.extract_labels()
-        labels2idx = {}
-        for i, label in enumerate(labels):
-            labels2idx[label] = i
-        return labels2idx
-
     def get_data(self):
-        output = []
-        for entry in self.data:
-            row = {}
-            row['start_time'] = None
-            row['end_time'] = None
-            row['id'] = entry['id_']
-            row['label'] = entry['template']
-            output.append(row)
-        return output, self.labels2idx
+        return [{'id': entry['id_'], 'label': entry['template']}
+                for entry in self.data]
 
     def iter_data(self):
-        meta_data, _ = self.get_data()
+        meta_data = self.get_data()
         sub_folders = (os.path.join(self.folder, md['id']) for md in meta_data)
-        return iter(({'meta': md,
-                      'frames':
-                      resize_images(burst_video_into_frames(get_video_path(sub_folder)[0],
-                                                                      self.shm_dir_path)
-                                ),
+        for md, sub_folder in zip(meta_data, sub_folders):
+            video_path = get_single_video_path(sub_folder)
+            frame_paths = burst_video_into_frames(video_path,
+                                                  self.shm_dir_path)
+            frames = resize_images(frame_paths, self.frame_size)
+            result = {'meta': md,
+                      'frames': frames,
                       'id': md['id']}
-                    for md, sub_folder in zip(meta_data, sub_folders)))
+            yield result
 
 
 class Input_from_csv(object):

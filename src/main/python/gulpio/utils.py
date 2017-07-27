@@ -106,5 +106,7 @@ def find_images_in_folder(folder, formats=['jpg', 'png']):
     return sorted(images)
 
 
-def get_video_path(folder_name):
-    return glob.glob("{}/*.mp4".format(folder_name))
+def get_single_video_path(folder_name):
+    video_filenames = glob.glob("{}/*.mp4".format(folder_name))
+    assert len(video_filenames) == 1
+    return video_filenames[0]
