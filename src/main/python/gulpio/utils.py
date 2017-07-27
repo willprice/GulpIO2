@@ -47,6 +47,22 @@ def burst_frames_to_shm(vid_path, shm_dir_path):
     return temp_dir
 
 
+def burst_video_into_frames(vid_path, shm_dir_path):
+    temp_dir = burst_frames_to_shm(vid_path, shm_dir_path)
+    imgs = find_images_in_folder(temp_dir, formats=['jpg'])
+    assert check_frames_are_present(imgs, temp_dir), \
+        "not frames bursted in {}...".format(vid_path)
+    return imgs
+
+
+def resize_images(imgs, img_size=-1):
+    for img in imgs:
+        img = cv2.imread(img)
+        if img_size > 0:
+            img = resize_by_short_edge(img, img_size)
+        yield img
+
+
 def resize_by_short_edge(img, size):
     h, w = img.shape[0], img.shape[1]
     if h < w:

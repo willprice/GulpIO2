@@ -41,8 +41,8 @@ class WriteChunks(object):
             meta_information = video_info['meta']
             filenames = video_info['files']
 
-            fg = FramesGenerator(filenames, id_)
-            frames = fg.extract_frames(self.img_size, self.shm_dir_path)
+            #fg = FramesGenerator(filenames, id_)
+            #frames = fg.extract_frames(self.img_size, self.shm_dir_path)
 
             gulp_file.write_meta(self.count_videos, id_, meta_information)
             [gulp_file.write(self.count_videos, img) for img in frames]
@@ -99,16 +99,4 @@ class FramesGenerator(object):
             # TODO improvable... Only jpg?
             return 'frames'
 
-    def burst_video_into_frames(self, vid_path, shm_dir_path):
-        temp_dir = burst_frames_to_shm(vid_path, shm_dir_path)
-        imgs = find_images_in_folder(temp_dir, formats=['jpg'])
-        if not (check_frames_are_present(imgs, temp_dir)):
-            print("not frames bursted in {}...".format(vid_path))
-        return imgs
 
-    def get_resized_image(self, imgs, img_size=-1):
-        for img in imgs:
-            img = cv2.imread(img)
-            if img_size > 0:
-                img = resize_by_short_edge(img, img_size)
-            yield img

@@ -4,13 +4,13 @@ import os
 from tbntools import data
 import pandas as pd
 
-from gulpio.utils import (find_images_in_folder, get_video_path)
-class MetaDataIterator(object):
+from gulpio.utils import (find_images_in_folder,
+                          get_video_path,
+                          resize_images,
+                          burst_video_into_frames)
 
-    def iter_meta(self):
-        """ 
-        """
-        return NotImplementedError
+
+class MetaDataIterator(object):
 
     def iter_data():
         """ ({meta: dict with meta information,
@@ -64,10 +64,11 @@ class Input_from_json(object):
     def iter_data(self):
         meta_data, _ = self.get_data()
         sub_folders = (os.path.join(self.folder, md['id']) for md in meta_data)
-        return iter([{'meta': md,
-                      'files': get_video_path(sub_folder),
+        return iter(({'meta': md,
+                      'frames': (resize_images(burst_video_into_frames(vid))
+                                 for vid in get_video_path(sub_folder)),
                       'id': md['id']}
-                    for md, sub_folder in zip(meta_data, sub_folders)])
+                    for md, sub_folder in zip(meta_data, sub_folders)))
 
 
 class Input_from_csv(object):
