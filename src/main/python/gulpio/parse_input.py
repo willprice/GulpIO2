@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 import os
+import json
 
-from tbntools import data
 import pandas as pd
 
-from gulpio.utils import (find_images_in_folder,
-                          get_single_video_path,
+from gulpio.utils import (get_single_video_path,
                           resize_images,
                           burst_video_into_frames)
 
@@ -30,27 +29,28 @@ class Input_from_json(object):
     def __init__(self, json_file, folder, frame_size=-1, shm_dir_path='/dev/shm'):
         self.folder = folder
         self.shm_dir_path = shm_dir_path
-        self.data = self.read_json_file(json_file)
+        self.data = self.read_json(json_file)
         self.frame_size = frame_size
 
-    def read_json_file(self, json_file):
-        return data.RawDataset.load(json_file, label='template').storage
+    def read_json(self, json_file):
+        with open(json_file, 'r') as f:
+            content = json.load(f)
+        return content
 
-    def get_data(self):
-        return [{'id': entry['id_'], 'label': entry['template']}
+    def get_meta(self):
+        return [{'id': entry['id'], 'label': entry['template']}
                 for entry in self.data]
 
     def iter_data(self):
-        meta_data = self.get_data()
-        sub_folders = (os.path.join(self.folder, md['id']) for md in meta_data)
-        for md, sub_folder in zip(meta_data, sub_folders):
-            video_path = get_single_video_path(sub_folder)
+        for meta in self.get_meta():
+            video_folder = os.path.join(self.folder, str(meta['id']))
+            video_path = get_single_video_path(video_folder)
             frame_paths = burst_video_into_frames(video_path,
                                                   self.shm_dir_path)
             frames = resize_images(frame_paths, self.frame_size)
-            result = {'meta': md,
+            result = {'meta': meta,
                       'frames': frames,
-                      'id': md['id']}
+                      'id': meta['id']}
             yield result
 
 
