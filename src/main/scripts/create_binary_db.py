@@ -30,7 +30,7 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 
 from gulpio.parse_input import (Input_from_csv,
-                                Input_from_json,
+                                Custom20BNJsonAdapter,
                                 )
 from gulpio.convert_binary import (ChunkGenerator,
                                    WriteChunks,
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     if input_csv:
         data_object = Input_from_csv(input_csv)
     elif input_json:
-        data_object = Input_from_json(input_json, videos_path)
+        data_object = Custom20BNJsonAdapter(input_json, videos_path)
 
     iter_data = data_object.iter_data()
     chunks = ChunkGenerator(iter_data, vid_per_chunk)

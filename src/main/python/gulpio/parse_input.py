@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import json
+from abc import ABC, abstractmethod
 
 import pandas as pd
 
@@ -9,28 +10,38 @@ from gulpio.utils import (get_single_video_path,
                           burst_video_into_frames)
 
 
-class MetaDataIterator(object):
+class AbstractDatasetAdapter(ABC):
+    """ Base class adapter for gulping (video) datasets.
 
+    Inherit from this class and implement the `iter_data` method. This method
+    should iterate over your entire dataset and for each element return a
+    dictionary with the following fields:
+
+        id     : a unique(?) ID for the element.
+        frames : a list of frames (PIL images, numpy arrays..)
+        meta   : a dictionary with arbitrary metadata (labels, start_time...)
+
+    For examples, see the custom adapters below.
+
+    """
+
+    @abstractmethod
     def iter_data():
-        """ ({meta: dict with meta information,
-              files: [frames or mp3 with path]},
-              id: unique id to find the video again
-             {...}
-             ...)
-        """
         return NotImplementedError
 
     def __getitem__(self, i):
         return NotImplementedError
 
 
-class Input_from_json(object):
+class Custom20BNJsonAdapter(object):
 
-    def __init__(self, json_file, folder, frame_size=-1, shm_dir_path='/dev/shm'):
-        self.folder = folder
-        self.shm_dir_path = shm_dir_path
+    def __init__(self, json_file, folder,
+                 frame_size=-1, shm_dir_path='/dev/shm'):
+        self.json_file = json_file
         self.data = self.read_json(json_file)
+        self.folder = folder
         self.frame_size = frame_size
+        self.shm_dir_path = shm_dir_path
 
     def read_json(self, json_file):
         with open(json_file, 'r') as f:
