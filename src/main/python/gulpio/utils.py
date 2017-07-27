@@ -56,9 +56,7 @@ def burst_video_into_frames(vid_path, shm_dir_path):
 
 
 def resize_images(imgs, img_size=-1):
-    print('ljlkjlkj', imgs)
     for img in imgs:
-        print(img)
         img = cv2.imread(img)
         if img_size > 0:
             img = resize_by_short_edge(img, img_size)
