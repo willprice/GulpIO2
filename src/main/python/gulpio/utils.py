@@ -52,7 +52,7 @@ def burst_video_into_frames(vid_path, shm_dir_path):
     imgs = find_images_in_folder(temp_dir, formats=['jpg'])
     assert check_frames_are_present(imgs, temp_dir), \
         "not frames bursted in {}...".format(vid_path)
-    return imgs
+    return temp_dir, imgs
 
 
 def resize_images(imgs, img_size=-1):

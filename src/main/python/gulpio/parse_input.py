@@ -7,7 +7,9 @@ import pandas as pd
 
 from gulpio.utils import (get_single_video_path,
                           resize_images,
-                          burst_video_into_frames)
+                          burst_video_into_frames,
+                          clear_temp_dir,
+                         )
 
 
 class AbstractDatasetAdapter(ABC):
@@ -56,9 +58,10 @@ class Custom20BNJsonAdapter(object):
         for meta in self.get_meta():
             video_folder = os.path.join(self.folder, str(meta['id']))
             video_path = get_single_video_path(video_folder)
-            frame_paths = burst_video_into_frames(video_path,
-                                                  self.shm_dir_path)
+            tmp_path, frame_paths = burst_video_into_frames(video_path,
+                                                            self.shm_dir_path)
             frames = resize_images(frame_paths, self.frame_size)
+            clear_temp_dir(tmp_path)
             result = {'meta': meta,
                       'frames': frames,
                       'id': meta['id']}
