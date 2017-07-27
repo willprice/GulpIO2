@@ -1,12 +1,12 @@
 import os
 
 from gulpio.gulpio import GulpVideoIO
+from .utils import ensure_output_dir_exists
 
 
 class WriteChunks(object):
 
-    def __init__(self, img_size, output_folder):
-        self.img_size = img_size
+    def __init__(self, output_folder):
         self.output_folder = output_folder
         self.count_videos = 0
 
@@ -62,6 +62,23 @@ class ChunkGenerator(object):
             self.iter_data_element = next(self.iter_data)
             count += 1
         return chunk
+
+
+class GulpIngestor(object):
+
+    def __init__(self, adapter, output_folder, videos_per_chunk):
+        self.adapter = adapter
+        self.output_folder = output_folder
+        self.videos_per_chunk = videos_per_chunk
+
+    def ingest(self):
+        ensure_output_dir_exists(self.output_folder)
+        iter_data = self.adapter.iter_data()
+        chunks = ChunkGenerator(iter_data, self.videos_per_chunk)
+        chunk_writer = WriteChunks(self.output_folder)
+        for chunk in chunks:
+            chunk_writer.write_chunk(chunk)
+
 
 
 # class FramesGenerator(object):

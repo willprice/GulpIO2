@@ -9,7 +9,7 @@ from gulpio.utils import (get_single_video_path,
                           resize_images,
                           burst_video_into_frames,
                           clear_temp_dir,
-                         )
+                          )
 
 
 class AbstractDatasetAdapter(ABC):
@@ -60,7 +60,7 @@ class Custom20BNJsonAdapter(object):
             video_path = get_single_video_path(video_folder)
             tmp_path, frame_paths = burst_video_into_frames(video_path,
                                                             self.shm_dir_path)
-            frames = resize_images(frame_paths, self.frame_size)
+            frames = list(resize_images(frame_paths, self.frame_size))
             clear_temp_dir(tmp_path)
             result = {'meta': meta,
                       'frames': frames,
