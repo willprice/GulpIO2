@@ -4,6 +4,8 @@ import os
 import cv2
 import pickle
 import numpy as np
+from abc import ABC, abstractmethod
+import json
 
 from PIL import Image
 from collections import namedtuple, defaultdict
@@ -18,13 +20,49 @@ MetaInfo = namedtuple('MetaInfo', ['id_',
                                    'meta_data'])
 
 
+class AbstractSerializer(ABC):
+
+    @abstractmethod
+    def load(self, file_pointer):
+        pass
+
+    @abstractmethod
+    def dump(self, thing, file_pointer):
+        pass
+    
+
+class PickleSerializer(AbstractSerializer):
+
+    def load(self, file_pointer):
+        return pickle.load(file_pointer)
+
+    def dump(self, thing, file_pointer):
+        pickle.dump(thing, file_pointer)
+
+
+class JSONSerializer(AbstractSerializer):
+
+    def load(self, file_pointer):
+        return json.load(file_pointer)
+
+    def dump(self, thing, file_pointer):
+        json.dump(thing, file_pointer)
+
+
+pickle_serializer = PickleSerializer()
+json_serializer = JSONSerializer()
+
+
 class GulpVideoIO(object):
 
-    def __init__(self, path, flag, meta_path, img_info_path):
-        self.meta_path = meta_path
-        self.img_info_path = img_info_path
+    def __init__(self, path, flag, meta_path, img_info_path,
+                 serializer=json_serializer):
         self.path = path
         self.flag = flag
+        self.meta_path = meta_path
+        self.img_info_path = img_info_path
+        self.serializer = serializer
+
         self.is_open = False
         self.is_writable = False
         self.f = None
@@ -33,7 +71,7 @@ class GulpVideoIO(object):
 
     def get_or_create_dict(self, path):
         if os.path.exists(path):
-            return pickle.load(open(path, 'rb'))
+            return self.serializer.load(open(path, 'r'))
         return defaultdict()
 
     def open(self):
@@ -50,8 +88,8 @@ class GulpVideoIO(object):
 
     def close(self):
         if self.is_open:
-            pickle.dump(self.meta_dict, open(self.meta_path, 'wb'))
-            pickle.dump(self.img_dict, open(self.img_info_path, 'wb'))
+            self.serializer.dump(self.meta_dict, open(self.meta_path, 'w'))
+            self.serializer.dump(self.img_dict, open(self.img_info_path, 'w'))
             self.f.close()
             self.is_open = False
         else:
