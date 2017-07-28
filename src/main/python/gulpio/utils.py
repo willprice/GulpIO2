@@ -26,6 +26,14 @@ def check_frames_are_present(imgs, temp_dir=None):
     return True
 
 
+class FFMPEGNotFound(Exception):
+    pass
+
+
+def check_ffmpeg_exists():
+    return os.system('ffmpeg -version > /dev/null') == 0
+
+
 def burst_frames_to_shm(vid_path, shm_dir_path):
     """
     - To burst frames in a temporary directory in shared memory.
@@ -37,6 +45,8 @@ def burst_frames_to_shm(vid_path, shm_dir_path):
     temp_dir = os.path.join(shm_dir_path, hash_str)
     os.makedirs(temp_dir)  # creates error if paths conflict (unlikely)
     target_mask = os.path.join(temp_dir, '%04d.jpg')
+    if not check_ffmpeg_exists():
+        raise FFMPEGNotFound()
     try:
         sh.ffmpeg('-i', vid_path,
                   '-q:v', str(1),
