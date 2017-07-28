@@ -177,28 +177,26 @@ class ChunkGenerator(object):
 
     def __init__(self, adapter, videos_per_chunk):
         self.adapter = adapter
-        self.iter_data = adapter.iter_data()
         self.videos_per_chunk = videos_per_chunk
-        self.iter_data_element = next(self.iter_data)
         q, r = divmod(len(adapter), videos_per_chunk)
         self.length = q + (1 if r else 0)
 
     def __iter__(self):
-        return self
+        chunk, videos_in_chunk = [], 0
+        for i in self.adapter.iter_data():
+            chunk.append(i)
+            videos_in_chunk += 1
+            if videos_in_chunk == self.videos_per_chunk:
+                yield chunk
+                chunk, videos_in_chunk = [], 0
+        else:
+            # If the last chunk has less videos than 'videos_per_chunk', we
+            # need to yield it too.
+            if chunk:
+                yield chunk
 
     def __len__(self):
         return self.length
-
-    def __next__(self):
-        chunk = []
-        if not self.iter_data_element:
-            raise StopIteration()
-        count = 0
-        while (self.iter_data_element and count < self.videos_per_chunk):
-            chunk.append(self.iter_data_element)
-            self.iter_data_element = next(self.iter_data)
-            count += 1
-        return chunk
 
 
 class GulpIngestor(object):
