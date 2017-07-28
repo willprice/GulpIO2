@@ -97,9 +97,9 @@ class GulpVideoIO(object):
 
     def write_meta(self, vid_idx, id_, meta_data):
         assert self.is_writable
-        meta_info = MetaInfo(meta_data=list(meta_data),
+        meta_info = MetaInfo(meta_data=meta_data,
                              id_=id_)
-        self.meta_dict[vid_idx] = [meta_info]
+        self.meta_dict[vid_idx] = meta_info
 
     def write(self, vid_idx, id_, image):
         assert self.is_writable
