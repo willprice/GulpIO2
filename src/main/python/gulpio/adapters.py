@@ -32,6 +32,10 @@ class AbstractDatasetAdapter(ABC):
     def iter_data():
         return NotImplementedError
 
+    @abstractmethod
+    def __len__(self):
+        return NotImplementedError
+
     def __getitem__(self, i):
         return NotImplementedError
 
@@ -55,6 +59,9 @@ class Custom20BNJsonAdapter(object):
     def get_meta(self):
         return [{'id': entry['id'], 'label': entry['template']}
                 for entry in self.data]
+
+    def __len__(self):
+        return len(self.data)
 
     def iter_data(self):
         all_meta = self.get_meta()

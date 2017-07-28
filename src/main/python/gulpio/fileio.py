@@ -9,6 +9,7 @@ import json
 
 from PIL import Image
 from collections import namedtuple, defaultdict
+from tqdm import tqdm
 
 from .utils import ensure_output_dir_exists
 
@@ -174,13 +175,18 @@ class WriteChunks(object):
 
 class ChunkGenerator(object):
 
-    def __init__(self, iter_data, videos_per_chunk):
+    def __init__(self, iter_data, num_videos, videos_per_chunk):
         self.iter_data = iter_data
         self.videos_per_chunk = videos_per_chunk
         self.iter_data_element = next(self.iter_data)
+        q, r = divmod(num_videos, videos_per_chunk)
+        self.length = q + (1 if r else 0)
 
     def __iter__(self):
         return self
+
+    def __len__(self):
+        return self.length
 
     def __next__(self):
         chunk = []
@@ -204,9 +210,11 @@ class GulpIngestor(object):
     def ingest(self):
         ensure_output_dir_exists(self.output_folder)
         iter_data = self.adapter.iter_data()
-        chunks = ChunkGenerator(iter_data, self.videos_per_chunk)
+        chunks = ChunkGenerator(iter_data,
+                                len(self.adapter),
+                                self.videos_per_chunk)
         chunk_writer = WriteChunks(self.output_folder)
-        for chunk in chunks:
+        for chunk in tqdm(chunks):
             chunk_writer.write_chunk(chunk)
 
 # class FramesGenerator(object):
