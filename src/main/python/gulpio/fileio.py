@@ -29,7 +29,7 @@ class AbstractSerializer(ABC):
     @abstractmethod
     def dump(self, thing, file_pointer):
         pass
-    
+
 
 class PickleSerializer(AbstractSerializer):
 
@@ -138,7 +138,7 @@ class WriteChunks(object):
 
     def __init__(self, output_folder):
         self.output_folder = output_folder
-        self.count_videos = 0
+        self.chunk_count = 0
 
     def initialize_filenames(self, output_folder, chunk_no):
         bin_file_path = os.path.join(output_folder,
@@ -153,7 +153,7 @@ class WriteChunks(object):
         (bin_file_path,
          img_info_path,
          meta_file_path) = self.initialize_filenames(self.output_folder,
-                                                     self.count_videos)
+                                                     self.chunk_count)
         gulp_file = GulpVideoIO(bin_file_path,
                                 'wb',
                                 meta_file_path,
@@ -164,11 +164,11 @@ class WriteChunks(object):
             meta_information = video['meta']
             frames = video['frames']
 
-            gulp_file.write_meta(self.count_videos, id_, meta_information)
+            gulp_file.write_meta(self.chunk_count, id_, meta_information)
             for frame in frames:
-                gulp_file.write(self.count_videos, id_, frame)
+                gulp_file.write(self.chunk_count, id_, frame)
 
-            self.count_videos += 1
+        self.chunk_count += 1
         gulp_file.close()
 
 
