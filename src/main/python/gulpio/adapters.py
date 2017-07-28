@@ -103,5 +103,3 @@ class Input_from_csv(object):
             entry_dict['end_time'] = row.time_end
             output.append(entry_dict)
         return output, self.labels2idx
-
-

@@ -209,15 +209,13 @@ class GulpIngestor(object):
         for chunk in chunks:
             chunk_writer.write_chunk(chunk)
 
-
-
 # class FramesGenerator(object):
-# 
+#
 #     def __init__(self, filenames, id_):
 #         self.filenames = filenames
 #         self.id_ = id_
 #         self.input_type = self.detect_input(self.filenames)
-# 
+#
 #     def extract_frames(self, img_size, shm_dir_path=''):
 #         if self.input_type == 'missing':
 #             print("no input files given for {}".format(self.id_))
@@ -225,7 +223,7 @@ class GulpIngestor(object):
 #             self. filenames = self.burst_video_into_frames(self.filenames[0],
 #                                                            shm_dir_path)
 #         return self.get_resized_image(self.filenames, img_size)
-# 
+#
 #     def detect_input(self, input_files):
 #         if len(input_files) == 0:
 #             return 'missing'
