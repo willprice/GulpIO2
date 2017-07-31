@@ -29,7 +29,7 @@ class AbstractDatasetAdapter(ABC):
     """
 
     @abstractmethod
-    def iter_data():
+    def iter_data(self, start=None, stop=None, step=None):
         return NotImplementedError
 
     @abstractmethod
@@ -50,6 +50,9 @@ class Custom20BNJsonAdapter(object):
         self.shuffle = shuffle
         self.frame_size = frame_size
         self.shm_dir_path = shm_dir_path
+        self.all_meta = self.get_meta()
+        if self.shuffle:
+            random.shuffle(self.all_meta)
 
     def read_json(self, json_file):
         with open(json_file, 'r') as f:
@@ -63,11 +66,11 @@ class Custom20BNJsonAdapter(object):
     def __len__(self):
         return len(self.data)
 
-    def iter_data(self):
-        all_meta = self.get_meta()
-        if self.shuffle:
-            random.shuffle(all_meta)
-        for meta in all_meta:
+    def iter_data(self, start=None, stop=None, step=None):
+        start = start or 0
+        stop = stop or len(self)
+        step = step or 1
+        for meta in self.all_meta[start:stop:step]:
             video_folder = os.path.join(self.folder, str(meta['id']))
             video_path = get_single_video_path(video_folder)
             tmp_path, frame_paths = burst_video_into_frames(video_path,

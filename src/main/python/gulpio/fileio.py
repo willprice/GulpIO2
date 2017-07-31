@@ -6,6 +6,7 @@ import pickle
 import numpy as np
 from abc import ABC, abstractmethod
 import json
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from PIL import Image
 from collections import namedtuple, defaultdict
@@ -73,7 +74,7 @@ class GulpVideoIO(object):
     def get_or_create_dict(self, path):
         if os.path.exists(path):
             return self.serializer.load(open(path, 'r'))
-        return defaultdict()
+        return defaultdict(list)
 
     def open(self):
         self.meta_dict = self.get_or_create_dict(self.meta_path)
@@ -100,7 +101,7 @@ class GulpVideoIO(object):
         assert self.is_writable
         meta_info = MetaInfo(meta_data=meta_data,
                              id_=id_)
-        self.meta_dict[vid_idx] = meta_info
+        self.meta_dict[vid_idx].append(meta_info)
 
     def write(self, vid_idx, id_, image):
         assert self.is_writable
@@ -111,10 +112,7 @@ class GulpVideoIO(object):
         img_info = ImgInfo(loc=loc,
                            length=len(record),
                            pad=pad)
-        try:
-            self.img_dict[vid_idx].append(img_info)
-        except KeyError:
-            self.img_dict[vid_idx] = [img_info]
+        self.img_dict[vid_idx].append(img_info)
         self.f.write(record)
 
     def read(self, img_info):
@@ -137,7 +135,8 @@ class GulpVideoIO(object):
 
 class WriteChunks(object):
 
-    def __init__(self, output_folder):
+    def __init__(self, adapter, output_folder):
+        self.adapter = adapter
         self.output_folder = output_folder
 
     def initialize_filenames(self, output_folder, chunk_no):
@@ -149,7 +148,7 @@ class WriteChunks(object):
                                      'img_info{}.bin'.format(chunk_no))
         return bin_file_path, img_info_path, meta_file_path
 
-    def write_chunk(self, input_chunk, chunk_id):
+    def write_chunk(self, input_chunk, chunk_id=0):
         (bin_file_path,
          img_info_path,
          meta_file_path) = self.initialize_filenames(self.output_folder,
@@ -159,7 +158,7 @@ class WriteChunks(object):
                                 meta_file_path,
                                 img_info_path)
         gulp_file.open()
-        for video in input_chunk:
+        for video in self.adapter.iter_data(input_chunk[0], input_chunk[1]):
             id_ = video['id']
             meta_information = video['meta']
             frames = video['frames']
@@ -171,45 +170,56 @@ class WriteChunks(object):
         gulp_file.close()
 
 
-class ChunkGenerator(object):
+def calculate_chunks(adapter, videos_per_chunk):
+    quotient, remainder = divmod(len(adapter), videos_per_chunk)
+    return [(i, min(i + videos_per_chunk, len(adapter)))
+            for i in range(0, len(adapter), videos_per_chunk)]
 
-    def __init__(self, adapter, videos_per_chunk):
-        self.adapter = adapter
-        self.videos_per_chunk = videos_per_chunk
-        q, r = divmod(len(adapter), videos_per_chunk)
-        self.length = q + (1 if r else 0)
 
-    def __iter__(self):
-        chunk, videos_in_chunk = [], 0
-        for i in self.adapter.iter_data():
-            chunk.append(i)
-            videos_in_chunk += 1
-            if videos_in_chunk == self.videos_per_chunk:
-                yield chunk
-                chunk, videos_in_chunk = [], 0
-        else:
-            # If the last chunk has less videos than 'videos_per_chunk', we
-            # need to yield it too.
-            if chunk:
-                yield chunk
-
-    def __len__(self):
-        return self.length
+#class ChunkGenerator(object):
+#
+#    def __init__(self, adapter, videos_per_chunk):
+#        self.adapter = adapter
+#        self.videos_per_chunk = videos_per_chunk
+#        q, r = divmod(len(adapter), videos_per_chunk)
+#        self.length = q + (1 if r else 0)
+#
+#    def __iter__(self):
+#        chunk, videos_in_chunk = [], 0
+#        for i in self.adapter.iter_data():
+#            chunk.append(i)
+#            videos_in_chunk += 1
+#            if videos_in_chunk == self.videos_per_chunk:
+#                yield chunk
+#                chunk, videos_in_chunk = [], 0
+#        else:
+#            # If the last chunk has less videos than 'videos_per_chunk', we
+#            # need to yield it too.
+#            if chunk:
+#                yield chunk
+#
+#    def __len__(self):
+#        return self.length
 
 
 class GulpIngestor(object):
 
-    def __init__(self, adapter, output_folder, videos_per_chunk):
+    def __init__(self, adapter, output_folder, videos_per_chunk, num_workers):
         self.adapter = adapter
         self.output_folder = output_folder
         self.videos_per_chunk = videos_per_chunk
+        self.num_workers = num_workers
 
     def ingest(self):
         ensure_output_dir_exists(self.output_folder)
-        chunks = ChunkGenerator(self.adapter, self.videos_per_chunk)
-        chunk_writer = WriteChunks(self.output_folder)
-        for chunk in tqdm(chunks):
-            chunk_writer.write_chunk(chunk)
+        chunks = calculate_chunks(self.adapter, self.videos_per_chunk)
+        chunk_writer = WriteChunks(self.adapter, self.output_folder)
+        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+            result = executor.map(chunk_writer.write_chunk, chunks,
+                                  range(len(chunks)), chunksize=1)
+            for r in tqdm(result, total=len(chunks)):
+                pass
+
 
 # class FramesGenerator(object):
 #
