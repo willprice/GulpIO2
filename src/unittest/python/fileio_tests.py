@@ -1,15 +1,26 @@
 import os
 import tempfile
 import shutil
-import json
+
+from collections import defaultdict
 
 import unittest
 import unittest.mock as mock
 
 from gulpio.fileio import (calculate_chunks,
                            GulpVideoIO,
-                           json_serializer
                            )
+
+
+class FSBase(unittest.TestCase):
+
+    def setUp(self):
+        print("setup ##############################################")
+        self.temp_dir = tempfile.mkdtemp(prefix='fileio_test-')
+
+    def tearDown(self):
+        print("tearDown ##########################################")
+        shutil.rmtree(self.temp_dir)
 
 
 class TestCalculateChunks(unittest.TestCase):
@@ -36,23 +47,54 @@ class TestCalculateChunks(unittest.TestCase):
         pass
 
 
-class TestGulpVideoIO(unittest.TestCase):
-    @mock.patch('gulpio.fileio.json_serializer')
-    def test_initializer(self, mock_json_serializer):
-        path = "ANY_PATH"
-        flag = "ANY_FLAG"
-        meta_path = "ANY_META_PATH"
-        img_info_path = "ANY_IMG_INFO_PATH"
-        gulpio_video_io = GulpVideoIO(path, flag, meta_path, img_info_path,
-                                      mock_json_serializer)
-        self.assertEqual(path, gulpio_video_io.path)
-        self.assertEqual(flag, gulpio_video_io.flag)
-        self.assertEqual(meta_path, gulpio_video_io.meta_path)
-        self.assertEqual(img_info_path, gulpio_video_io.img_info_path)
-        self.assertEqual(mock_json_serializer, gulpio_video_io.serializer)
+class GulpVideoIOElement(FSBase):
 
-        self.assertEqual(gulpio_video_io.is_open, False)
-        self.assertEqual(gulpio_video_io.is_writable, False)
-        self.assertEqual(gulpio_video_io.f, None)
-        self.assertEqual(gulpio_video_io.img_dict, None)
-        self.assertEqual(gulpio_video_io.meta_dict, None)
+    @mock.patch('gulpio.fileio.json_serializer')
+    def setUp(self, mock_json_serializer):
+        super(GulpVideoIOElement, self).setUp()
+        self.mock_json_serializer = mock_json_serializer
+        self.path = "ANY_PATH"
+        self.flag = "ANY_FLAG"
+        self.meta_path = "ANY_META_PATH"
+        self.img_info_path = "ANY_IMG_INFO_PATH"
+        self.gulp_video_io = GulpVideoIO(self.path,
+                                         self.flag,
+                                         self.meta_path,
+                                         self.img_info_path,
+                                         mock_json_serializer)
+
+    def tearDown(self):
+        pass
+
+
+class TestGulpVideoIO(GulpVideoIOElement):
+
+    def test_initializer(self):
+        self.assertEqual(self.path, self.gulp_video_io.path)
+        self.assertEqual(self.flag, self.gulp_video_io.flag)
+        self.assertEqual(self.meta_path, self.gulp_video_io.meta_path)
+        self.assertEqual(self.img_info_path, self.gulp_video_io.img_info_path)
+        self.assertEqual(self.mock_json_serializer,
+                         self.gulp_video_io.serializer)
+
+        self.assertEqual(self.gulp_video_io.is_open, False)
+        self.assertEqual(self.gulp_video_io.is_writable, False)
+        self.assertEqual(self.gulp_video_io.f, None)
+        self.assertEqual(self.gulp_video_io.img_dict, None)
+        self.assertEqual(self.gulp_video_io.meta_dict, None)
+
+    def test_get_or_create_dict_not_exists(self):
+        self.assertEqual(self.gulp_video_io.get_or_create_dict('ANY_PATH'),
+                         defaultdict(list))
+
+    def test_get_or_create_dict_exists(self):
+        existing_dict_file = os.path.join(self.temp_dir, 'ANY_DICT')
+        open(existing_dict_file, 'w').close()
+        self.gulp_video_io.get_or_create_dict(existing_dict_file)
+        self.mock_json_serializer.load.called_once_with(existing_dict_file)
+
+
+
+
+
+
