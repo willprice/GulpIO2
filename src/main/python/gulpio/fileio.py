@@ -148,7 +148,7 @@ class WriteChunks(object):
                                      'img_info{}.bin'.format(chunk_no))
         return bin_file_path, img_info_path, meta_file_path
 
-    def write_chunk(self, input_chunk, chunk_id=0):
+    def write_chunk(self, input_chunk, chunk_id):
         (bin_file_path,
          img_info_path,
          meta_file_path) = self.initialize_filenames(self.output_folder,
