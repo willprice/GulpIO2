@@ -139,7 +139,6 @@ class WriteChunks(object):
 
     def __init__(self, output_folder):
         self.output_folder = output_folder
-        self.chunk_count = 0
 
     def initialize_filenames(self, output_folder, chunk_no):
         bin_file_path = os.path.join(output_folder,
@@ -150,11 +149,11 @@ class WriteChunks(object):
                                      'img_info{}.bin'.format(chunk_no))
         return bin_file_path, img_info_path, meta_file_path
 
-    def write_chunk(self, input_chunk):
+    def write_chunk(self, input_chunk, chunk_id):
         (bin_file_path,
          img_info_path,
          meta_file_path) = self.initialize_filenames(self.output_folder,
-                                                     self.chunk_count)
+                                                     chunk_id)
         gulp_file = GulpVideoIO(bin_file_path,
                                 'wb',
                                 meta_file_path,
@@ -165,11 +164,10 @@ class WriteChunks(object):
             meta_information = video['meta']
             frames = video['frames']
 
-            gulp_file.write_meta(self.chunk_count, id_, meta_information)
+            gulp_file.write_meta(chunk_id, id_, meta_information)
             for frame in frames:
-                gulp_file.write(self.chunk_count, id_, frame)
+                gulp_file.write(chunk_id, id_, frame)
 
-        self.chunk_count += 1
         gulp_file.close()
 
 
