@@ -170,10 +170,10 @@ class ChunkWriter(object):
         gulp_file.close()
 
 
-def calculate_chunks(adapter, videos_per_chunk):
-    quotient, remainder = divmod(len(adapter), videos_per_chunk)
-    return [(i, min(i + videos_per_chunk, len(adapter)))
-            for i in range(0, len(adapter), videos_per_chunk)]
+def calculate_chunks(videos_per_chunk, num_videos):
+    quotient, remainder = divmod(num_videos, videos_per_chunk)
+    return [(i, min(i + videos_per_chunk, num_videos))
+            for i in range(0, num_videos, videos_per_chunk)]
 
 
 #class ChunkGenerator(object):
@@ -212,7 +212,7 @@ class GulpIngestor(object):
 
     def ingest(self):
         ensure_output_dir_exists(self.output_folder)
-        chunks = calculate_chunks(self.adapter, self.videos_per_chunk)
+        chunks = calculate_chunks(self.videos_per_chunk, len(self.adapter))
         chunk_writer = ChunkWriter(self.adapter, self.output_folder)
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             result = executor.map(chunk_writer.write_chunk, chunks,
