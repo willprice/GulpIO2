@@ -158,7 +158,8 @@ class ChunkWriter(object):
                                 meta_file_path,
                                 img_info_path)
         gulp_file.open()
-        for video in self.adapter.iter_data(input_chunk[0], input_chunk[1]):
+        for video in self.adapter.iter_data(slice(input_chunk[0],
+                                                  input_chunk[1])):
             id_ = video['id']
             meta_information = video['meta']
             frames = video['frames']

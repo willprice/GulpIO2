@@ -66,11 +66,9 @@ class Custom20BNJsonAdapter(object):
     def __len__(self):
         return len(self.data)
 
-    def iter_data(self, start=None, stop=None, step=None):
-        start = start or 0
-        stop = stop or len(self)
-        step = step or 1
-        for meta in self.all_meta[start:stop:step]:
+    def iter_data(self, slice_element=None):
+        slice_element = slice_element or slice(0, len(self))
+        for meta in self.all_meta[slice_element]:
             video_folder = os.path.join(self.folder, str(meta['id']))
             video_path = get_single_video_path(video_folder)
             tmp_path, frame_paths = burst_video_into_frames(video_path,
