@@ -133,7 +133,7 @@ class GulpVideoIO(object):
         self.f.seek(loc)
 
 
-class WriteChunks(object):
+class ChunkWriter(object):
 
     def __init__(self, adapter, output_folder):
         self.adapter = adapter
@@ -213,7 +213,7 @@ class GulpIngestor(object):
     def ingest(self):
         ensure_output_dir_exists(self.output_folder)
         chunks = calculate_chunks(self.adapter, self.videos_per_chunk)
-        chunk_writer = WriteChunks(self.adapter, self.output_folder)
+        chunk_writer = ChunkWriter(self.adapter, self.output_folder)
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             result = executor.map(chunk_writer.write_chunk, chunks,
                                   range(len(chunks)), chunksize=1)
