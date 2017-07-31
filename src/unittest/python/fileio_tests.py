@@ -64,7 +64,7 @@ class GulpVideoIOElement(FSBase):
                                          mock_json_serializer)
 
     def tearDown(self):
-        pass
+        super(GulpVideoIOElement, self).tearDown()
 
 
 class TestGulpVideoIO(GulpVideoIOElement):
