@@ -6,7 +6,7 @@ import pickle
 import numpy as np
 from abc import ABC, abstractmethod
 import json
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor
 
 from PIL import Image
 from collections import namedtuple, defaultdict
