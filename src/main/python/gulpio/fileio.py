@@ -218,7 +218,11 @@ class GulpIngestor(object):
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             result = executor.map(chunk_writer.write_chunk, chunks,
                                   range(len(chunks)), chunksize=1)
-            for r in tqdm(result, total=len(chunks)):
+            for r in tqdm(result,
+                          desc='Chunks finished',
+                          unit='chunks',
+                          dynamic_ncols=True,
+                          total=len(chunks)):
                 pass
 
 
