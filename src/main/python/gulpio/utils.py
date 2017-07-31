@@ -4,7 +4,6 @@ import os
 import sh
 import random
 import cv2
-import pickle
 import shutil
 import glob
 
@@ -12,18 +11,6 @@ import glob
 ###############################################################################
 #                                Helper Functions                             #
 ###############################################################################
-
-def shuffle(df, n=1, axis=0):
-    random.shuffle(df)
-    return df
-
-
-def check_frames_are_present(imgs, temp_dir=None):
-    if len(imgs) == 0:
-        if temp_dir:
-            shutil.rmtree(temp_dir)
-        return False
-    return True
 
 
 class FFMPEGNotFound(Exception):
@@ -60,7 +47,7 @@ def burst_frames_to_shm(vid_path, shm_dir_path):
 def burst_video_into_frames(vid_path, shm_dir_path):
     temp_dir = burst_frames_to_shm(vid_path, shm_dir_path)
     imgs = find_images_in_folder(temp_dir, formats=['jpg'])
-    assert check_frames_are_present(imgs, temp_dir), \
+    assert len(imgs) > 0, \
         "not frames bursted in {}...".format(vid_path)
     return temp_dir, imgs
 
@@ -96,10 +83,6 @@ def ensure_output_dir_exists(output_dir):
 
 def clear_temp_dir(temp_dir):
     shutil.rmtree(temp_dir)
-
-
-def dump_in_pickel(data, output_folder, filename):
-    pickle.dump(data, open(output_folder + '/' + filename + '.pkl', 'wb'))
 
 
 ###############################################################################

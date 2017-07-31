@@ -57,10 +57,9 @@ json_serializer = JSONSerializer()
 
 class GulpVideoIO(object):
 
-    def __init__(self, path, flag, meta_path, img_info_path,
+    def __init__(self, path, meta_path, img_info_path,
                  serializer=json_serializer):
         self.path = path
-        self.flag = flag
         self.meta_path = meta_path
         self.img_info_path = img_info_path
         self.serializer = serializer
@@ -76,16 +75,19 @@ class GulpVideoIO(object):
             return self.serializer.load(open(path, 'r'))
         return defaultdict(list)
 
-    def open(self):
+    def open(self, flag='rb'):
         self.meta_dict = self.get_or_create_dict(self.meta_path)
         self.img_dict = self.get_or_create_dict(self.img_info_path)
 
-        if self.flag == 'wb':
-            self.f = open(self.path, self.flag)
+        if flag == 'wb':
+            self.f = open(self.path, flag)
             self.is_writable = True
-        elif self.flag == 'rb':
-            self.f = open(self.path, self.flag)
+        elif flag == 'rb':
+            self.f = open(self.path, flag)
             self.is_writable = False
+        else:
+            m = "This file does not support the mode: '{}'".format(flag)
+            raise NotImplementedError(m)
         self.is_open = True
 
     def close(self):
@@ -154,10 +156,9 @@ class ChunkWriter(object):
          meta_file_path) = self.initialize_filenames(self.output_folder,
                                                      chunk_id)
         gulp_file = GulpVideoIO(bin_file_path,
-                                'wb',
                                 meta_file_path,
                                 img_info_path)
-        gulp_file.open()
+        gulp_file.open('wb')
         for video in self.adapter.iter_data(slice(input_chunk[0],
                                                   input_chunk[1])):
             id_ = video['id']
@@ -172,12 +173,14 @@ class ChunkWriter(object):
 
 
 def calculate_chunks(videos_per_chunk, num_videos):
+    assert videos_per_chunk > 0
+    assert num_videos > 0
     quotient, remainder = divmod(num_videos, videos_per_chunk)
     return [(i, min(i + videos_per_chunk, num_videos))
             for i in range(0, num_videos, videos_per_chunk)]
 
 
-#class ChunkGenerator(object):
+#  class ChunkGenerator(object):
 #
 #    def __init__(self, adapter, videos_per_chunk):
 #        self.adapter = adapter
@@ -220,7 +223,7 @@ class GulpIngestor(object):
                                   range(len(chunks)), chunksize=1)
             for r in tqdm(result,
                           desc='Chunks finished',
-                          unit='chunks',
+                          unit='chunk',
                           dynamic_ncols=True,
                           total=len(chunks)):
                 pass
