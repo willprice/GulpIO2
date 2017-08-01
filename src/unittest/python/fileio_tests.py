@@ -1,6 +1,8 @@
 import os
 import tempfile
 import shutil
+import json
+import pickle
 
 from collections import defaultdict
 from io import BytesIO
@@ -16,6 +18,7 @@ from gulpio.fileio import (GulpVideoIO,
                            GulpIngestor,
                            calculate_chunks,
                            json_serializer,
+                           pickle_serializer,
                            MetaInfo,
                            ImgInfo,
                            )
@@ -28,6 +31,42 @@ class FSBase(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
+
+
+class TestJSONSerializer(FSBase):
+
+    def test_dump(self):
+        filename = os.path.join(self.temp_dir, 'ANY_JSON.json')
+        content = {'ANY_KEY': 'ANY_CONTENT'}
+        json_serializer.dump(content, filename)
+        with open(filename, 'r') as fp:
+            written_content = json.load(fp)
+        self.assertEqual(content, written_content)
+
+    def test_load(self):
+        filename = os.path.join(self.temp_dir, 'ANY_JSON.json')
+        content = {'ANY_KEY': 'ANY_CONTENT'}
+        json_serializer.dump(content, filename)
+        received_content = json_serializer.load(filename)
+        self.assertEqual(content, received_content)
+
+
+class TestPickleSerializer(FSBase):
+
+    def test_dump(self):
+        filename = os.path.join(self.temp_dir, 'ANY_PICKLE.pickle')
+        content = {'ANY_KEY': 'ANY_CONTENT'}
+        pickle_serializer.dump(content, filename)
+        with open(filename, 'rb') as file_pointer:
+            written_content = pickle.load(file_pointer)
+        self.assertEqual(content, written_content)
+
+    def test_load(self):
+        filename = os.path.join(self.temp_dir, 'ANY_PICKLE.pickle')
+        content = {'ANY_KEY': 'ANY_CONTENT'}
+        pickle_serializer.dump(content, filename)
+        received_content = pickle_serializer.load(filename)
+        self.assertEqual(content, received_content)
 
 
 class TestCalculateChunks(unittest.TestCase):
@@ -235,7 +274,6 @@ class TestChunkWriter(ChunkWriterElement):
         )
 
 
-
 class GulpIngestorElement(unittest.TestCase):
 
     @mock.patch('gulpio.adapters.AbstractDatasetAdapter')
@@ -283,4 +321,3 @@ class TestGulpIngestor(GulpIngestorElement):
             range(2),
             chunksize=1,
         )
-

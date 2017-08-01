@@ -25,30 +25,34 @@ MetaInfo = namedtuple('MetaInfo', ['id_',
 class AbstractSerializer(ABC):  # pragma: no cover
 
     @abstractmethod
-    def load(self, file_pointer):
+    def load(self, file_name):
         pass
 
     @abstractmethod
-    def dump(self, thing, file_pointer):
+    def dump(self, thing, file_name):
         pass
 
 
 class PickleSerializer(AbstractSerializer):
 
-    def load(self, file_pointer):
-        return pickle.load(file_pointer)
+    def load(self, file_name):
+        with open(file_name, 'rb') as file_pointer:
+            return pickle.load(file_pointer)
 
-    def dump(self, thing, file_pointer):
-        pickle.dump(thing, file_pointer)
+    def dump(self, thing, file_name):
+        with open(file_name, 'wb') as file_pointer:
+            pickle.dump(thing, file_pointer)
 
 
 class JSONSerializer(AbstractSerializer):
 
-    def load(self, file_pointer):
-        return json.load(file_pointer)
+    def load(self, file_name):
+        with open(file_name, 'r') as file_pointer:
+            return json.load(file_pointer)
 
-    def dump(self, thing, file_pointer):
-        json.dump(thing, file_pointer)
+    def dump(self, thing, file_name):
+        with open(file_name, 'w') as file_pointer:
+            json.dump(thing, file_pointer)
 
 
 pickle_serializer = PickleSerializer()
@@ -72,7 +76,7 @@ class GulpVideoIO(object):
 
     def get_or_create_dict(self, path):
         if os.path.exists(path):
-            return self.serializer.load(open(path, 'r'))
+            return self.serializer.load(path)
         return defaultdict(list)
 
     def open(self, flag='rb'):
@@ -91,10 +95,8 @@ class GulpVideoIO(object):
         self.is_open = True
 
     def flush(self):
-        with open(self.meta_path, 'w') as mfp:
-            self.serializer.dump(self.meta_dict, mfp)
-        with open(self.img_info_path, 'w') as iifp:
-            self.serializer.dump(self.img_dict, iifp)
+        self.serializer.dump(self.meta_dict, self.meta_path)
+        self.serializer.dump(self.img_dict, self.img_info_path)
 
     def close(self):
         if self.is_open:
