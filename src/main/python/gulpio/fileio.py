@@ -22,7 +22,7 @@ MetaInfo = namedtuple('MetaInfo', ['id_',
                                    'meta_data'])
 
 
-class AbstractSerializer(ABC):
+class AbstractSerializer(ABC):  # pragma: no cover
 
     @abstractmethod
     def load(self, file_pointer):
