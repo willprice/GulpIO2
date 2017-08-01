@@ -176,32 +176,6 @@ def calculate_chunks(videos_per_chunk, num_videos):
             for i in range(0, num_videos, videos_per_chunk)]
 
 
-#  class ChunkGenerator(object):
-#
-#    def __init__(self, adapter, videos_per_chunk):
-#        self.adapter = adapter
-#        self.videos_per_chunk = videos_per_chunk
-#        q, r = divmod(len(adapter), videos_per_chunk)
-#        self.length = q + (1 if r else 0)
-#
-#    def __iter__(self):
-#        chunk, videos_in_chunk = [], 0
-#        for i in self.adapter.iter_data():
-#            chunk.append(i)
-#            videos_in_chunk += 1
-#            if videos_in_chunk == self.videos_per_chunk:
-#                yield chunk
-#                chunk, videos_in_chunk = [], 0
-#        else:
-#            # If the last chunk has less videos than 'videos_per_chunk', we
-#            # need to yield it too.
-#            if chunk:
-#                yield chunk
-#
-#    def __len__(self):
-#        return self.length
-
-
 class GulpIngestor(object):
 
     def __init__(self, adapter, output_folder, videos_per_chunk, num_workers):
@@ -223,29 +197,3 @@ class GulpIngestor(object):
                           dynamic_ncols=True,
                           total=len(chunks)):
                 pass
-
-
-# class FramesGenerator(object):
-#
-#     def __init__(self, filenames, id_):
-#         self.filenames = filenames
-#         self.id_ = id_
-#         self.input_type = self.detect_input(self.filenames)
-#
-#     def extract_frames(self, img_size, shm_dir_path=''):
-#         if self.input_type == 'missing':
-#             print("no input files given for {}".format(self.id_))
-#         if self.input_type == 'video':
-#             self. filenames = self.burst_video_into_frames(self.filenames[0],
-#                                                            shm_dir_path)
-#         return self.get_resized_image(self.filenames, img_size)
-#
-#     def detect_input(self, input_files):
-#         if len(input_files) == 0:
-#             return 'missing'
-#         if ('.mp4' in input_files[0] and len(input_files) == 1):
-#             # TODO improvable
-#             return 'video'
-#         elif all(('jpg' in i or 'png' in i) for i in input_files):
-#             # TODO improvable... Only jpg?
-#             return 'frames'
