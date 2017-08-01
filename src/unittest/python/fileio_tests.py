@@ -11,9 +11,11 @@ import numpy.testing as npt
 import unittest
 import unittest.mock as mock
 
-from gulpio.fileio import (calculate_chunks,
+from gulpio.fileio import (GulpVideoIO,
+                           ChunkWriter,
+                           GulpIngestor,
+                           calculate_chunks,
                            json_serializer,
-                           GulpVideoIO,
                            MetaInfo,
                            ImgInfo,
                            )
@@ -191,3 +193,82 @@ class TestGulpVideoIO(GulpVideoIOElement):
         info = self.gulp_video_io.img_dict[0][0]
         result = self.gulp_video_io.read_frame(info)
         npt.assert_array_equal(image, numpy.array(result))
+
+
+class ChunkWriterElement(unittest.TestCase):
+
+    @mock.patch('gulpio.adapters.AbstractDatasetAdapter')
+    def setUp(self, mock_adapter):
+        self.adapter = mock_adapter
+        self.output_folder = 'ANY_OUTPUT_FOLDER'
+        self.chunk_writer = ChunkWriter(self.adapter, self.output_folder)
+
+    def tearDown(self):
+        pass
+
+
+class TestChunkWriter(ChunkWriterElement):
+
+    def test_initialization(self):
+        self.assertEqual(self.adapter, self.chunk_writer.adapter)
+        self.assertEqual(self.output_folder, self.chunk_writer.output_folder)
+
+    def test_initialize_filenames(self):
+        expected = (self.output_folder + '/data0.bin',
+                    self.output_folder + '/img_info0.bin',
+                    self.output_folder + '/meta0.bin')
+        outcome = self.chunk_writer.initialize_filenames(0)
+        self.assertEqual(expected, outcome)
+
+    def test_write_chunk(self):
+        pass
+
+
+class GulpIngestorElement(unittest.TestCase):
+
+    @mock.patch('gulpio.adapters.AbstractDatasetAdapter')
+    def setUp(self, mock_adapter):
+        self.adapter = mock_adapter
+        self.output_folder = 'ANY_OUTPUT_FOLDER'
+        self.videos_per_chunk = 1
+        self.num_workers = 1
+        self.gulp_ingestor = GulpIngestor(self.adapter,
+                                          self.output_folder,
+                                          self.videos_per_chunk,
+                                          self.num_workers)
+
+
+class TestGulpIngestor(GulpIngestorElement):
+
+    def test_initialization(self):
+        self.assertEqual(self.adapter, self.gulp_ingestor.adapter)
+        self.assertEqual(self.output_folder, self.gulp_ingestor.output_folder)
+        self.assertEqual(self.videos_per_chunk,
+                         self.gulp_ingestor.videos_per_chunk)
+        self.assertEqual(self.num_workers, self.gulp_ingestor.num_workers)
+
+    @mock.patch('gulpio.utils.ensure_output_dir_exists')
+    @mock.patch('gulpio.fileio.ChunkWriter')
+    @mock.patch('gulpio.fileio.ProcessPoolExecutor')
+    def test_ingest(self,
+                    mock_process_pool,
+                    mock_chunk_writer,
+                    mock_ensure_output_dir):
+        self.adapter.__len__.return_value = 2
+
+        # The next three lines mock the ProcessPoolExecutor and it's map
+        # function.
+        executor_mock = mock.Mock()
+        executor_mock.map.return_value = []
+        mock_process_pool.return_value.__enter__.return_value = executor_mock
+
+        self.gulp_ingestor.ingest()
+        mock_chunk_writer.assert_called_once_with(self.adapter,
+                                                  self.output_folder)
+        executor_mock.map.assert_called_once_with(
+            mock_chunk_writer().write_chunk,
+            [(0, 1), (1, 2)],
+            range(2),
+            chunksize=1,
+        )
+
