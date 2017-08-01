@@ -3,19 +3,25 @@ import tempfile
 import shutil
 
 from collections import defaultdict
+from io import BytesIO
+
+import numpy
 
 import unittest
 import unittest.mock as mock
 
 from gulpio.fileio import (calculate_chunks,
+                           json_serializer,
                            GulpVideoIO,
+                           MetaInfo,
+                           ImgInfo,
                            )
 
 
 class FSBase(unittest.TestCase):
 
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp(prefix='fileio_test-')
+        self.temp_dir = tempfile.mkdtemp(prefix='fileio-test-')
 
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
@@ -93,7 +99,79 @@ class TestGulpVideoIO(GulpVideoIOElement):
         self.gulp_video_io.get_or_create_dict(existing_dict_file)
         self.mock_json_serializer.load.called_once_with(existing_dict_file)
 
+    def test_open_with_wb(self):
+        get_mock = mock.Mock()
+        self.gulp_video_io.get_or_create_dict = get_mock
+        with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
+            self.gulp_video_io.open('wb')
+            m.assert_called_once_with(self.path, 'wb')
+            self.assertEqual(self.gulp_video_io.is_writable, True)
+            self.assertEqual(self.gulp_video_io.is_open, True)
+            get_mock.assert_has_calls([mock.call(self.meta_path),
+                                       mock.call(self.img_info_path)])
 
+    def test_open_with_rb(self):
+        get_mock = mock.Mock()
+        self.gulp_video_io.get_or_create_dict = get_mock
+        with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
+            self.gulp_video_io.open('rb')
+            m.assert_called_once_with(self.path, 'rb')
+            self.assertEqual(self.gulp_video_io.is_writable, False)
+            self.assertEqual(self.gulp_video_io.is_open, True)
+            get_mock.assert_has_calls([mock.call(self.meta_path),
+                                       mock.call(self.img_info_path)])
 
+    def test_open_unknown_flag(self):
+        get_mock = mock.Mock()
+        self.gulp_video_io.get_or_create_dict = get_mock
+        self.assertRaises(NotImplementedError,
+                          self.gulp_video_io.open,
+                          'NO_SUCH_FLAG')
 
+    def test_flush(self):
+        meta_path = os.path.join(self.temp_dir, self.meta_path)
+        self.gulp_video_io.meta_path = meta_path
+        img_info_path = os.path.join(self.temp_dir, self.img_info_path)
+        self.gulp_video_io.serializer = json_serializer
+        self.gulp_video_io.img_info_path = img_info_path
+        self.gulp_video_io.meta_dict = {'meta': 'ANY_META'}
+        self.gulp_video_io.img_dict = {'img_info': 'ANY_IMG_INFO'}
+        self.gulp_video_io.flush()
+        meta_path_written = open(meta_path).read()
+        self.assertEqual('{"meta": "ANY_META"}', meta_path_written)
+        img_info_path_written = open(img_info_path).read()
+        self.assertEqual('{"img_info": "ANY_IMG_INFO"}', img_info_path_written)
 
+    def test_close_when_open(self):
+        f_mock = mock.Mock()
+        flush_mock = mock.Mock()
+        self.gulp_video_io.f = f_mock
+        self.gulp_video_io.flush = flush_mock
+        self.gulp_video_io.is_open = True
+        self.gulp_video_io.close()
+        self.assertEqual(self.gulp_video_io.is_open, False)
+        f_mock.close.assert_called_once_with()
+        flush_mock.assert_called_once_with()
+
+    def test_close_when_closed(self):
+        self.gulp_video_io.is_open = False
+        self.gulp_video_io.close()
+
+    def test_append_meta(self):
+        self.gulp_video_io.is_writable = True
+        self.gulp_video_io.meta_dict = {0: []}
+        self.gulp_video_io.append_meta(0, 0, {'meta': 'ANY_META'})
+        expected = {0: [MetaInfo(0, {'meta': 'ANY_META'})]}
+        self.assertEqual(expected, self.gulp_video_io.meta_dict)
+
+    def test_write_frame(self):
+        self.gulp_video_io.is_writable = True
+        bio = BytesIO()
+        self.gulp_video_io.img_dict = {0: []}
+        self.gulp_video_io.f = bio
+        with mock.patch('cv2.imencode') as imencode_mock:
+            imencode_mock.return_value = '', numpy.ones((1,), dtype='uint8')
+            self.gulp_video_io.write_frame(0, 0, None)
+            self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
+            expected = {0: [ImgInfo(0, 3, 4)]}
+            self.assertEqual(expected, self.gulp_video_io.img_dict)

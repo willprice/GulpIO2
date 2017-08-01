@@ -90,22 +90,25 @@ class GulpVideoIO(object):
             raise NotImplementedError(m)
         self.is_open = True
 
+    def flush(self):
+        with open(self.meta_path, 'w') as mfp:
+            self.serializer.dump(self.meta_dict, mfp)
+        with open(self.img_info_path, 'w') as iifp:
+            self.serializer.dump(self.img_dict, iifp)
+
     def close(self):
         if self.is_open:
-            self.serializer.dump(self.meta_dict, open(self.meta_path, 'w'))
-            self.serializer.dump(self.img_dict, open(self.img_info_path, 'w'))
+            self.flush()
             self.f.close()
             self.is_open = False
-        else:
-            return
 
-    def write_meta(self, vid_idx, id_, meta_data):
+    def append_meta(self, vid_idx, id_, meta_data):
         assert self.is_writable
         meta_info = MetaInfo(meta_data=meta_data,
                              id_=id_)
         self.meta_dict[vid_idx].append(meta_info)
 
-    def write(self, vid_idx, id_, image):
+    def write_frame(self, vid_idx, id_, image):
         assert self.is_writable
         loc = self.f.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
@@ -165,7 +168,7 @@ class ChunkWriter(object):
             meta_information = video['meta']
             frames = video['frames']
 
-            gulp_file.write_meta(chunk_id, id_, meta_information)
+            gulp_file.append_meta(chunk_id, id_, meta_information)
             for frame in frames:
                 gulp_file.write(chunk_id, id_, frame)
 
