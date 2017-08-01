@@ -120,7 +120,7 @@ class GulpVideoIO(object):
         self.img_dict[vid_idx].append(img_info)
         self.f.write(record)
 
-    def read(self, img_info):
+    def read_frame(self, img_info):
         assert not self.is_writable
         self.f.seek(img_info.loc)
         record = self.f.read(img_info.length)

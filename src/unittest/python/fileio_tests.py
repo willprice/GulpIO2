@@ -6,6 +6,7 @@ from collections import defaultdict
 from io import BytesIO
 
 import numpy
+import numpy.testing as npt
 
 import unittest
 import unittest.mock as mock
@@ -175,3 +176,18 @@ class TestGulpVideoIO(GulpVideoIOElement):
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {0: [ImgInfo(0, 3, 4)]}
             self.assertEqual(expected, self.gulp_video_io.img_dict)
+
+    def test_read_frame(self):
+        # use 'write_frame' to write a single image
+        self.gulp_video_io.is_writable = True
+        bio = BytesIO()
+        self.gulp_video_io.img_dict = {0: []}
+        self.gulp_video_io.f = bio
+        image = numpy.ones((3, 3, 3), dtype='uint8')
+        self.gulp_video_io.write_frame(0, 0, image)
+
+        # recover the single frame using 'read'
+        self.gulp_video_io.is_writable = False
+        info = self.gulp_video_io.img_dict[0][0]
+        result = self.gulp_video_io.read_frame(info)
+        npt.assert_array_equal(image, numpy.array(result))
