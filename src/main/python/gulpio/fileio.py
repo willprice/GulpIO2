@@ -178,6 +178,7 @@ def calculate_chunks(videos_per_chunk, num_videos):
 class GulpIngestor(object):
 
     def __init__(self, adapter, output_folder, videos_per_chunk, num_workers):
+        assert num_workers > 0
         self.adapter = adapter
         self.output_folder = output_folder
         self.videos_per_chunk = videos_per_chunk
