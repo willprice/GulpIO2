@@ -130,13 +130,6 @@ class GulpVideoIO(object):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         return Image.fromarray(img)
 
-    def reset(self):
-        self.close()
-        self.open()
-
-    def seek(self, loc):
-        self.f.seek(loc)
-
 
 class ChunkWriter(object):
 
