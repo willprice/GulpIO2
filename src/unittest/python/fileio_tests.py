@@ -220,8 +220,20 @@ class TestChunkWriter(ChunkWriterElement):
         outcome = self.chunk_writer.initialize_filenames(0)
         self.assertEqual(expected, outcome)
 
-    def test_write_chunk(self):
-        pass
+    @mock.patch('gulpio.fileio.GulpVideoIO')
+    def test_write_chunk(self, mock_gulp):
+        def mock_iter_data(input_slice):
+            yield {'id': 0,
+                   'meta': {'meta': 'ANY_META'},
+                   'frames': ['ANY_FRAME1', 'ANY_FRAME2'],
+                   }
+        self.adapter.iter_data = mock_iter_data
+        self.chunk_writer.write_chunk((0, 1), 0)
+        mock_gulp().write_frame.assert_has_calls(
+            [mock.call(0, 0, 'ANY_FRAME1'),
+             mock.call(0, 0, 'ANY_FRAME2')]
+        )
+
 
 
 class GulpIngestorElement(unittest.TestCase):

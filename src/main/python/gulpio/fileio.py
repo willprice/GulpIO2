@@ -137,20 +137,19 @@ class ChunkWriter(object):
         self.adapter = adapter
         self.output_folder = output_folder
 
-    def initialize_filenames(self, output_folder, chunk_no):
-        bin_file_path = os.path.join(output_folder,
+    def initialize_filenames(self, chunk_no):
+        bin_file_path = os.path.join(self.output_folder,
                                      'data{}.bin'.format(chunk_no))
-        meta_file_path = os.path.join(output_folder,
+        meta_file_path = os.path.join(self.output_folder,
                                       'meta{}.bin'.format(chunk_no))
-        img_info_path = os.path.join(output_folder,
+        img_info_path = os.path.join(self.output_folder,
                                      'img_info{}.bin'.format(chunk_no))
         return bin_file_path, img_info_path, meta_file_path
 
     def write_chunk(self, input_chunk, chunk_id):
         (bin_file_path,
          img_info_path,
-         meta_file_path) = self.initialize_filenames(self.output_folder,
-                                                     chunk_id)
+         meta_file_path) = self.initialize_filenames(chunk_id)
         gulp_file = GulpVideoIO(bin_file_path,
                                 meta_file_path,
                                 img_info_path)
@@ -163,7 +162,7 @@ class ChunkWriter(object):
 
             gulp_file.append_meta(chunk_id, id_, meta_information)
             for frame in frames:
-                gulp_file.write(chunk_id, id_, frame)
+                gulp_file.write_frame(chunk_id, id_, frame)
 
         gulp_file.close()
 
