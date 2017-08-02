@@ -58,11 +58,3 @@ if __name__ == '__main__':
     ingestor = GulpIngestor(adapter, output_folder, videos_per_chunk,
                             num_workers=num_workers)
     ingestor.ingest()
-#    results = Parallel(n_jobs=num_workers)(delayed(chunk_writer.write_chunk)(
-#        i,
-#        img_size,
-#        output_folder,
-#        shm_dir_path
-#        )
-#                                            for i in chunks)
-#    clear_temp_dir(shm_dir_path)
