@@ -41,7 +41,7 @@ class TestBurstVideoIntoFrames(unittest.TestCase):
     def test(self):
         video_path = os.path.join(os.path.dirname(__file__), 'test.mp4')
         temp_dir, imgs = burst_video_into_frames(video_path, '/dev/shm')
-        self.assertEqual(21, len(imgs))
+        self.assertEqual(39, len(imgs))
         shutil.rmtree(temp_dir)
 
 
