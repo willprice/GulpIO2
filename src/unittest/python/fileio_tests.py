@@ -202,7 +202,7 @@ class TestGulpVideoIO(GulpVideoIOElement):
     def test_append_meta(self):
         self.gulp_video_io.is_writable = True
         self.gulp_video_io.meta_dict = {0: []}
-        self.gulp_video_io.append_meta(0, 0, {'meta': 'ANY_META'})
+        self.gulp_video_io.append_meta(0, {'meta': 'ANY_META'})
         expected = {0: [MetaInfo(0, {'meta': 'ANY_META'})]}
         self.assertEqual(expected, self.gulp_video_io.meta_dict)
 
@@ -213,7 +213,7 @@ class TestGulpVideoIO(GulpVideoIOElement):
         self.gulp_video_io.f = bio
         with mock.patch('cv2.imencode') as imencode_mock:
             imencode_mock.return_value = '', numpy.ones((1,), dtype='uint8')
-            self.gulp_video_io.write_frame(0, 0, None)
+            self.gulp_video_io.write_frame(0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {0: [ImgInfo(0, 3, 4)]}
             self.assertEqual(expected, self.gulp_video_io.img_dict)
@@ -225,7 +225,7 @@ class TestGulpVideoIO(GulpVideoIOElement):
         self.gulp_video_io.img_dict = {0: []}
         self.gulp_video_io.f = bio
         image = numpy.ones((3, 3, 3), dtype='uint8')
-        self.gulp_video_io.write_frame(0, 0, image)
+        self.gulp_video_io.write_frame(0, image)
 
         # recover the single frame using 'read'
         self.gulp_video_io.is_writable = False
@@ -269,8 +269,8 @@ class TestChunkWriter(ChunkWriterElement):
         self.adapter.iter_data = mock_iter_data
         self.chunk_writer.write_chunk((0, 1), 0)
         mock_gulp().write_frame.assert_has_calls(
-            [mock.call(0, 0, 'ANY_FRAME1'),
-             mock.call(0, 0, 'ANY_FRAME2')]
+            [mock.call(0, 'ANY_FRAME1'),
+             mock.call(0, 'ANY_FRAME2')]
         )
 
 

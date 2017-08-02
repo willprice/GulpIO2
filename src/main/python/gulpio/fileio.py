@@ -104,13 +104,13 @@ class GulpVideoIO(object):
             self.f.close()
             self.is_open = False
 
-    def append_meta(self, vid_idx, id_, meta_data):
+    def append_meta(self, id_, meta_data):
         assert self.is_writable
         meta_info = MetaInfo(meta_data=meta_data,
                              id_=id_)
-        self.meta_dict[vid_idx].append(meta_info)
+        self.meta_dict[id_].append(meta_info)
 
-    def write_frame(self, vid_idx, id_, image):
+    def write_frame(self, id_, image):
         assert self.is_writable
         loc = self.f.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
@@ -119,7 +119,7 @@ class GulpVideoIO(object):
         img_info = ImgInfo(loc=loc,
                            length=len(record),
                            pad=pad)
-        self.img_dict[vid_idx].append(img_info)
+        self.img_dict[id_].append(img_info)
         self.f.write(record)
 
     def read_frame(self, img_info):
@@ -161,9 +161,9 @@ class ChunkWriter(object):
             meta_information = video['meta']
             frames = video['frames']
 
-            gulp_file.append_meta(chunk_id, id_, meta_information)
+            gulp_file.append_meta(id_, meta_information)
             for frame in frames:
-                gulp_file.write_frame(chunk_id, id_, frame)
+                gulp_file.write_frame(id_, frame)
 
         gulp_file.close()
 
