@@ -18,8 +18,6 @@ from .utils import ensure_output_dir_exists
 ImgInfo = namedtuple('ImgInfo', ['loc',
                                  'pad',
                                  'length'])
-MetaInfo = namedtuple('MetaInfo', ['id_',
-                                   'meta_data'])
 
 
 class AbstractSerializer(ABC):  # pragma: no cover
@@ -61,27 +59,24 @@ json_serializer = JSONSerializer()
 
 class GulpVideoIO(object):
 
-    def __init__(self, path, meta_path, img_info_path,
+    def __init__(self, path, meta_path,
                  serializer=json_serializer):
         self.path = path
         self.meta_path = meta_path
-        self.img_info_path = img_info_path
         self.serializer = serializer
 
         self.is_open = False
         self.is_writable = False
         self.f = None
-        self.img_dict = None
         self.meta_dict = None
 
     def get_or_create_dict(self, path):
         if os.path.exists(path):
             return self.serializer.load(path)
-        return defaultdict(list)
+        return defaultdict(lambda: defaultdict(list))
 
     def open(self, flag='rb'):
         self.meta_dict = self.get_or_create_dict(self.meta_path)
-        self.img_dict = self.get_or_create_dict(self.img_info_path)
 
         if flag == 'wb':
             self.f = open(self.path, flag)
@@ -96,7 +91,6 @@ class GulpVideoIO(object):
 
     def flush(self):
         self.serializer.dump(self.meta_dict, self.meta_path)
-        self.serializer.dump(self.img_dict, self.img_info_path)
 
     def close(self):
         if self.is_open:
@@ -106,9 +100,7 @@ class GulpVideoIO(object):
 
     def append_meta(self, id_, meta_data):
         assert self.is_writable
-        meta_info = MetaInfo(meta_data=meta_data,
-                             id_=id_)
-        self.meta_dict[id_].append(meta_info)
+        self.meta_dict[str(id_)]['meta_data'].append(meta_data)
 
     def write_frame(self, id_, image):
         assert self.is_writable
@@ -119,7 +111,7 @@ class GulpVideoIO(object):
         img_info = ImgInfo(loc=loc,
                            length=len(record),
                            pad=pad)
-        self.img_dict[id_].append(img_info)
+        self.meta_dict[str(id_)]['frame_info'].append(img_info)
         self.f.write(record)
 
     def read_frame(self, img_info):
@@ -141,20 +133,17 @@ class ChunkWriter(object):
 
     def initialize_filenames(self, chunk_no):
         bin_file_path = os.path.join(self.output_folder,
-                                     'data{}.bin'.format(chunk_no))
+                                     'data{}.gulp'.format(chunk_no))
         meta_file_path = os.path.join(self.output_folder,
-                                      'meta{}.bin'.format(chunk_no))
-        img_info_path = os.path.join(self.output_folder,
-                                     'img_info{}.bin'.format(chunk_no))
-        return bin_file_path, img_info_path, meta_file_path
+                                      'meta{}.gmeta'.format(chunk_no))
+        return bin_file_path, meta_file_path
 
     def write_chunk(self, input_chunk, chunk_id):
         (bin_file_path,
-         img_info_path,
          meta_file_path) = self.initialize_filenames(chunk_id)
         gulp_file = GulpVideoIO(bin_file_path,
-                                meta_file_path,
-                                img_info_path)
+                                meta_file_path
+                                )
         gulp_file.open('wb')
         for video in self.adapter.iter_data(slice(*input_chunk)):
             id_ = video['id']
