@@ -57,7 +57,7 @@ pickle_serializer = PickleSerializer()
 json_serializer = JSONSerializer()
 
 
-class GulpVideoIO(object):
+class GulpChunk(object):
 
     def __init__(self, path, meta_path,
                  serializer=json_serializer):
@@ -151,9 +151,7 @@ class ChunkWriter(object):
     def write_chunk(self, input_chunk, chunk_id):
         (bin_file_path,
          meta_file_path) = self.initialize_filenames(chunk_id)
-        gulp_file = GulpVideoIO(bin_file_path,
-                                meta_file_path
-                                )
+        gulp_file = GulpChunk(bin_file_path, meta_file_path)
         gulp_file.open('wb')
         for video in self.adapter.iter_data(slice(*input_chunk)):
             id_ = video['id']

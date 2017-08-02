@@ -13,7 +13,7 @@ import numpy.testing as npt
 import unittest
 import unittest.mock as mock
 
-from gulpio.fileio import (GulpVideoIO,
+from gulpio.fileio import (GulpChunk,
                            ChunkWriter,
                            GulpIngestor,
                            calculate_chunks,
@@ -97,23 +97,23 @@ class TestCalculateChunks(unittest.TestCase):
         self.assertRaises(AssertionError, calculate_chunks, 1, 0)
 
 
-class GulpVideoIOElement(FSBase):
+class GulpChunkElement(FSBase):
 
     @mock.patch('gulpio.fileio.json_serializer')
     def setUp(self, mock_json_serializer):
-        super(GulpVideoIOElement, self).setUp()
+        super().setUp()
         self.mock_json_serializer = mock_json_serializer
         self.path = "ANY_PATH"
         self.meta_path = "ANY_META_PATH"
-        self.gulp_video_io = GulpVideoIO(self.path,
-                                         self.meta_path,
-                                         mock_json_serializer)
+        self.gulp_video_io = GulpChunk(self.path,
+                                       self.meta_path,
+                                       mock_json_serializer)
 
     def tearDown(self):
-        super(GulpVideoIOElement, self).tearDown()
+        super().tearDown()
 
 
-class TestGulpVideoIO(GulpVideoIOElement):
+class TestGulpChunk(GulpChunkElement):
 
     def test_initializer(self):
         self.assertEqual(self.path, self.gulp_video_io.path)
@@ -124,7 +124,7 @@ class TestGulpVideoIO(GulpVideoIOElement):
         self.assertEqual(self.gulp_video_io.is_open, False)
         self.assertEqual(self.gulp_video_io.is_writable, False)
         self.assertEqual(self.gulp_video_io.f, None)
-        #self.assertEqual(self.gulp_video_io.meta_dict, None)
+        self.assertEqual(self.gulp_video_io.meta_dict, None)
 
     def test_get_or_create_dict_not_exists(self):
         self.assertEqual(self.gulp_video_io.get_or_create_dict('ANY_PATH'),
@@ -256,7 +256,7 @@ class TestChunkWriter(ChunkWriterElement):
         outcome = self.chunk_writer.initialize_filenames(0)
         self.assertEqual(expected, outcome)
 
-    @mock.patch('gulpio.fileio.GulpVideoIO')
+    @mock.patch('gulpio.fileio.GulpChunk')
     def test_write_chunk(self, mock_gulp):
         def mock_iter_data(input_slice):
             yield {'id': 0,
