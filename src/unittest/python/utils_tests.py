@@ -12,7 +12,17 @@ from gulpio.utils import (check_ffmpeg_exists,
                           burst_video_into_frames,
                           resize_by_short_edge,
                           resize_images,
+                          get_single_video_path,
                           )
+
+
+class FSBase(unittest.TestCase):
+
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp(prefix='utils-test-')
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
 
 
 class TestCheckFFMPEGExists(unittest.TestCase):
@@ -71,3 +81,15 @@ class TestResizeByShortEdge(unittest.TestCase):
         correct_result = np.zeros((5, 3))
         result = resize_by_short_edge(input_image, size)
         np.testing.assert_array_equal(correct_result, result)
+
+
+class TestGetSingleVideoPath(FSBase):
+
+    def test_video_exists(self):
+        test_video_path = os.path.join(self.temp_dir, 'test.mp4')
+        open(test_video_path, 'w').close()
+        received = get_single_video_path(self.temp_dir)
+        self.assertEqual(test_video_path, received)
+
+    def test_video_doesnt_exists(self):
+        self.assertRaises(AssertionError, get_single_video_path, 'ANY_PATH')
