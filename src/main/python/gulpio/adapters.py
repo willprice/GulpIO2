@@ -4,7 +4,6 @@ import os
 import json
 from abc import ABC, abstractmethod
 
-import pandas as pd
 
 from .utils import (get_single_video_path,
                     resize_images,
