@@ -127,15 +127,25 @@ class GulpVideoIO(object):
 
 class ChunkWriter(object):
 
-    def __init__(self, adapter, output_folder):
+    def __init__(self, adapter, output_folder, videos_per_chunk):
         self.adapter = adapter
         self.output_folder = output_folder
+        self.videos_per_chunk = videos_per_chunk
+        self.chunks = calculate_chunks(self.videos_per_chunk,
+                                       len(self.adapter))
+
+    def __len__(self):
+        return len(self.chunks)
+
+    def pad_chunk_no(self, chunk_no):
+        return str(chunk_no).zfill(len(str(len(self))))
 
     def initialize_filenames(self, chunk_no):
+        padded_chunk_no = self.pad_chunk_no(chunk_no)
         bin_file_path = os.path.join(self.output_folder,
-                                     'data{}.gulp'.format(chunk_no))
+                                     'data_{}.gulp'.format(padded_chunk_no))
         meta_file_path = os.path.join(self.output_folder,
-                                      'meta{}.gmeta'.format(chunk_no))
+                                      'meta_{}.gmeta'.format(padded_chunk_no))
         return bin_file_path, meta_file_path
 
     def write_chunk(self, input_chunk, chunk_id):
@@ -176,14 +186,17 @@ class GulpIngestor(object):
 
     def ingest(self):
         ensure_output_dir_exists(self.output_folder)
-        chunks = calculate_chunks(self.videos_per_chunk, len(self.adapter))
-        chunk_writer = ChunkWriter(self.adapter, self.output_folder)
+        chunk_writer = ChunkWriter(self.adapter,
+                                   self.output_folder,
+                                   self.videos_per_chunk)
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            result = executor.map(chunk_writer.write_chunk, chunks,
-                                  range(len(chunks)), chunksize=1)
+            result = executor.map(chunk_writer.write_chunk,
+                                  chunk_writer.chunks,
+                                  range(len(chunk_writer)),
+                                  chunksize=1)
             for r in tqdm(result,
                           desc='Chunks finished',
                           unit='chunk',
                           dynamic_ncols=True,
-                          total=len(chunks)):
+                          total=len(chunk_writer)):
                 pass

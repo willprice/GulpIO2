@@ -230,8 +230,12 @@ class ChunkWriterElement(unittest.TestCase):
     @mock.patch('gulpio.adapters.AbstractDatasetAdapter')
     def setUp(self, mock_adapter):
         self.adapter = mock_adapter
+        self.adapter.__len__.return_value = 1
         self.output_folder = 'ANY_OUTPUT_FOLDER'
-        self.chunk_writer = ChunkWriter(self.adapter, self.output_folder)
+        self.videos_per_chunk = 1
+        self.chunk_writer = ChunkWriter(self.adapter,
+                                        self.output_folder,
+                                        self.videos_per_chunk)
 
     def tearDown(self):
         pass
@@ -240,12 +244,16 @@ class ChunkWriterElement(unittest.TestCase):
 class TestChunkWriter(ChunkWriterElement):
 
     def test_initialization(self):
-        self.assertEqual(self.adapter, self.chunk_writer.adapter)
-        self.assertEqual(self.output_folder, self.chunk_writer.output_folder)
+        self.assertEqual(self.adapter,
+                         self.chunk_writer.adapter)
+        self.assertEqual(self.output_folder,
+                         self.chunk_writer.output_folder)
+        self.assertEqual(self.videos_per_chunk,
+                         self.chunk_writer.videos_per_chunk)
 
     def test_initialize_filenames(self):
-        expected = (self.output_folder + '/data0.gulp',
-                    self.output_folder + '/meta0.gmeta')
+        expected = (self.output_folder + '/data_0.gulp',
+                    self.output_folder + '/meta_0.gmeta')
         outcome = self.chunk_writer.initialize_filenames(0)
         self.assertEqual(expected, outcome)
 
@@ -294,7 +302,6 @@ class TestGulpIngestor(GulpIngestorElement):
                     mock_process_pool,
                     mock_chunk_writer,
                     mock_ensure_output_dir):
-        self.adapter.__len__.return_value = 2
 
         # The next three lines mock the ProcessPoolExecutor and it's map
         # function.
@@ -302,11 +309,16 @@ class TestGulpIngestor(GulpIngestorElement):
         executor_mock.map.return_value = []
         mock_process_pool.return_value.__enter__.return_value = executor_mock
 
+        mock_chunk_writer.return_value.__len__.return_value = 2
+        mock_chunk_writer.return_value.chunks = [(0, 1), (1, 2)]
+
         self.gulp_ingestor.ingest()
         mock_chunk_writer.assert_called_once_with(self.adapter,
-                                                  self.output_folder)
+                                                  self.output_folder,
+                                                  self.videos_per_chunk,
+                                                  )
         executor_mock.map.assert_called_once_with(
-            mock_chunk_writer().write_chunk,
+            mock_chunk_writer.return_value.write_chunk,
             [(0, 1), (1, 2)],
             range(2),
             chunksize=1,
