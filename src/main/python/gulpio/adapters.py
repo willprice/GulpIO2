@@ -29,7 +29,7 @@ class AbstractDatasetAdapter(ABC):
     """
 
     @abstractmethod
-    def iter_data(self, start=None, stop=None, step=None):
+    def iter_data(self, slice_element=None):
         return NotImplementedError
 
     @abstractmethod
