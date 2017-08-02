@@ -81,33 +81,33 @@ class Custom20BNJsonAdapter(object):
             yield result
 
 
-class Input_from_csv(object):
-
-    def __init__(self, csv_file, num_labels=None):
-        self.num_labels = num_labels
-        self.data = self.read_input_from_csv(csv_file)
-        self.labels2idx = self.create_labels_dict()
-
-    def read_input_from_csv(self, csv_file):
-        print(" > Reading data list (csv)")
-        return pd.read_csv(csv_file)
-
-    def create_labels_dict(self):
-        labels = sorted(pd.unique(self.data['label']))
-        if self.num_labels:
-            assert len(labels) == self.num_labels
-        labels2idx = {}
-        for i, label in enumerate(labels):
-            labels2idx[label] = i
-        return labels2idx
-
-    def get_data(self):
-        output = []
-        for idx, row in self.data.iterrows():
-            entry_dict = {}
-            entry_dict['id'] = row.youtube_id
-            entry_dict['label'] = row.label
-            entry_dict['start_time'] = row.time_start
-            entry_dict['end_time'] = row.time_end
-            output.append(entry_dict)
-        return output, self.labels2idx
+# class Input_from_csv(object):
+#
+#     def __init__(self, csv_file, num_labels=None):
+#         self.num_labels = num_labels
+#         self.data = self.read_input_from_csv(csv_file)
+#         self.labels2idx = self.create_labels_dict()
+#
+#     def read_input_from_csv(self, csv_file):
+#         print(" > Reading data list (csv)")
+#         return pd.read_csv(csv_file)
+#
+#     def create_labels_dict(self):
+#         labels = sorted(pd.unique(self.data['label']))
+#         if self.num_labels:
+#             assert len(labels) == self.num_labels
+#         labels2idx = {}
+#         for i, label in enumerate(labels):
+#             labels2idx[label] = i
+#         return labels2idx
+#
+#     def get_data(self):
+#         output = []
+#         for idx, row in self.data.iterrows():
+#             entry_dict = {}
+#             entry_dict['id'] = row.youtube_id
+#             entry_dict['label'] = row.label
+#             entry_dict['start_time'] = row.time_start
+#             entry_dict['end_time'] = row.time_end
+#             output.append(entry_dict)
+#         return output, self.labels2idx
