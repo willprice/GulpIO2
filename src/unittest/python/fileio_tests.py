@@ -227,9 +227,8 @@ class TestGulpVideoIO(GulpVideoIOElement):
 
 class ChunkWriterElement(unittest.TestCase):
 
-    @mock.patch('gulpio.adapters.AbstractDatasetAdapter')
-    def setUp(self, mock_adapter):
-        self.adapter = mock_adapter
+    def setUp(self):
+        self.adapter = mock.MagicMock()
         self.adapter.__len__.return_value = 1
         self.output_folder = 'ANY_OUTPUT_FOLDER'
         self.videos_per_chunk = 1
