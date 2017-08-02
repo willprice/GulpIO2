@@ -13,7 +13,7 @@ from .utils import (get_single_video_path,
                     )
 
 
-class AbstractDatasetAdapter(ABC):
+class AbstractDatasetAdapter(ABC):  # pragma: no cover
     """ Base class adapter for gulping (video) datasets.
 
     Inherit from this class and implement the `iter_data` method. This method
