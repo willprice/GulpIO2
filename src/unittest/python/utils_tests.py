@@ -9,6 +9,7 @@ import unittest
 import unittest.mock as mock
 
 from gulpio.utils import (check_ffmpeg_exists,
+                          burst_video_into_frames,
                           resize_by_short_edge,
                           resize_images,
                           )
@@ -23,6 +24,15 @@ class TestCheckFFMPEGExists(unittest.TestCase):
     @mock.patch('os.system', mock.Mock(return_value=1))
     def test_does_not_exists(self):
         self.assertEqual(False, check_ffmpeg_exists())
+
+
+class TestBurstVideoIntoFrames(unittest.TestCase):
+
+    def test(self):
+        video_path = os.path.join(os.path.dirname(__file__), 'test.mp4')
+        temp_dir, imgs = burst_video_into_frames(video_path, '/dev/shm')
+        self.assertEqual(21, len(imgs))
+        shutil.rmtree(temp_dir)
 
 
 class TestResizeImages(unittest.TestCase):
@@ -54,7 +64,6 @@ class TestResizeByShortEdge(unittest.TestCase):
         correct_result = np.zeros((3, 5))
         result = resize_by_short_edge(input_image, size)
         np.testing.assert_array_equal(correct_result, result)
-
 
     def test_resize_second_edge_shorter(self):
         input_image = np.zeros((10, 6))
