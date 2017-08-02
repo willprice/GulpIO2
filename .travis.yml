@@ -10,6 +10,17 @@ before_install:
   - git fetch --unshallow || true
 
 install:
+  # get miniconda
+  - wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b -p $PWD/anaconda
+  - anaconda/bin/conda update --yes --quiet conda
+  # install and extract ffmpg static binary to current directory
+  - anaconda/bin/conda install --yes -c menpo ffmpeg=3.1.3
+  - cp anaconda/bin/ffmpeg .
+  - ./ffmpeg -version
+  - export PATH=".:$PATH"
+
   - pip install -U pip setuptools
   - pip install --pre pybuilder
   - pyb -X install_dependencies
