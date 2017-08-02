@@ -1,0 +1,18 @@
+language: python
+cache: pip
+
+python:
+  - "3.4"
+  - "3.5"
+  - "3.6"
+
+before_install:
+  - git fetch --unshallow || true
+
+install:
+  - pip install -U pip setuptools
+  - pip install --pre pybuilder
+  - pyb -X install_dependencies
+
+script:
+  - pyb -X
