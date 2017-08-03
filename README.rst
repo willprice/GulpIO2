@@ -7,6 +7,12 @@ About
 
 Binary storage format for deep learning on videos.
 
+Status
+======
+
+.. image:: https://travis-ci.com/TwentyBN/GulpIO.svg?token=S1oNqvRREH7GP7VjDu9s&branch=master
+    :target: https://travis-ci.com/TwentyBN/GulpIO
+
 Install
 =======
 
