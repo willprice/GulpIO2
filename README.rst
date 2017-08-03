@@ -112,7 +112,7 @@ For example, here is a meta file snippet:
                                [161964, 3, 7456],
                                [169420, 2, 7444],
                                [176864, 2, 7436]],
-                "meta_data":  [{"label": "Making eye contact with the camera while standing",
+                "meta_data":  [{"label": "something something",
                                 "id":    702766}]},
      "803959": {"frame_info": [[184300, 1, 9256],
                                [193556, 3, 9232],
@@ -140,7 +140,7 @@ For example, here is a meta file snippet:
                                [394668, 2, 9084],
                                [403752, 1, 9112],
                                [412864, 2, 9108]],
-                "meta_data":  [{"label": "No eye contact while sitting in front of your computer",
+                "meta_data":  [{"label": "something something",
                                 "id":    803959}]},
      "803957": {"frame_info": [[421972, 2, 8592],
                                [430564, 1, 8608],
@@ -168,7 +168,7 @@ For example, here is a meta file snippet:
                                [625952, 2, 9056],
                                [635008, 4, 9084],
                                [644092, 2, 9100]],
-                "meta_data":  [{"label": "Making eye contact with the camera while sitting in front of your computer",
+                "meta_data":  [{"label": "something something",
                                 "id":    803957}]},
      "773430": {"frame_info": [[653192, 1, 7964],
                                [661156, 2, 7996],
@@ -192,7 +192,7 @@ For example, here is a meta file snippet:
                                [805316, 4, 8056],
                                [813372, 3, 8088],
                                [821460, 4, 8044]],
-                "meta_data":  [{"label": "Making eye contact with the camera while sitting in front of your computer",
+                "meta_data":  [{"label": "something something",
                                 "id":    773430}]},
      "803963": {"frame_info": [[829504, 2, 8952],
                                [838456, 1, 8928],
@@ -220,14 +220,14 @@ For example, here is a meta file snippet:
                                [1037136, 2, 9040],
                                [1046176, 2, 9052],
                                [1055228, 3, 9096]],
-                "meta_data":  [{"label": "Making eye contact with the camera while standing",
+                "meta_data":  [{"label": "something something",
                                 "id":    803963}]}
     }
 
 Other Formats
 =============
 
-* MXNet based RecordIO: http://mxnet.io/architecture/note_data_loading.html
+* Inspired by: MXNet based RecordIO: http://mxnet.io/architecture/note_data_loading.html
 
 License
 =======
