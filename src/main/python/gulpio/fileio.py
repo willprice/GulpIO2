@@ -3,11 +3,12 @@
 import os
 import cv2
 import pickle
-import numpy as np
-from abc import ABC, abstractmethod
 import json
-from concurrent.futures import ProcessPoolExecutor
+import numpy as np
 
+from abc import ABC, abstractmethod
+from concurrent.futures import ProcessPoolExecutor
+from contextlib import contextmanager
 from PIL import Image
 from collections import namedtuple, defaultdict
 from tqdm import tqdm
@@ -65,9 +66,6 @@ class GulpChunk(object):
         self.meta_path = meta_path
         self.serializer = serializer
 
-        self.is_open = False
-        self.is_writable = False
-        self.f = None
         self.meta_dict = None
 
     def get_or_create_dict(self, path):
@@ -75,36 +73,31 @@ class GulpChunk(object):
             return self.serializer.load(path)
         return defaultdict(lambda: defaultdict(list))
 
+    @contextmanager
     def open(self, flag='rb'):
-        self.meta_dict = self.get_or_create_dict(self.meta_path)
+        try:
+            self.meta_dict = self.get_or_create_dict(self.meta_path)
 
-        if flag == 'wb':
-            self.f = open(self.path, flag)
-            self.is_writable = True
-        elif flag == 'rb':
-            self.f = open(self.path, flag)
-            self.is_writable = False
-        else:
-            m = "This file does not support the mode: '{}'".format(flag)
-            raise NotImplementedError(m)
-        self.is_open = True
+            if flag == 'wb':
+                fp = open(self.path, flag)
+            elif flag == 'rb':
+                fp = open(self.path, flag)
+            else:
+                m = "This file does not support the mode: '{}'".format(flag)
+                raise NotImplementedError(m)
+            yield fp
+        finally:
+            self.flush()
+            fp.close()
 
     def flush(self):
         self.serializer.dump(self.meta_dict, self.meta_path)
 
-    def close(self):
-        if self.is_open:
-            self.flush()
-            self.f.close()
-            self.is_open = False
-
     def append_meta(self, id_, meta_data):
-        assert self.is_writable
         self.meta_dict[str(id_)]['meta_data'].append(meta_data)
 
-    def write_frame(self, id_, image):
-        assert self.is_writable
-        loc = self.f.tell()
+    def write_frame(self, fp, id_, image):
+        loc = fp.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
         pad = 4 - (len(img_str) % 4)
         record = img_str.ljust(len(img_str) + pad, b'\0')
@@ -112,12 +105,12 @@ class GulpChunk(object):
                            length=len(record),
                            pad=pad)
         self.meta_dict[str(id_)]['frame_info'].append(img_info)
-        self.f.write(record)
+        fp.write(record)
 
     def read_frame(self, img_info):
-        assert not self.is_writable
-        self.f.seek(img_info.loc)
-        record = self.f.read(img_info.length)
+        with open('rb') as fp:
+            fp.seek(img_info.loc)
+            record = fp.read(img_info.length)
         img_str = record[:-img_info.pad]
         nparr = np.fromstring(img_str, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -152,17 +145,16 @@ class ChunkWriter(object):
         (bin_file_path,
          meta_file_path) = self.initialize_filenames(chunk_id)
         gulp_file = GulpChunk(bin_file_path, meta_file_path)
-        gulp_file.open('wb')
-        for video in self.adapter.iter_data(slice(*input_chunk)):
-            id_ = video['id']
-            meta_information = video['meta']
-            frames = video['frames']
+        with gulp_file.open('wb') as fp:
+            for video in self.adapter.iter_data(slice(*input_chunk)):
+                id_ = video['id']
+                meta_information = video['meta']
+                frames = video['frames']
 
-            gulp_file.append_meta(id_, meta_information)
-            for frame in frames:
-                gulp_file.write_frame(id_, frame)
+                gulp_file.append_meta(id_, meta_information)
+                for frame in frames:
+                    gulp_file.write_frame(fp, id_, frame)
 
-        gulp_file.close()
 
 
 def calculate_chunks(videos_per_chunk, num_videos):
