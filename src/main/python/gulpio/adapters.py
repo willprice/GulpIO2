@@ -69,7 +69,7 @@ class Custom20BNJsonAdapter(object):
         slice_element = slice_element or slice(0, len(self))
         for meta in self.all_meta[slice_element]:
             video_folder = os.path.join(self.folder, str(meta['id']))
-            video_path = get_single_video_path(video_folder)
+            video_path = get_single_video_path(video_folder, format_='mp4')
             tmp_path, frame_paths = burst_video_into_frames(video_path,
                                                             self.shm_dir_path)
             frames = list(resize_images(frame_paths, self.frame_size))

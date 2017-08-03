@@ -44,6 +44,13 @@ class TestBurstVideoIntoFrames(unittest.TestCase):
         self.assertEqual(39, len(imgs))
         shutil.rmtree(temp_dir)
 
+    def test_webm(self):
+        video_path = os.path.join(os.path.dirname(__file__), 'test.webm')
+        temp_dir, imgs = burst_video_into_frames(video_path, '/dev/shm')
+        self.assertEqual(39, len(imgs))
+        shutil.rmtree(temp_dir)
+
+
 
 class TestResizeImages(unittest.TestCase):
 
