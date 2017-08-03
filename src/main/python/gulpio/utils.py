@@ -91,7 +91,7 @@ def ensure_output_dir_exists(output_dir):
 #                       Helper Functions for input iterator                   #
 ###############################################################################
 
-def find_images_in_folder(folder, formats=['jpg', 'png']):
+def find_images_in_folder(folder, formats=['jpg']):
     images = []
     for format_ in formats:
         files = glob.glob('{}/*.{}'.format(folder, format_))
