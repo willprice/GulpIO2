@@ -2,6 +2,7 @@
 import random
 import os
 import json
+import gzip
 from abc import ABC, abstractmethod
 
 
@@ -44,7 +45,12 @@ class Custom20BNJsonAdapter(object):
     def __init__(self, json_file, folder,
                  shuffle=False, frame_size=-1, shm_dir_path='/dev/shm'):
         self.json_file = json_file
-        self.data = self.read_json(json_file)
+        if json_file.endswith('.json.gz'):
+            self.data = self.read_gz_json(json_file)
+        elif json_file.endswith('.json'):
+            self.data = self.read_json(json_file)
+        else:
+            raise RuntimeError('Wrong data file format (.json.gz or .json)')
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
@@ -56,6 +62,11 @@ class Custom20BNJsonAdapter(object):
     def read_json(self, json_file):
         with open(json_file, 'r') as f:
             content = json.load(f)
+        return content
+
+    def read_gz_json(self, gz_json_file):
+        with gzip.open(gz_json_file, 'rt') as fp:
+            content = json.load(fp)
         return content
 
     def get_meta(self):
