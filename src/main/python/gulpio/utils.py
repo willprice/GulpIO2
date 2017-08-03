@@ -6,6 +6,7 @@ import random
 import cv2
 import shutil
 import glob
+from contextlib import contextmanager
 
 
 ###############################################################################
@@ -21,17 +22,23 @@ def check_ffmpeg_exists():
     return os.system('ffmpeg -version > /dev/null') == 0
 
 
-def burst_frames_to_shm(vid_path, shm_dir_path):
+@contextmanager
+def temp_dir_for_bursting(shm_dir_path='/dev/shm'):
+    hash_str = str(random.getrandbits(128))
+    temp_dir = os.path.join(shm_dir_path, hash_str)
+    os.makedirs(temp_dir)  # creates error if paths conflict (unlikely)
+    yield temp_dir
+    shutil.rmtree(temp_dir)
+
+
+def burst_frames_to_shm(vid_path, temp_burst_dir):
     """
     - To burst frames in a temporary directory in shared memory.
     - Directory name is chosen as random 128 bits so as to avoid clash
       during parallelization
     - Returns path to directory containing frames for the specific video
     """
-    hash_str = str(random.getrandbits(128))
-    temp_dir = os.path.join(shm_dir_path, hash_str)
-    os.makedirs(temp_dir)  # creates error if paths conflict (unlikely)
-    target_mask = os.path.join(temp_dir, '%04d.jpg')
+    target_mask = os.path.join(temp_burst_dir, '%04d.jpg')
     if not check_ffmpeg_exists():
         raise FFMPEGNotFound()
     try:
@@ -41,15 +48,14 @@ def burst_frames_to_shm(vid_path, shm_dir_path):
                   '-f', 'image2', target_mask)
     except Exception as e:
         print(repr(e))
-    return temp_dir
 
 
-def burst_video_into_frames(vid_path, shm_dir_path):
-    temp_dir = burst_frames_to_shm(vid_path, shm_dir_path)
-    imgs = find_images_in_folder(temp_dir, formats=['jpg'])
+def burst_video_into_frames(vid_path, temp_burst_dir):
+    burst_frames_to_shm(vid_path, temp_burst_dir)
+    imgs = find_images_in_folder(temp_burst_dir, formats=['jpg'])
     assert len(imgs) > 0, \
-        "not frames bursted in {}...".format(vid_path)
-    return temp_dir, imgs
+        "no frames bursted in {}...".format(vid_path)
+    return imgs
 
 
 def resize_images(imgs, img_size=-1):
@@ -79,10 +85,6 @@ def resize_by_short_edge(img, size):
 
 def ensure_output_dir_exists(output_dir):
     os.makedirs(output_dir, exist_ok=True)
-
-
-def clear_temp_dir(temp_dir):
-    shutil.rmtree(temp_dir)
 
 
 ###############################################################################

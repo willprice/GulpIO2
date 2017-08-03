@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from .utils import (get_single_video_path,
                     resize_images,
                     burst_video_into_frames,
-                    clear_temp_dir,
+                    temp_dir_for_bursting,
                     )
 
 
@@ -70,10 +70,10 @@ class Custom20BNJsonAdapter(object):
         for meta in self.all_meta[slice_element]:
             video_folder = os.path.join(self.folder, str(meta['id']))
             video_path = get_single_video_path(video_folder, format_='mp4')
-            tmp_path, frame_paths = burst_video_into_frames(video_path,
-                                                            self.shm_dir_path)
-            frames = list(resize_images(frame_paths, self.frame_size))
-            clear_temp_dir(tmp_path)
+            with temp_dir_for_bursting(self.shm_dir_path) as temp_burst_dir:
+                frame_paths = burst_video_into_frames(video_path,
+                                                      temp_burst_dir)
+                frames = list(resize_images(frame_paths, self.frame_size))
             result = {'meta': meta,
                       'frames': frames,
                       'id': meta['id']}

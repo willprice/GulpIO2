@@ -13,6 +13,7 @@ from gulpio.utils import (check_ffmpeg_exists,
                           resize_by_short_edge,
                           resize_images,
                           get_single_video_path,
+                          temp_dir_for_bursting,
                           )
 
 
@@ -40,16 +41,15 @@ class TestBurstVideoIntoFrames(unittest.TestCase):
 
     def test(self):
         video_path = os.path.join(os.path.dirname(__file__), 'test.mp4')
-        temp_dir, imgs = burst_video_into_frames(video_path, '/dev/shm')
+        with temp_dir_for_bursting() as temp_burst_dir:
+            imgs = burst_video_into_frames(video_path, temp_burst_dir)
         self.assertEqual(39, len(imgs))
-        shutil.rmtree(temp_dir)
 
     def test_webm(self):
         video_path = os.path.join(os.path.dirname(__file__), 'test.webm')
-        temp_dir, imgs = burst_video_into_frames(video_path, '/dev/shm')
+        with temp_dir_for_bursting() as temp_burst_dir:
+            imgs = burst_video_into_frames(video_path, temp_burst_dir)
         self.assertEqual(39, len(imgs))
-        shutil.rmtree(temp_dir)
-
 
 
 class TestResizeImages(unittest.TestCase):

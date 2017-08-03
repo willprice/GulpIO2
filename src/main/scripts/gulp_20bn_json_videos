@@ -56,4 +56,4 @@ if __name__ == '__main__':
                                     )
     ingestor = GulpIngestor(adapter, output_folder, videos_per_chunk,
                             num_workers=num_workers)
-    ingestor.ingest()
+    ingestor()
