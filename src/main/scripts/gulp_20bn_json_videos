@@ -32,7 +32,6 @@ Options:
 
 from docopt import docopt
 from tqdm import tqdm
-from joblib import Parallel, delayed
 
 from gulpio.adapters import Custom20BNJsonAdapter
 from gulpio.fileio import GulpIngestor
