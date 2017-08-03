@@ -169,7 +169,7 @@ class GulpIngestor(object):
         self.videos_per_chunk = videos_per_chunk
         self.num_workers = num_workers
 
-    def ingest(self):
+    def __call__(self):
         ensure_output_dir_exists(self.output_folder)
         chunk_writer = ChunkWriter(self.adapter,
                                    self.output_folder,

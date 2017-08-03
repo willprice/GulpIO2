@@ -301,7 +301,7 @@ class TestGulpIngestor(GulpIngestorElement):
         mock_chunk_writer.return_value.__len__.return_value = 2
         mock_chunk_writer.return_value.chunks = [(0, 1), (1, 2)]
 
-        self.gulp_ingestor.ingest()
+        self.gulp_ingestor()
         mock_chunk_writer.assert_called_once_with(self.adapter,
                                                   self.output_folder,
                                                   self.videos_per_chunk,
