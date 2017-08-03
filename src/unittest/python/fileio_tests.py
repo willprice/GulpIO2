@@ -121,9 +121,6 @@ class TestGulpChunk(GulpChunkElement):
         self.assertEqual(self.mock_json_serializer,
                          self.gulp_video_io.serializer)
 
-        self.assertEqual(self.gulp_video_io.is_open, False)
-        self.assertEqual(self.gulp_video_io.is_writable, False)
-        self.assertEqual(self.gulp_video_io.f, None)
         self.assertEqual(self.gulp_video_io.meta_dict, None)
 
     def test_get_or_create_dict_not_exists(self):
@@ -140,28 +137,24 @@ class TestGulpChunk(GulpChunkElement):
         get_mock = mock.Mock()
         self.gulp_video_io.get_or_create_dict = get_mock
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
-            self.gulp_video_io.open('wb')
-            m.assert_called_once_with(self.path, 'wb')
-            self.assertEqual(self.gulp_video_io.is_writable, True)
-            self.assertEqual(self.gulp_video_io.is_open, True)
-            get_mock.assert_has_calls([mock.call(self.meta_path)])
+            with self.gulp_video_io.open('wb') as fp:
+                m.assert_called_once_with(self.path, 'wb')
+                get_mock.assert_has_calls([mock.call(self.meta_path)])
 
     def test_open_with_rb(self):
         get_mock = mock.Mock()
         self.gulp_video_io.get_or_create_dict = get_mock
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
-            self.gulp_video_io.open('rb')
-            m.assert_called_once_with(self.path, 'rb')
-            self.assertEqual(self.gulp_video_io.is_writable, False)
-            self.assertEqual(self.gulp_video_io.is_open, True)
-            get_mock.assert_has_calls([mock.call(self.meta_path)])
+            with self.gulp_video_io.open('rb') as fp:
+                m.assert_called_once_with(self.path, 'rb')
+                get_mock.assert_has_calls([mock.call(self.meta_path)])
 
     def test_open_unknown_flag(self):
         get_mock = mock.Mock()
         self.gulp_video_io.get_or_create_dict = get_mock
-        self.assertRaises(NotImplementedError,
-                          self.gulp_video_io.open,
-                          'NO_SUCH_FLAG')
+        with self.assertRaises(NotImplementedError):
+            with self.gulp_video_io.open('NO_SUCH_FLAG') as fp:
+                pass
 
     def test_flush(self):
         meta_path = os.path.join(self.temp_dir, self.meta_path)
@@ -172,37 +165,35 @@ class TestGulpChunk(GulpChunkElement):
         meta_path_written = open(meta_path).read()
         self.assertEqual('{"0": {"meta_data": []}}', meta_path_written)
 
-    def test_close_when_open(self):
-        f_mock = mock.Mock()
-        flush_mock = mock.Mock()
-        self.gulp_video_io.f = f_mock
-        self.gulp_video_io.flush = flush_mock
-        self.gulp_video_io.is_open = True
-        self.gulp_video_io.close()
-        self.assertEqual(self.gulp_video_io.is_open, False)
-        f_mock.close.assert_called_once_with()
-        flush_mock.assert_called_once_with()
-
-    def test_close_when_closed(self):
-        self.gulp_video_io.is_open = False
-        self.gulp_video_io.close()
+#     def test_close_when_open(self):
+#         f_mock = mock.Mock()
+#         flush_mock = mock.Mock()
+#         self.gulp_video_io.f = f_mock
+#         self.gulp_video_io.flush = flush_mock
+#         self.gulp_video_io.is_open = True
+#         self.gulp_video_io.close()
+#         self.assertEqual(self.gulp_video_io.is_open, False)
+#         f_mock.close.assert_called_once_with()
+#         flush_mock.assert_called_once_with()
+# 
+#     def test_close_when_closed(self):
+#         self.gulp_video_io.is_open = False
+#         self.gulp_video_io.close()
 
     def test_append_meta(self):
-        self.gulp_video_io.is_writable = True
         self.gulp_video_io.meta_dict = {'0': {'meta_data': []}}
         self.gulp_video_io.append_meta(0, {'meta': 'ANY_META'})
         expected = {'0': {'meta_data': [{'meta': 'ANY_META'}]}}
         self.assertEqual(expected, self.gulp_video_io.meta_dict)
 
     def test_write_frame(self):
-        self.gulp_video_io.is_writable = True
         bio = BytesIO()
         self.gulp_video_io.meta_dict = {'0': {'meta_data': [],
                                               'frame_info': []}}
-        self.gulp_video_io.f = bio
+        fp = bio
         with mock.patch('cv2.imencode') as imencode_mock:
             imencode_mock.return_value = '', numpy.ones((1,), dtype='uint8')
-            self.gulp_video_io.write_frame(0, None)
+            self.gulp_video_io.write_frame(fp, 0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {'0': {'meta_data': [],
                               'frame_info': [ImgInfo(0, 3, 4)]}}
@@ -210,18 +201,16 @@ class TestGulpChunk(GulpChunkElement):
 
     def test_read_frame(self):
         # use 'write_frame' to write a single image
-        self.gulp_video_io.is_writable = True
         bio = BytesIO()
         self.gulp_video_io.meta_dict = {'0': {'meta_data': [],
                                               'frame_info': []}}
-        self.gulp_video_io.f = bio
+        fp = bio
         image = numpy.ones((3, 3, 3), dtype='uint8')
-        self.gulp_video_io.write_frame(0, image)
+        self.gulp_video_io.write_frame(fp, 0, image)
 
         # recover the single frame using 'read'
-        self.gulp_video_io.is_writable = False
         info = self.gulp_video_io.meta_dict['0']['frame_info'][0]
-        result = self.gulp_video_io.read_frame(info)
+        result = self.gulp_video_io.read_frame(fp, info)
         npt.assert_array_equal(image, numpy.array(result))
 
 
@@ -264,10 +253,11 @@ class TestChunkWriter(ChunkWriterElement):
                    'frames': ['ANY_FRAME1', 'ANY_FRAME2'],
                    }
         self.adapter.iter_data = mock_iter_data
+        mock_gulp.open = mock.Mock()
         self.chunk_writer.write_chunk((0, 1), 0)
         mock_gulp().write_frame.assert_has_calls(
-            [mock.call(0, 'ANY_FRAME1'),
-             mock.call(0, 'ANY_FRAME2')]
+            [mock.call(mock.call, 0, 'ANY_FRAME1'),
+             mock.call(mock.call(), 0, 'ANY_FRAME2')]
         )
 
 

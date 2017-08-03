@@ -75,20 +75,17 @@ class GulpChunk(object):
 
     @contextmanager
     def open(self, flag='rb'):
-        try:
-            self.meta_dict = self.get_or_create_dict(self.meta_path)
-
-            if flag == 'wb':
-                fp = open(self.path, flag)
-            elif flag == 'rb':
-                fp = open(self.path, flag)
-            else:
-                m = "This file does not support the mode: '{}'".format(flag)
-                raise NotImplementedError(m)
-            yield fp
-        finally:
-            self.flush()
-            fp.close()
+        self.meta_dict = self.get_or_create_dict(self.meta_path)
+        if flag == 'wb':
+            fp = open(self.path, flag)
+        elif flag == 'rb':
+            fp = open(self.path, flag)
+        else:
+            m = "This file does not support the mode: '{}'".format(flag)
+            raise NotImplementedError(m)
+        yield fp
+        self.flush()
+        fp.close()
 
     def flush(self):
         self.serializer.dump(self.meta_dict, self.meta_path)
@@ -107,10 +104,9 @@ class GulpChunk(object):
         self.meta_dict[str(id_)]['frame_info'].append(img_info)
         fp.write(record)
 
-    def read_frame(self, img_info):
-        with open('rb') as fp:
-            fp.seek(img_info.loc)
-            record = fp.read(img_info.length)
+    def read_frame(self, fp, img_info):
+        fp.seek(img_info.loc)
+        record = fp.read(img_info.length)
         img_str = record[:-img_info.pad]
         nparr = np.fromstring(img_str, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
