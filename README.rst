@@ -224,15 +224,10 @@ For example, here is a meta file snippet:
                                 "id":    803963}]}
     }
 
-Examples
-========
+Other Formats
+=============
 
-
-Details
-=======
-
-Comparison to Other Formats
-===========================
+* MXNet based RecordIO: http://mxnet.io/architecture/note_data_loading.html
 
 License
 =======
