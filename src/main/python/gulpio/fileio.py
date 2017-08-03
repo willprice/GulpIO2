@@ -168,7 +168,6 @@ class ChunkWriter(object):
 def calculate_chunks(videos_per_chunk, num_videos):
     assert videos_per_chunk > 0
     assert num_videos > 0
-    quotient, remainder = divmod(num_videos, videos_per_chunk)
     return [(i, min(i + videos_per_chunk, num_videos))
             for i in range(0, num_videos, videos_per_chunk)]
 
