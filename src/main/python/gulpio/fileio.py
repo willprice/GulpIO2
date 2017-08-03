@@ -152,7 +152,6 @@ class ChunkWriter(object):
                     gulp_file.write_frame(fp, id_, frame)
 
 
-
 def calculate_chunks(videos_per_chunk, num_videos):
     assert videos_per_chunk > 0
     assert num_videos > 0
