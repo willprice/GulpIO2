@@ -49,10 +49,10 @@ Format Description
 ==================
 
 When gulping a dataset, two different files are created for every chunk: a
-`*.gulp` data file that contains the actual data and a `*.gmeta` meta file that
-contains the metadata.
+``*.gulp`` data file that contains the actual data and a ``*.gmeta`` meta file
+that contains the metadata.
 
-The layout of the `*.gulp` file is as follows:
+The layout of the ``*.gulp`` file is as follows:
 
 .. code::
 
