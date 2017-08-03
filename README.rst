@@ -76,6 +76,10 @@ from the data file.
       |-> meta_data: [{}]
       |
       |-> frame_info: [[], [], ...]
+    .
+    .
+    .
+
 
 By default, the meta file is serialized in JSON format.
 
