@@ -30,10 +30,10 @@ Then, install the package using:
 Usage
 =====
 
-The `gulpio` package has been designed to be infinitely hackable and to support
+The ``gulpio`` package has been designed to be infinitely hackable and to support
 arbitrary datasets. To this end, we are providing a so-called *adapter
-pattern*. Specifically there exists an abstract class in `gulpio.adapters`:
-the `AbstractDatasetAdapter`.  In order to ingest your dataset, you basically
+pattern*. Specifically there exists an abstract class in ``gulpio.adapters``:
+the ``AbstractDatasetAdapter``.  In order to ingest your dataset, you basically
 need to implement your own custom adapter that inherits from this.
 Additionally, if you would like to ingest your dataset from the command line,
 you need to implement a short command line interface.
