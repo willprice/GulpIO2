@@ -36,9 +36,6 @@ class AbstractDatasetAdapter(ABC):  # pragma: no cover
     def __len__(self):
         return NotImplementedError
 
-    def __getitem__(self, i):
-        return NotImplementedError
-
 
 class Custom20BNJsonAdapter(object):
 
