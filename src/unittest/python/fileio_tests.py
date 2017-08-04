@@ -21,6 +21,7 @@ from gulpio.fileio import (GulpChunk,
                            pickle_serializer,
                            ImgInfo,
                            )
+from gulpio.adapters import AbstractDatasetAdapter
 
 
 class FSBase(unittest.TestCase):
@@ -103,10 +104,10 @@ class GulpChunkElement(FSBase):
     def setUp(self, mock_json_serializer):
         super().setUp()
         self.mock_json_serializer = mock_json_serializer
-        self.path = "ANY_PATH"
-        self.meta_path = "ANY_META_PATH"
-        self.gulp_video_io = GulpChunk(self.path,
-                                       self.meta_path,
+        self.output_path = "ANY_OUTPUT_PATH"
+        self.gulp_video_io = GulpChunk(0,
+                                       self.output_path,
+                                       1,
                                        mock_json_serializer)
 
     def tearDown(self):
@@ -116,8 +117,10 @@ class GulpChunkElement(FSBase):
 class TestGulpChunk(GulpChunkElement):
 
     def test_initializer(self):
-        self.assertEqual(self.path, self.gulp_video_io.path)
-        self.assertEqual(self.meta_path, self.gulp_video_io.meta_path)
+        self.assertEqual('ANY_OUTPUT_PATH/data_0.gulp',
+                         self.gulp_video_io.data_file_path)
+        self.assertEqual('ANY_OUTPUT_PATH/meta_0.gmeta',
+                         self.gulp_video_io.meta_file_path)
         self.assertEqual(self.mock_json_serializer,
                          self.gulp_video_io.serializer)
 
@@ -138,16 +141,20 @@ class TestGulpChunk(GulpChunkElement):
         self.gulp_video_io.get_or_create_dict = get_mock
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
             with self.gulp_video_io.open('wb') as fp:
-                m.assert_called_once_with(self.path, 'wb')
-                get_mock.assert_has_calls([mock.call(self.meta_path)])
+                m.assert_called_once_with(
+                    self.gulp_video_io.data_file_path, 'wb')
+                get_mock.assert_has_calls([mock.call(
+                    self.gulp_video_io.meta_file_path)])
 
     def test_open_with_rb(self):
         get_mock = mock.Mock()
         self.gulp_video_io.get_or_create_dict = get_mock
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
             with self.gulp_video_io.open('rb') as fp:
-                m.assert_called_once_with(self.path, 'rb')
-                get_mock.assert_has_calls([mock.call(self.meta_path)])
+                m.assert_called_once_with(
+                    self.gulp_video_io.data_file_path, 'rb')
+                get_mock.assert_has_calls([mock.call(
+                    self.gulp_video_io.meta_file_path)])
 
     def test_open_unknown_flag(self):
         get_mock = mock.Mock()
@@ -157,8 +164,8 @@ class TestGulpChunk(GulpChunkElement):
                 pass
 
     def test_flush(self):
-        meta_path = os.path.join(self.temp_dir, self.meta_path)
-        self.gulp_video_io.meta_path = meta_path
+        meta_path = os.path.join(self.temp_dir, 'meta_0.gmeta')
+        self.gulp_video_io.meta_file_path = meta_path
         self.gulp_video_io.serializer = json_serializer
         self.gulp_video_io.meta_dict = {'0': {'meta_data': []}}
         self.gulp_video_io.flush()
@@ -175,7 +182,7 @@ class TestGulpChunk(GulpChunkElement):
 #         self.assertEqual(self.gulp_video_io.is_open, False)
 #         f_mock.close.assert_called_once_with()
 #         flush_mock.assert_called_once_with()
-# 
+#
 #     def test_close_when_closed(self):
 #         self.gulp_video_io.is_open = False
 #         self.gulp_video_io.close()
@@ -199,19 +206,25 @@ class TestGulpChunk(GulpChunkElement):
                               'frame_info': [ImgInfo(0, 3, 4)]}}
             self.assertEqual(expected, self.gulp_video_io.meta_dict)
 
-    def test_read_frame(self):
-        # use 'write_frame' to write a single image
-        bio = BytesIO()
-        self.gulp_video_io.meta_dict = {'0': {'meta_data': [],
-                                              'frame_info': []}}
-        fp = bio
-        image = numpy.ones((3, 3, 3), dtype='uint8')
-        self.gulp_video_io.write_frame(fp, 0, image)
+    def test_initialize_filenames(self):
+        expected = (self.gulp_video_io.output_path + '/data_0.gulp',
+                    self.gulp_video_io.output_path + '/meta_0.gmeta')
+        outcome = self.gulp_video_io.initialize_filenames(0)
+        self.assertEqual(expected, outcome)
 
-        # recover the single frame using 'read'
-        info = self.gulp_video_io.meta_dict['0']['frame_info'][0]
-        result = self.gulp_video_io.read_frame(fp, info)
-        npt.assert_array_equal(image, numpy.array(result))
+#     def test_read_frame(self):
+#         # use 'write_frame' to write a single image
+#         bio = BytesIO()
+#         self.gulp_video_io.meta_dict = {'0': {'meta_data': [],
+#                                               'frame_info': []}}
+#         fp = bio
+#         image = numpy.ones((3, 3, 3), dtype='uint8')
+#         self.gulp_video_io.write_frame(fp, 0, image)
+#
+#         # recover the single frame using 'read'
+#         info = self.gulp_video_io.meta_dict['0']['frame_info'][0]
+#         result = self.gulp_video_io.read_frame(fp, info)
+#         npt.assert_array_equal(image, numpy.array(result))
 
 
 class ChunkWriterElement(unittest.TestCase):
@@ -238,12 +251,6 @@ class TestChunkWriter(ChunkWriterElement):
                          self.chunk_writer.output_folder)
         self.assertEqual(self.videos_per_chunk,
                          self.chunk_writer.videos_per_chunk)
-
-    def test_initialize_filenames(self):
-        expected = (self.output_folder + '/data_0.gulp',
-                    self.output_folder + '/meta_0.gmeta')
-        outcome = self.chunk_writer.initialize_filenames(0)
-        self.assertEqual(expected, outcome)
 
     @mock.patch('gulpio.fileio.GulpChunk')
     def test_write_chunk(self, mock_gulp):
@@ -312,3 +319,62 @@ class TestGulpIngestor(GulpIngestorElement):
             range(2),
             chunksize=1,
         )
+
+
+class RoundTripAdapter(AbstractDatasetAdapter):
+
+    def __init__(self):
+        self.result1 = {
+            'meta': {'name': 'empty video'},
+            'frames': [],
+            'id': 0,
+        }
+        self.result2 = {
+            'meta': {'name': 'bunch of numpy arrays'},
+            'frames': [
+                numpy.ones((4,1,3), dtype='uint8'),
+                numpy.ones((3,1,3), dtype='uint8'),
+                numpy.ones((2,1,3), dtype='uint8'),
+                numpy.ones((1,1,3), dtype='uint8'),
+            ],
+            'id': 1,
+        }
+
+    def __len__(self):
+        return 2
+
+    def iter_data(self, slice_element=None):
+        yield self.result1
+        yield self.result2
+
+
+class TestRoundTrip(FSBase):
+
+    def test(self):
+        adapter = RoundTripAdapter()
+        output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
+        ingestor = GulpIngestor(adapter, output_directory, 2, 1)
+        ingestor()
+        gc = GulpChunk(0, output_directory, 1)
+        expected_output_shapes = [[],
+                                  [(4, 1, 3),
+                                   (3, 1, 3),
+                                   (2, 1, 3),
+                                   (1, 1, 3)]
+                                  ]
+        expected_meta = [{'name': 'empty video'},
+                         {'name': 'bunch of numpy arrays'}]
+        with gc.open('rb') as ch_p:
+            for i, id_ in enumerate(sorted(gc.meta_dict.keys())):
+                frames, meta = gc.read_frames(ch_p, id_)
+                output_shapes = [numpy.array(frame).shape for frame in frames]
+                self.assertEqual(expected_meta[i], meta)
+                self.assertEqual(expected_output_shapes[i], output_shapes)
+
+        with gc.open('rb') as ch_p:
+            frames, meta = gc.read_chunk(ch_p)
+            for i, (frames_, meta_) in enumerate((frames, meta)):
+                self.assertEqual(expected_meta[i], meta_)
+                self.assertEqual(expected_output_shapes[i],
+                                 [numpy.array(frame).shape
+                                  for frame in frames_])

@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from PIL import Image
-from collections import namedtuple, defaultdict
+from collections import namedtuple, defaultdict, OrderedDict
 from tqdm import tqdm
 
 from .utils import ensure_output_dir_exists
@@ -47,7 +47,7 @@ class JSONSerializer(AbstractSerializer):
 
     def load(self, file_name):
         with open(file_name, 'r') as file_pointer:
-            return json.load(file_pointer)
+            return json.load(file_pointer, object_pairs_hook=OrderedDict)
 
     def dump(self, thing, file_name):
         with open(file_name, 'w') as file_pointer:
@@ -60,29 +60,31 @@ json_serializer = JSONSerializer()
 
 class GulpChunk(object):
 
-    def __init__(self, path, meta_path,
+    def __init__(self, chunk_id, output_path, expected_chunks,
                  serializer=json_serializer):
-        self.path = path
-        self.meta_path = meta_path
         self.serializer = serializer
-
+        self.output_path = output_path
+        self.expected_chunks = expected_chunks
         self.meta_dict = None
+        (self.data_file_path,
+         self.meta_file_path) = self.initialize_filenames(chunk_id)
 
     def get_or_create_dict(self, path):
         if os.path.exists(path):
             return self.serializer.load(path)
+        return OrderedDict()
 
-        def d():
-            return {'meta_data': [], 'frame_info': []}
-        return defaultdict(d)
+    @staticmethod
+    def default_factory():
+        return {'meta_data': [], 'frame_info': []}
 
     @contextmanager
     def open(self, flag='rb'):
-        self.meta_dict = self.get_or_create_dict(self.meta_path)
+        self.meta_dict = self.get_or_create_dict(self.meta_file_path)
         if flag == 'wb':
-            fp = open(self.path, flag)
+            fp = open(self.data_file_path, flag)
         elif flag == 'rb':
-            fp = open(self.path, flag)
+            fp = open(self.data_file_path, flag)
         else:
             m = "This file does not support the mode: '{}'".format(flag)
             raise NotImplementedError(m)
@@ -91,9 +93,22 @@ class GulpChunk(object):
         fp.close()
 
     def flush(self):
-        self.serializer.dump(self.meta_dict, self.meta_path)
+        self.serializer.dump(self.meta_dict, self.meta_file_path)
+
+    def initialize_filenames(self, chunk_no):
+        padded_chunk_no = self.pad_chunk_no(chunk_no)
+        bin_file_path = os.path.join(self.output_path,
+                                     'data_{}.gulp'.format(padded_chunk_no))
+        meta_file_path = os.path.join(self.output_path,
+                                      'meta_{}.gmeta'.format(padded_chunk_no))
+        return bin_file_path, meta_file_path
+
+    def pad_chunk_no(self, chunk_no):
+        return str(chunk_no).zfill(len(str(self.expected_chunks)))
 
     def append_meta(self, id_, meta_data):
+        if str(id_) not in self.meta_dict:
+            self.meta_dict[str(id_)] = self.default_factory()
         self.meta_dict[str(id_)]['meta_data'].append(meta_data)
 
     def write_frame(self, fp, id_, image):
@@ -104,17 +119,33 @@ class GulpChunk(object):
         img_info = ImgInfo(loc=loc,
                            length=len(record),
                            pad=pad)
+        if str(id_) not in self.meta_dict:
+            self.meta_dict[str(id_)] = self.default_factory()
         self.meta_dict[str(id_)]['frame_info'].append(img_info)
         fp.write(record)
 
-    def read_frame(self, fp, img_info):
-        fp.seek(img_info.loc)
-        record = fp.read(img_info.length)
-        img_str = record[:-img_info.pad]
-        nparr = np.fromstring(img_str, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        return Image.fromarray(img)
+    def retrieve_meta_infos(self, id_):
+        return ([ImgInfo(*self.meta_dict[str(id_)]['frame_info'][i])
+                 for i in range(len(self.meta_dict[id_]['frame_info']))],
+                dict(self.meta_dict[str(id_)]['meta_data'][0]))
+
+    def read_frames(self, fp, id_):
+        frame_infos, meta_data = self.retrieve_meta_infos(id_)
+        frames = []
+        for frame_info in frame_infos:
+            fp.seek(frame_info.loc)
+            record = fp.read(frame_info.length)
+            img_str = record[:-frame_info.pad]
+            nparr = np.fromstring(img_str, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            frames.append(Image.fromarray(img))
+        return frames, meta_data
+
+    def read_chunk(self, fp):
+        for i, id_ in enumerate(self.meta_dict.keys()):
+            frames, meta = self.read_frames(fp, id_)
+            yield (frames, meta)
 
 
 class ChunkWriter(object):
@@ -129,21 +160,8 @@ class ChunkWriter(object):
     def __len__(self):
         return len(self.chunks)
 
-    def pad_chunk_no(self, chunk_no):
-        return str(chunk_no).zfill(len(str(len(self))))
-
-    def initialize_filenames(self, chunk_no):
-        padded_chunk_no = self.pad_chunk_no(chunk_no)
-        bin_file_path = os.path.join(self.output_folder,
-                                     'data_{}.gulp'.format(padded_chunk_no))
-        meta_file_path = os.path.join(self.output_folder,
-                                      'meta_{}.gmeta'.format(padded_chunk_no))
-        return bin_file_path, meta_file_path
-
     def write_chunk(self, input_chunk, chunk_id):
-        (bin_file_path,
-         meta_file_path) = self.initialize_filenames(chunk_id)
-        gulp_file = GulpChunk(bin_file_path, meta_file_path)
+        gulp_file = GulpChunk(chunk_id, self.output_folder, len(self))
         with gulp_file.open('wb') as fp:
             for video in self.adapter.iter_data(slice(*input_chunk)):
                 id_ = video['id']
