@@ -17,6 +17,8 @@ summary = "Binary storage format for deep learning on videos."
 authors = [Author("Eren Golge", "eren.golge@twentybn.com"),
            Author("Raghav Goyal", "raghav.goyal@twentybn.com"),
            Author("Susanne Westphal", "susanne.westphal@twentybn.com"),
+           Author("Heuna Kim", "heuna.kim@twentybn.com"),
+           Author("Guillaume Berger", "guillaume.berger@twentybn.com"),
            Author("Valentin Haenel", "valentin.haenel@twentybn.com"),
            ]
 
