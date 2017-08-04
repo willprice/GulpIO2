@@ -71,7 +71,10 @@ class GulpChunk(object):
     def get_or_create_dict(self, path):
         if os.path.exists(path):
             return self.serializer.load(path)
-        return defaultdict(lambda: defaultdict(list))
+
+        def d():
+            return {'meta_data': [], 'frame_info': []}
+        return defaultdict(d)
 
     @contextmanager
     def open(self, flag='rb'):

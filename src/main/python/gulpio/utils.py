@@ -52,10 +52,7 @@ def burst_frames_to_shm(vid_path, temp_burst_dir):
 
 def burst_video_into_frames(vid_path, temp_burst_dir):
     burst_frames_to_shm(vid_path, temp_burst_dir)
-    imgs = find_images_in_folder(temp_burst_dir, formats=['jpg'])
-    assert len(imgs) > 0, \
-        "no frames bursted in {}...".format(vid_path)
-    return imgs
+    return find_images_in_folder(temp_burst_dir, formats=['jpg'])
 
 
 def resize_images(imgs, img_size=-1):
