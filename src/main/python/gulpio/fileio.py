@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from PIL import Image
-from collections import namedtuple, defaultdict, OrderedDict
+from collections import namedtuple, OrderedDict
 from tqdm import tqdm
 
 from .utils import ensure_output_dir_exists

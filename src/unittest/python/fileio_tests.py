@@ -8,7 +8,6 @@ from collections import defaultdict
 from io import BytesIO
 
 import numpy
-import numpy.testing as npt
 
 import unittest
 import unittest.mock as mock
@@ -140,7 +139,7 @@ class TestGulpChunk(GulpChunkElement):
         get_mock = mock.Mock()
         self.gulp_video_io.get_or_create_dict = get_mock
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
-            with self.gulp_video_io.open('wb') as fp:
+            with self.gulp_video_io.open('wb'):
                 m.assert_called_once_with(
                     self.gulp_video_io.data_file_path, 'wb')
                 get_mock.assert_has_calls([mock.call(
@@ -150,7 +149,7 @@ class TestGulpChunk(GulpChunkElement):
         get_mock = mock.Mock()
         self.gulp_video_io.get_or_create_dict = get_mock
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
-            with self.gulp_video_io.open('rb') as fp:
+            with self.gulp_video_io.open('rb'):
                 m.assert_called_once_with(
                     self.gulp_video_io.data_file_path, 'rb')
                 get_mock.assert_has_calls([mock.call(
@@ -160,7 +159,7 @@ class TestGulpChunk(GulpChunkElement):
         get_mock = mock.Mock()
         self.gulp_video_io.get_or_create_dict = get_mock
         with self.assertRaises(NotImplementedError):
-            with self.gulp_video_io.open('NO_SUCH_FLAG') as fp:
+            with self.gulp_video_io.open('NO_SUCH_FLAG'):
                 pass
 
     def test_flush(self):
@@ -331,10 +330,10 @@ class RoundTripAdapter(AbstractDatasetAdapter):
         self.result2 = {
             'meta': {'name': 'bunch of numpy arrays'},
             'frames': [
-                numpy.ones((4,1,3), dtype='uint8'),
-                numpy.ones((3,1,3), dtype='uint8'),
-                numpy.ones((2,1,3), dtype='uint8'),
-                numpy.ones((1,1,3), dtype='uint8'),
+                numpy.ones((4, 1, 3), dtype='uint8'),
+                numpy.ones((3, 1, 3), dtype='uint8'),
+                numpy.ones((2, 1, 3), dtype='uint8'),
+                numpy.ones((1, 1, 3), dtype='uint8'),
             ],
             'id': 1,
         }
