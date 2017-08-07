@@ -225,6 +225,20 @@ class TestGulpChunk(GulpChunkElement):
 #         result = self.gulp_video_io.read_frame(fp, info)
 #         npt.assert_array_equal(image, numpy.array(result))
 
+    def test_id_in_chunk(self):
+        self.gulp_video_io.meta_dict = {'0': {'meta_data': [{}],
+                                              'frame_info': []}}
+        with mock.patch('gulpio.fileio.GulpChunk.open'):
+            output = self.gulp_video_io.id_in_chunk(0)
+        self.assertTrue(output)
+
+    def test_id_not_in_chunk(self):
+        self.gulp_video_io.meta_dict = {'0': {'meta_data': [{}],
+                                              'frame_info': []}}
+        with mock.patch('gulpio.fileio.GulpChunk.open'):
+            output = self.gulp_video_io.id_in_chunk(1)
+        self.assertFalse(output)
+
 
 class ChunkWriterElement(unittest.TestCase):
 

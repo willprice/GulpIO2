@@ -125,9 +125,10 @@ class GulpChunk(object):
         fp.write(record)
 
     def retrieve_meta_infos(self, id_):
-        return ([ImgInfo(*self.meta_dict[str(id_)]['frame_info'][i])
-                 for i in range(len(self.meta_dict[id_]['frame_info']))],
-                dict(self.meta_dict[str(id_)]['meta_data'][0]))
+        if str(id_) in self.meta_dict:
+            return ([ImgInfo(*self.meta_dict[str(id_)]['frame_info'][i])
+                     for i in range(len(self.meta_dict[str(id_)]['frame_info']))],
+                    dict(self.meta_dict[str(id_)]['meta_data'][0]))
 
     def read_frames(self, fp, id_):
         frame_infos, meta_data = self.retrieve_meta_infos(id_)
@@ -146,6 +147,10 @@ class GulpChunk(object):
         for i, id_ in enumerate(self.meta_dict.keys()):
             frames, meta = self.read_frames(fp, id_)
             yield frames, meta
+
+    def id_in_chunk(self, id_):
+        if self.retrieve_meta_infos(id_):
+            return True
 
 
 class ChunkWriter(object):
