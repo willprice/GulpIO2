@@ -355,14 +355,12 @@ class TestRoundTrip(FSBase):
         ingestor = GulpIngestor(adapter, output_directory, 2, 1)
         ingestor()
         gc = GulpChunk(0, output_directory, 1)
-        expected_output_shapes = [[],
-                                  [(4, 1, 3),
+        expected_output_shapes = [[(4, 1, 3),
                                    (3, 1, 3),
                                    (2, 1, 3),
                                    (1, 1, 3)]
                                   ]
-        expected_meta = [{'name': 'empty video'},
-                         {'name': 'bunch of numpy arrays'}]
+        expected_meta = [{'name': 'bunch of numpy arrays'}]
         with gc.open('rb') as ch_p:
             for i, id_ in enumerate(sorted(gc.meta_dict.keys())):
                 frames, meta = gc.read_frames(ch_p, id_)
@@ -371,8 +369,8 @@ class TestRoundTrip(FSBase):
                 self.assertEqual(expected_output_shapes[i], output_shapes)
 
         with gc.open('rb') as ch_p:
-            frames, meta = gc.read_chunk(ch_p)
-            for i, (frames_, meta_) in enumerate((frames, meta)):
+            chunk_element = gc.read_chunk(ch_p)
+            for i, (frames_, meta_) in enumerate(chunk_element):
                 self.assertEqual(expected_meta[i], meta_)
                 self.assertEqual(expected_output_shapes[i],
                                  [numpy.array(frame).shape

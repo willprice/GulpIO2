@@ -145,7 +145,7 @@ class GulpChunk(object):
     def read_chunk(self, fp):
         for i, id_ in enumerate(self.meta_dict.keys()):
             frames, meta = self.read_frames(fp, id_)
-            yield (frames, meta)
+            yield frames, meta
 
 
 class ChunkWriter(object):
