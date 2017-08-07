@@ -171,6 +171,9 @@ class ChunkWriter(object):
                     gulp_file.append_meta(id_, meta_information)
                     for frame in frames:
                         gulp_file.write_frame(fp, id_, frame)
+                else:
+                    # TODO log file, print statement,...
+                    print("Failed to write video with id: {}".format(id_))
 
 
 def calculate_chunks(videos_per_chunk, num_videos):
