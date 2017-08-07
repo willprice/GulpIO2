@@ -83,7 +83,7 @@ class Custom20BNJsonAdapter(object):
         for label_counter, label in enumerate(labels):
             labels2idx[label] = label_counter
         json.dump(labels2idx,
-                  open(os.path.join(self.output_folder, 'label2idx.pkl'),
+                  open(os.path.join(self.output_folder, 'label2idx.json'),
                        'w'))
         return labels2idx
 
