@@ -167,10 +167,10 @@ class ChunkWriter(object):
                 id_ = video['id']
                 meta_information = video['meta']
                 frames = video['frames']
-
-                gulp_file.append_meta(id_, meta_information)
-                for frame in frames:
-                    gulp_file.write_frame(fp, id_, frame)
+                if len(frames) > 0:
+                    gulp_file.append_meta(id_, meta_information)
+                    for frame in frames:
+                        gulp_file.write_frame(fp, id_, frame)
 
 
 def calculate_chunks(videos_per_chunk, num_videos):
