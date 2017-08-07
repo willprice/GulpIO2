@@ -317,7 +317,6 @@ class TestGulpIngestor(GulpIngestorElement):
             mock_chunk_writer.return_value.write_chunk,
             [(0, 1), (1, 2)],
             range(2),
-            chunksize=1,
         )
 
 
