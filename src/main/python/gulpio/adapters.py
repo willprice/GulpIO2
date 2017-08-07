@@ -111,6 +111,7 @@ class OpenSource20BNAdapter(object):
                  shuffle=False, frame_size=-1, shm_dir_path='/dev/shm'):
         self.data = self.read_csv(csv_file)
         self.output_folder = output_folder
+        self.label2idx = self.create_label2idx_dict()
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
@@ -129,8 +130,20 @@ class OpenSource20BNAdapter(object):
 
     def get_meta(self):
         return [{'id': entry['id'],
-                 'label': entry['label']}
+                 'label': entry['label'],
+                 'idx': self.label2idx[entry['label']]}
                 for entry in self.data]
+
+    def create_label2idx_dict(self):
+        labels = sorted(set([item['label'] for item in self.data]))
+        labels2idx = {}
+        label_counter = 0
+        for label_counter, label in enumerate(labels):
+            labels2idx[label] = label_counter
+        json.dump(labels2idx,
+                  open(os.path.join(self.output_folder, 'label2idx.json'),
+                       'w'))
+        return labels2idx
 
     def __len__(self):
         return len(self.data)
@@ -145,6 +158,8 @@ class OpenSource20BNAdapter(object):
                       'frames': frames,
                       'id': meta['id']}
             yield result
+
+
 # class Input_from_csv(object):
 #
 #     def __init__(self, csv_file, num_labels=None):
