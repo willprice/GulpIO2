@@ -39,7 +39,7 @@ class AbstractDatasetAdapter(ABC):  # pragma: no cover
 
 class Custom20BNJsonAdapter(object):
 
-    def __init__(self, json_file, folder,
+    def __init__(self, json_file, folder, output_folder,
                  shuffle=False, frame_size=-1, shm_dir_path='/dev/shm'):
         self.json_file = json_file
         if json_file.endswith('.json.gz'):
@@ -48,6 +48,8 @@ class Custom20BNJsonAdapter(object):
             self.data = self.read_json(json_file)
         else:
             raise RuntimeError('Wrong data file format (.json.gz or .json)')
+        self.output_folder = output_folder
+        self.labels2idx = self.create_label2idx_dict()
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
@@ -67,8 +69,21 @@ class Custom20BNJsonAdapter(object):
         return content
 
     def get_meta(self):
-        return [{'id': entry['id'], 'label': entry['template']}
+        return [{'id': entry['id'],
+                 'label': entry['template'],
+                 'idx': self.labels2idx[entry['template']]}
                 for entry in self.data]
+
+    def create_label2idx_dict(self):
+        labels = sorted(set([item['template'] for item in self.data]))
+        labels2idx = {}
+        label_counter = 0
+        for label_counter, label in enumerate(labels):
+            labels2idx[label] = label_counter
+        json.dump(labels2idx,
+                  open(os.path.join(self.output_folder, 'label2idx.pkl'),
+                       'w'))
+        return labels2idx
 
     def __len__(self):
         return len(self.data)
