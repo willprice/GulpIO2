@@ -48,8 +48,6 @@ def burst_frames_to_shm(vid_path, temp_burst_dir):
                   '-f', 'image2', target_mask)
     except Exception as e:
         print(repr(e))
-    except:  # TODO 
-        pass
 
 
 def burst_video_into_frames(vid_path, temp_burst_dir):
