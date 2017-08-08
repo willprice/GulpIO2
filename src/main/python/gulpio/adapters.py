@@ -82,10 +82,12 @@ class Custom20BNJsonAdapter(object):
         label_counter = 0
         for label_counter, label in enumerate(labels):
             labels2idx[label] = label_counter
-        json.dump(labels2idx,
+        return labels2idx
+
+    def write_label2idx_dict(self):
+        json.dump(self.labels2idx,
                   open(os.path.join(self.output_folder, 'label2idx.json'),
                        'w'))
-        return labels2idx
 
     def __len__(self):
         return len(self.data)
@@ -103,6 +105,8 @@ class Custom20BNJsonAdapter(object):
                       'frames': frames,
                       'id': meta['id']}
             yield result
+        else:
+            self.write_label2idx_dict()
 
 
 class OpenSource20BNAdapter(object):
