@@ -182,8 +182,8 @@ class ChunkWriter(object):
                     for frame in frames:
                         gulp_file.write_frame(fp, id_, frame)
                 else:
-                    # TODO log file, print statement,...
-                    print("Failed to write video with id: {}".format(id_))
+                    print("Failed to write video with id: {}; no frames"
+                          .format(id_))
 
 
 class ChunkAppender(object):
@@ -228,13 +228,16 @@ class ChunkAppender(object):
                 id_ = video['id']
                 meta_information = video['meta']
                 frames = video['frames']
-                if len(frames) > 0 and not self.id_exists(id_):
+                if len(frames) == 0:
+                    print("Failed to write video with id: '{}'; no frames"
+                          .format(id_))
+                elif self.id_exists(id_):
+                    print("Id '{}' exists already in gulped files".format(id_))
+                else:
                     with gulp_file.open('wb'):
                         gulp_file.append_meta(id_, meta_information)
                         for frame in frames:
                             gulp_file.write_frame(fp, id_, frame)
-                else:
-                    print("Failed to write video with id: {}".format(id_))
 
 
 def calculate_chunks(videos_per_chunk, num_videos):
