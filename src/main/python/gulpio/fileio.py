@@ -154,6 +154,7 @@ class GulpChunk(object):
     def id_in_chunk(self, id_):
         if self.retrieve_meta_infos(id_):
             return True
+        return False
 
 
 class ChunkWriter(object):
@@ -202,9 +203,9 @@ class ChunkAppender(object):
 
     def find_chunk_id(self):
         existing_chunk_nb = self.find_existing_chunks()
-        new_chunk_nb = len(existing_chunk_nb)
-        while new_chunk_nb in existing_chunk_nb:
-            new_chunk_nb += 1
+        new_chunk_nb = 0
+        if len(existing_chunk_nb) > 0:
+            new_chunk_nb = max([int(i) for i in existing_chunk_nb]) + 1
         return new_chunk_nb
 
     def id_exists(self, id_):
@@ -217,8 +218,9 @@ class ChunkAppender(object):
                     return True
         return False
 
-    def write_chunk(self, input_chunk):
+    def append_chunk(self, input_chunk):
         chunk_id = self.find_chunk_id()
+        print(chunk_id)
         gulp_file = GulpChunk(chunk_id, self.output_folder, len(self))
         with gulp_file.open('ab') as fp:
             for video in self.adapter.iter_data(slice(*input_chunk)):
@@ -270,17 +272,18 @@ class GulpIngestor(object):
 
 class GulpAppender(object):
 
-    def __init__(self, adapter, output_folder, videos_per_chunk, num_workers):
-        assert num_workers > 0
+    def __init__(self, adapter, output_folder, videos_per_chunk):
         self.adapter = adapter
         self.output_folder = output_folder
         self.videos_per_chunk = videos_per_chunk
-        self.num_workers = num_workers
 
     def __call__(self):
         ensure_output_dir_exists(self.output_folder)
-        chunk_writer = ChunkAppender(self.adapter,
-                                     self.output_folder,
-                                     self.videos_per_chunk)
-        for chunk in tqdm(chunk_writer.chunks):
-            chunk_writer.write_chunk(chunk)
+        chunk_appender = ChunkAppender(self.adapter,
+                                       self.output_folder,
+                                       self.videos_per_chunk)
+        print(chunk_appender.chunks)
+        for chunk in tqdm(chunk_appender.chunks):
+            print("called wiht", chunk)
+            print(chunk_appender.append_chunk)
+            chunk_appender.append_chunk(chunk)
