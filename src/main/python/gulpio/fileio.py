@@ -4,6 +4,7 @@ import os
 import cv2
 import pickle
 import json
+import glob
 import numpy as np
 
 from abc import ABC, abstractmethod
@@ -84,6 +85,8 @@ class GulpChunk(object):
         if flag == 'wb':
             fp = open(self.data_file_path, flag)
         elif flag == 'rb':
+            fp = open(self.data_file_path, flag)
+        elif flag == 'ab':
             fp = open(self.data_file_path, flag)
         else:
             m = "This file does not support the mode: '{}'".format(flag)
@@ -181,6 +184,57 @@ class ChunkWriter(object):
                     print("Failed to write video with id: {}".format(id_))
 
 
+class ChunkAppender(object):
+
+    def __init__(self, adapter, output_folder, videos_per_chunk):
+        self.adapter = adapter
+        self.output_folder = output_folder
+        self.videos_per_chunk = videos_per_chunk
+        self.chunks = calculate_chunks(self.videos_per_chunk,
+                                       len(self.adapter))
+
+    def __len__(self):
+        return len(self.chunks)
+
+    def find_existing_chunks(self):
+        meta_file_names = glob.glob(os.path.join(self.output_folder, '*.gmeta'))
+        return [fn.split('_')[-1].split('.')[0] for fn in meta_file_names]
+
+    def find_chunk_id(self):
+        existing_chunk_nb = self.find_existing_chunks()
+        new_chunk_nb = len(existing_chunk_nb)
+        while new_chunk_nb in existing_chunk_nb:
+            new_chunk_nb += 1
+        return new_chunk_nb
+
+    def id_exists(self, id_):
+        existing_chunk_nb = self.find_existing_chunks()
+        for ex_chunk_nb in existing_chunk_nb:
+            gulp_file = GulpChunk(ex_chunk_nb, self.output_folder,
+                                  len(ex_chunk_nb))
+            with gulp_file.open('rb'):
+                if gulp_file.id_in_chunk(id_):
+                    return True
+        return False
+
+    def write_chunk(self, input_chunk):
+        chunk_id = self.find_chunk_id()
+        gulp_file = GulpChunk(chunk_id, self.output_folder, len(self))
+        with gulp_file.open('ab') as fp:
+            for video in self.adapter.iter_data(slice(*input_chunk)):
+                id_ = video['id']
+                meta_information = video['meta']
+                frames = video['frames']
+                if len(frames) > 0 and not self.id_exists(id_):
+                    with gulp_file.open('wb'):
+                        gulp_file.append_meta(id_, meta_information)
+                        for frame in frames:
+                            gulp_file.write_frame(fp, id_, frame)
+                else:
+                    # TODO log file, print statement,...
+                    print("Failed to write video with id: {}".format(id_))
+
+
 def calculate_chunks(videos_per_chunk, num_videos):
     assert videos_per_chunk > 0
     assert num_videos > 0
@@ -212,3 +266,21 @@ class GulpIngestor(object):
                           dynamic_ncols=True,
                           total=len(chunk_writer)):
                 pass
+
+
+class GulpAppender(object):
+
+    def __init__(self, adapter, output_folder, videos_per_chunk, num_workers):
+        assert num_workers > 0
+        self.adapter = adapter
+        self.output_folder = output_folder
+        self.videos_per_chunk = videos_per_chunk
+        self.num_workers = num_workers
+
+    def __call__(self):
+        ensure_output_dir_exists(self.output_folder)
+        chunk_writer = ChunkAppender(self.adapter,
+                                     self.output_folder,
+                                     self.videos_per_chunk)
+        for chunk in tqdm(chunk_writer.chunks):
+            chunk_writer.write_chunk(chunk)

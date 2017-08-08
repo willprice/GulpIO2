@@ -10,6 +10,7 @@ Usage:
                           [--num_workers <num_workers>]
                           [--image_size <image_size>]
                           [--shuffle]
+                          [--extend]
                           [--shm_dir <shm_dir>]
                           <input_json> <videos_directory> <output_directory>
     gulp_20bn_json_videos (-h | --help)
@@ -27,13 +28,14 @@ Options:
     --num_workers=<num_workers>             Number of parallel processes [default: 4]
     --image_size=<image_size>               Size of smaller edge of resized frames [default: -1]
     --shuffle                               Shuffle the dataset before ingestion
+    --extend                                Extend Gulps by further files
     --shm_dir=<shm_dir>                     Temporary directory for bursting frames [default: /dev/shm]
 """
 
 from docopt import docopt
 
 from gulpio.adapters import Custom20BNJsonAdapter
-from gulpio.fileio import GulpIngestor
+from gulpio.fileio import GulpIngestor, GulpAppender
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
@@ -46,6 +48,7 @@ if __name__ == '__main__':
     num_workers = int(arguments['--num_workers'])
     img_size = int(arguments['--image_size'])
     shuffle = arguments['--shuffle']
+    extend = arguments['--extend']
     shm_dir = arguments['--shm_dir']
 
     adapter = Custom20BNJsonAdapter(input_json, videos_path, output_folder,
@@ -53,6 +56,14 @@ if __name__ == '__main__':
                                     frame_size=img_size,
                                     shm_dir_path=shm_dir
                                     )
-    ingestor = GulpIngestor(adapter, output_folder, videos_per_chunk,
-                            num_workers=num_workers)
+    if not extend:
+        ingestor = GulpIngestor(adapter,
+                                output_folder,
+                                videos_per_chunk,
+                                num_workers)
+    else:
+        ingestor = GulpAppender(adapter,
+                                output_folder,
+                                videos_per_chunk,
+                                num_workers)
     ingestor()
