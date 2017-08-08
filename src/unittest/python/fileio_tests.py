@@ -183,6 +183,13 @@ class TestGulpChunk(GulpChunkElement):
         meta_path_written = open(meta_path).read()
         self.assertEqual('{"0": {"meta_data": []}}', meta_path_written)
 
+    def test_pad_image(self):
+        self.assertEqual(0, GulpChunk.pad_image(0))
+        self.assertEqual(1, GulpChunk.pad_image(3))
+        self.assertEqual(2, GulpChunk.pad_image(2))
+        self.assertEqual(3, GulpChunk.pad_image(1))
+        self.assertEqual(0, GulpChunk.pad_image(4))
+
 #     def test_close_when_open(self):
 #         f_mock = mock.Mock()
 #         flush_mock = mock.Mock()

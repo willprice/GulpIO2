@@ -114,10 +114,14 @@ class GulpChunk(object):
             self.meta_dict[str(id_)] = self.default_factory()
         self.meta_dict[str(id_)]['meta_data'].append(meta_data)
 
+    @staticmethod
+    def pad_image(number):
+        return (4 - (number % 4)) % 4
+
     def write_frame(self, fp, id_, image):
         loc = fp.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
-        pad = (4 - (len(img_str) % 4)) % 4
+        pad = self.pad_image(len(img_str))
         record = img_str.ljust(len(img_str) + pad, b'\0')
         img_info = ImgInfo(loc=loc,
                            length=len(record),
