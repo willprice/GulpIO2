@@ -222,7 +222,6 @@ class ChunkAppender(object):
 
     def append_chunk(self, input_chunk):
         chunk_id = self.find_chunk_id()
-        print(chunk_id)
         gulp_file = GulpChunk(chunk_id, self.output_folder, len(self))
         with gulp_file.open('ab') as fp:
             for video in self.adapter.iter_data(slice(*input_chunk)):
@@ -235,7 +234,6 @@ class ChunkAppender(object):
                         for frame in frames:
                             gulp_file.write_frame(fp, id_, frame)
                 else:
-                    # TODO log file, print statement,...
                     print("Failed to write video with id: {}".format(id_))
 
 
@@ -284,8 +282,5 @@ class GulpAppender(object):
         chunk_appender = ChunkAppender(self.adapter,
                                        self.output_folder,
                                        self.videos_per_chunk)
-        print(chunk_appender.chunks)
         for chunk in tqdm(chunk_appender.chunks):
-            print("called wiht", chunk)
-            print(chunk_appender.append_chunk)
             chunk_appender.append_chunk(chunk)
