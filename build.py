@@ -8,7 +8,7 @@ use_plugin("python.flake8")
 use_plugin("python.coverage")
 use_plugin("python.distutils")
 use_plugin("filter_resources")
-
+use_plugin('python.integrationtest')
 
 name = "gulpio"
 default_task = "publish"
@@ -36,3 +36,4 @@ def set_properties(project):
         ['**/gulpio/__init__.py'])
     project.get_property('coverage_exceptions').extend(
         ['gulpio.adapters'])
+    project.set_property('integrationtest_inherit_environment', True)
