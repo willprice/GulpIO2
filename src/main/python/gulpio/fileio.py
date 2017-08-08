@@ -130,7 +130,8 @@ class GulpChunk(object):
     def retrieve_meta_infos(self, id_):
         if str(id_) in self.meta_dict:
             return ([ImgInfo(*self.meta_dict[str(id_)]['frame_info'][i])
-                     for i in range(len(self.meta_dict[str(id_)]['frame_info']))],
+                     for i in range(len(self.meta_dict[str(id_)]
+                                                      ['frame_info']))],
                     dict(self.meta_dict[str(id_)]['meta_data'][0]))
 
     def read_frames(self, fp, id_):
@@ -198,7 +199,8 @@ class ChunkAppender(object):
         return len(self.chunks)
 
     def find_existing_chunks(self):
-        meta_file_names = glob.glob(os.path.join(self.output_folder, '*.gmeta'))
+        meta_file_names = glob.glob(os.path.join(self.output_folder,
+                                                 '*.gmeta'))
         return [fn.split('_')[-1].split('.')[0] for fn in meta_file_names]
 
     def find_chunk_id(self):

@@ -64,6 +64,5 @@ if __name__ == '__main__':
     else:
         ingestor = GulpAppender(adapter,
                                 output_folder,
-                                videos_per_chunk,
-                                num_workers)
+                                videos_per_chunk)
     ingestor()

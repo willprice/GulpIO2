@@ -390,11 +390,21 @@ class TestChunkAppender(ChunkAppenderElement):
     def test_id_exists(self, mock_gulp):
         mock_gulp.open = mock.Mock()
         mock_gulp.return_value.id_in_chunk = mock.Mock()
-        mock_gulp.return_value.id_in_chunk.return_value = False ## Valentin
+        mock_gulp.return_value.id_in_chunk.return_value = False
         open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
         output = self.chunk_appender.id_exists(0)
         mock_gulp.assert_called_once_with('0', self.output_folder, 1)
-        self.assertEqual(False, output)
+        self.assertFalse(output)
+
+    @mock.patch('gulpio.fileio.GulpChunk')
+    def test_id_not_exists(self, mock_gulp):
+        mock_gulp.open = mock.Mock()
+        mock_gulp.return_value.id_in_chunk = mock.Mock()
+        mock_gulp.return_value.id_in_chunk.return_value = True
+        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
+        output = self.chunk_appender.id_exists(0)
+        mock_gulp.assert_called_once_with('0', self.output_folder, 1)
+        self.assertTrue(output)
 
     def test_find_chunk_id_next(self):
         open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
@@ -499,10 +509,9 @@ class TestGulpAppender(GulpAppenderElement):
                                                     self.output_folder,
                                                     self.videos_per_chunk,
                                                     )
-        print(mock_chunk_appender.append_chunk)
-        mock_chunk_appender.return_value.append_chunk.assert_has_calls([mock.call((0,
-                                                                                   1)),
-                                                           mock.call((1, 2))])
+        mock_chunk_appender.return_value.append_chunk.assert_has_calls(
+            [mock.call((0, 1)),
+             mock.call((1, 2))])
 
 
 class RoundTripAdapter(AbstractDatasetAdapter):
