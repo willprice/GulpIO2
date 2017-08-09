@@ -35,7 +35,7 @@ Options:
 from docopt import docopt
 
 from gulpio.adapters import Custom20BNJsonAdapter
-from gulpio.fileio import GulpIngestor, GulpAppender
+from gulpio.fileio import GulpIngestor
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
@@ -48,7 +48,6 @@ if __name__ == '__main__':
     num_workers = int(arguments['--num_workers'])
     img_size = int(arguments['--image_size'])
     shuffle = arguments['--shuffle']
-    extend = arguments['--extend']
     shm_dir = arguments['--shm_dir']
 
     adapter = Custom20BNJsonAdapter(input_json, videos_path, output_folder,
@@ -56,13 +55,8 @@ if __name__ == '__main__':
                                     frame_size=img_size,
                                     shm_dir_path=shm_dir
                                     )
-    if not extend:
-        ingestor = GulpIngestor(adapter,
-                                output_folder,
-                                videos_per_chunk,
-                                num_workers)
-    else:
-        ingestor = GulpAppender(adapter,
-                                output_folder,
-                                videos_per_chunk)
+    ingestor = GulpIngestor(adapter,
+                            output_folder,
+                            videos_per_chunk,
+                            num_workers)
     ingestor()

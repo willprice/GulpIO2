@@ -2,14 +2,13 @@ import os
 import tempfile
 import sh
 import json
-import glob
 import atexit
 import shutil
 
 import numpy as np
 import numpy.testing as npt
 
-from gulpio.fileio import GulpChunk
+from gulpio.fileio import GulpDirectory
 
 # step 0: setup
 
@@ -23,13 +22,10 @@ white_frame = np.ones((100, 100, 3)) * 255
 
 
 def check_generated_files():
-    gulps = glob.glob(os.path.join(output_dir, '*.gulp'))
-    for gulp in sorted(gulps):
-        chunk_id = gulp.split('_')[-1].split('.')[0]
-        gulp_chunk = GulpChunk(chunk_id, output_dir,
-                               expected_chunks=3)
-        with gulp_chunk.open('rb') as fp:
-            for frames, m in gulp_chunk.read_chunk(fp):
+    gulp_directory = GulpDirectory(output_dir)
+    for chunk in gulp_directory.chunks():
+        with chunk.open('rb'):
+            for frames, meta in chunk.read_all():
                 for i, f in enumerate(frames):
                     arr = np.array(f)
                     if i % 2 != 0:
@@ -113,7 +109,6 @@ with open(os.path.join(temp_dir, 'videos_extend.json'), 'w') as fp:
 command = sh.gulp_20bn_json_videos(
     '--videos_per_chunk',  '10',
     os.path.join(temp_dir, 'videos_extend.json'),
-    '--extend',
     temp_dir,
     output_dir,
 )

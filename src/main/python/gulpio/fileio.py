@@ -59,21 +59,80 @@ pickle_serializer = PickleSerializer()
 json_serializer = JSONSerializer()
 
 
+class GulpDirectory(object):
+
+    def __init__(self, output_dir):
+        self.output_dir = output_dir
+
+    def chunks(self):
+        return ((GulpChunk(*paths) for paths in self._existing_file_paths()))
+
+    def new_chunks(self, total_new_chunks):
+        return ((GulpChunk(*paths) for paths in
+                 self._allocate_new_file_paths(total_new_chunks)))
+
+    def _find_existing_data_paths(self):
+        return sorted(glob.glob(os.path.join(self.output_dir, 'data*.gulp')))
+
+    def _find_existing_meta_paths(self):
+        return sorted(glob.glob(os.path.join(self.output_dir, 'meta*.gmeta')))
+
+    def _existing_file_paths(self):
+        data_paths = self._find_existing_data_paths()
+        meta_paths = self._find_existing_meta_paths()
+        assert len(data_paths) == len(meta_paths)
+        return zip(data_paths, meta_paths)
+
+    def _find_ids_from_paths(self, paths):
+        return [int(p.split('_')[-1].split('.')[0]) for p in paths]
+
+    def _chunk_ids(self):
+        data_paths = self._find_existing_data_paths()
+        meta_paths = self._find_existing_meta_paths()
+        data_ids = self._find_ids_from_paths(data_paths)
+        meta_ids = self._find_ids_from_paths(meta_paths)
+        assert data_ids == meta_ids
+        return data_ids
+
+    def _next_chunk_id(self):
+        existing_chunk_ids = self._chunk_ids()
+        next_chunk_id = 0
+        if len(existing_chunk_ids) > 0:
+            next_chunk_id = max([int(i) for i in existing_chunk_ids]) + 1
+        return next_chunk_id
+
+    def _allocate_new_file_paths(self, total_new_chunks):
+        next_chunk_id = self._next_chunk_id()
+        return [self._initialize_filenames(i)
+                for i in range(next_chunk_id,
+                               next_chunk_id + total_new_chunks)]
+
+    def _initialize_filenames(self, chunk_id):
+        data_file_path = os.path.join(
+            self.output_dir, 'data_{}.gulp'.format(chunk_id))
+        meta_file_path = os.path.join(
+            self.output_dir, 'meta_{}.gmeta'.format(chunk_id))
+        return data_file_path, meta_file_path
+
+#    def pad_chunk_no(self, chunk_no):
+#        return str(chunk_no).zfill(len(str(self.expected_chunks)))
+
+
 class GulpChunk(object):
 
-    def __init__(self, chunk_id, output_path, expected_chunks=10,
+    def __init__(self, data_file_path, meta_file_path,
                  serializer=json_serializer):
         self.serializer = serializer
-        self.output_path = output_path
-        self.expected_chunks = expected_chunks
+        self.data_file_path = data_file_path
+        self.meta_file_path = meta_file_path
         self.meta_dict = None
-        (self.data_file_path,
-         self.meta_file_path) = self.initialize_filenames(chunk_id)
+        self.fp = None
 
-    def get_or_create_dict(self, path):
-        if os.path.exists(path):
-            return self.serializer.load(path)
-        return OrderedDict()
+    def get_or_create_dict(self):
+        if os.path.exists(self.meta_file_path):
+            return self.serializer.load(self.meta_file_path)
+        else:
+            return OrderedDict()
 
     @staticmethod
     def default_factory():
@@ -81,33 +140,19 @@ class GulpChunk(object):
 
     @contextmanager
     def open(self, flag='rb'):
-        self.meta_dict = self.get_or_create_dict(self.meta_file_path)
-        if flag == 'wb':
-            fp = open(self.data_file_path, flag)
-        elif flag == 'rb':
-            fp = open(self.data_file_path, flag)
-        elif flag == 'ab':
-            fp = open(self.data_file_path, flag)
+        self.meta_dict = self.get_or_create_dict()
+        if flag in ['wb', 'rb', 'ab']:
+            self.fp = open(self.data_file_path, flag)
         else:
             m = "This file does not support the mode: '{}'".format(flag)
             raise NotImplementedError(m)
-        yield fp
+        yield 
         self.flush()
-        fp.close()
+        self.fp.close()
 
     def flush(self):
+        self.fp.flush()
         self.serializer.dump(self.meta_dict, self.meta_file_path)
-
-    def initialize_filenames(self, chunk_no):
-        padded_chunk_no = self.pad_chunk_no(chunk_no)
-        bin_file_path = os.path.join(self.output_path,
-                                     'data_{}.gulp'.format(padded_chunk_no))
-        meta_file_path = os.path.join(self.output_path,
-                                      'meta_{}.gmeta'.format(padded_chunk_no))
-        return bin_file_path, meta_file_path
-
-    def pad_chunk_no(self, chunk_no):
-        return str(chunk_no).zfill(len(str(self.expected_chunks)))
 
     def append_meta(self, id_, meta_data):
         if str(id_) not in self.meta_dict:
@@ -118,8 +163,8 @@ class GulpChunk(object):
     def pad_image(number):
         return (4 - (number % 4)) % 4
 
-    def write_frame(self, fp, id_, image):
-        loc = fp.tell()
+    def write_frame(self, id_, image):
+        loc = self.fp.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
         pad = self.pad_image(len(img_str))
         record = img_str.ljust(len(img_str) + pad, b'\0')
@@ -129,8 +174,7 @@ class GulpChunk(object):
         if str(id_) not in self.meta_dict:
             self.meta_dict[str(id_)] = self.default_factory()
         self.meta_dict[str(id_)]['frame_info'].append(img_info)
-        fp.write(record)
-
+        self.fp.write(record)
 
     def retrieve_meta_infos(self, id_):
         if str(id_) in self.meta_dict:
@@ -139,12 +183,12 @@ class GulpChunk(object):
                                                       ['frame_info']))],
                     dict(self.meta_dict[str(id_)]['meta_data'][0]))
 
-    def read_frames(self, fp, id_):
+    def read_frames(self, id_):
         frame_infos, meta_data = self.retrieve_meta_infos(id_)
         frames = []
         for frame_info in frame_infos:
-            fp.seek(frame_info.loc)
-            record = fp.read(frame_info.length)
+            self.fp.seek(frame_info.loc)
+            record = self.fp.read(frame_info.length)
             img_str = record[:-frame_info.pad]
             nparr = np.fromstring(img_str, np.uint8)
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -152,9 +196,9 @@ class GulpChunk(object):
             frames.append(Image.fromarray(img))
         return frames, meta_data
 
-    def read_chunk(self, fp):
+    def read_all(self):
         for i, id_ in enumerate(self.meta_dict.keys()):
-            frames, meta = self.read_frames(fp, id_)
+            frames, meta = self.read_frames(id_)
             yield frames, meta
 
     def id_in_chunk(self, id_):
@@ -165,83 +209,22 @@ class GulpChunk(object):
 
 class ChunkWriter(object):
 
-    def __init__(self, adapter, output_folder, videos_per_chunk):
+    def __init__(self, adapter):
         self.adapter = adapter
-        self.output_folder = output_folder
-        self.videos_per_chunk = videos_per_chunk
-        self.chunks = calculate_chunks(self.videos_per_chunk,
-                                       len(self.adapter))
 
-    def __len__(self):
-        return len(self.chunks)
-
-    def write_chunk(self, input_chunk, chunk_id):
-        gulp_file = GulpChunk(chunk_id, self.output_folder, len(self))
-        with gulp_file.open('wb') as fp:
-            for video in self.adapter.iter_data(slice(*input_chunk)):
+    def write_chunk(self, input_chunk, input_slice):
+        with input_chunk.open('wb'):
+            for video in self.adapter.iter_data(slice(*input_slice)):
                 id_ = video['id']
                 meta_information = video['meta']
                 frames = video['frames']
                 if len(frames) > 0:
-                    gulp_file.append_meta(id_, meta_information)
+                    input_chunk.append_meta(id_, meta_information)
                     for frame in frames:
-                        gulp_file.write_frame(fp, id_, frame)
+                        input_chunk.write_frame(id_, frame)
                 else:
                     print("Failed to write video with id: {}; no frames"
                           .format(id_))
-
-
-class ChunkAppender(object):
-
-    def __init__(self, adapter, output_folder, videos_per_chunk):
-        self.adapter = adapter
-        self.output_folder = output_folder
-        self.videos_per_chunk = videos_per_chunk
-        self.chunks = calculate_chunks(self.videos_per_chunk,
-                                       len(self.adapter))
-
-    def __len__(self):
-        return len(self.chunks)
-
-    def find_existing_chunks(self):
-        meta_file_names = glob.glob(os.path.join(self.output_folder,
-                                                 '*.gmeta'))
-        return [fn.split('_')[-1].split('.')[0] for fn in meta_file_names]
-
-    def find_chunk_id(self):
-        existing_chunk_nb = self.find_existing_chunks()
-        new_chunk_nb = 0
-        if len(existing_chunk_nb) > 0:
-            new_chunk_nb = max([int(i) for i in existing_chunk_nb]) + 1
-        return new_chunk_nb
-
-    def id_exists(self, id_):
-        existing_chunk_nb = self.find_existing_chunks()
-        for ex_chunk_nb in existing_chunk_nb:
-            gulp_file = GulpChunk(ex_chunk_nb, self.output_folder,
-                                  len(ex_chunk_nb))
-            with gulp_file.open('rb'):
-                if gulp_file.id_in_chunk(id_):
-                    return True
-        return False
-
-    def append_chunk(self, input_chunk):
-        chunk_id = self.find_chunk_id()
-        gulp_file = GulpChunk(chunk_id, self.output_folder, len(self))
-        with gulp_file.open('ab') as fp:
-            for video in self.adapter.iter_data(slice(*input_chunk)):
-                id_ = video['id']
-                meta_information = video['meta']
-                frames = video['frames']
-                if len(frames) == 0:
-                    print("Failed to write video with id: '{}'; no frames"
-                          .format(id_))
-                elif self.id_exists(id_):
-                    print("Id '{}' exists already in gulped files".format(id_))
-                else:
-                    gulp_file.append_meta(id_, meta_information)
-                    for frame in frames:
-                        gulp_file.write_frame(fp, id_, frame)
 
 
 def calculate_chunks(videos_per_chunk, num_videos):
@@ -262,32 +245,18 @@ class GulpIngestor(object):
 
     def __call__(self):
         ensure_output_dir_exists(self.output_folder)
-        chunk_writer = ChunkWriter(self.adapter,
-                                   self.output_folder,
-                                   self.videos_per_chunk)
+        chunk_slices = calculate_chunks(self.videos_per_chunk,
+                                        len(self.adapter))
+        gulp_directory = GulpDirectory(self.output_folder)
+        new_chunks = gulp_directory.new_chunks(len(chunk_slices))
+        chunk_writer = ChunkWriter(self.adapter)
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             result = executor.map(chunk_writer.write_chunk,
-                                  chunk_writer.chunks,
-                                  range(len(chunk_writer)))
+                                  new_chunks,
+                                  chunk_slices)
             for r in tqdm(result,
                           desc='Chunks finished',
                           unit='chunk',
                           dynamic_ncols=True,
-                          total=len(chunk_writer)):
+                          total=len(chunk_slices)):
                 pass
-
-
-class GulpAppender(object):
-
-    def __init__(self, adapter, output_folder, videos_per_chunk):
-        self.adapter = adapter
-        self.output_folder = output_folder
-        self.videos_per_chunk = videos_per_chunk
-
-    def __call__(self):
-        ensure_output_dir_exists(self.output_folder)
-        chunk_appender = ChunkAppender(self.adapter,
-                                       self.output_folder,
-                                       self.videos_per_chunk)
-        for chunk in tqdm(chunk_appender.chunks):
-            chunk_appender.append_chunk(chunk)
