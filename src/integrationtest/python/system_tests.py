@@ -41,7 +41,7 @@ def check_generated_files():
 # step 1: generate the videos and JSON file
 
 with open(os.path.join(temp_dir, 'source'), 'wb') as source_frames:
-    for _ in range(60):
+    for _ in range(40):
         source_frames.write(b'\x00' * 30000)
         source_frames.write(b'\xff' * 30000)
 
@@ -49,7 +49,7 @@ sh.ffmpeg('-t', '10',
           '-s', '100x100',
           '-f', 'rawvideo',
           '-pix_fmt', 'rgb24',
-          '-r', '12',
+          '-r', '8',
           '-i', './source',
           'source.mp4',
           _cwd=temp_dir,
@@ -94,8 +94,9 @@ expected_files = [
 assert expected_files == files
 
 sizes = [os.path.getsize(os.path.join(output_dir, f)) for f in files]
-expected_sizes = [988800, 988800, 296640, 335, 22311, 22321, 6599]
+expected_sizes = [659200, 659200, 197760, 335, 15111, 15121, 4439]
 
+print(expected_sizes, sizes)
 assert expected_sizes == sizes
 
 # step 4: ungulp the videos and check the result
@@ -134,8 +135,8 @@ expected_files = [
 assert expected_files == files
 
 sizes = [os.path.getsize(os.path.join(output_dir, f)) for f in files]
-expected_sizes = [988800, 988800, 296640, 197760, 28, 22311, 22321, 6599, 4351]
-
+expected_sizes = [659200, 659200, 197760, 131840, 28, 15111, 15121, 4439, 2911]
+print(expected_sizes, sizes)
 assert expected_sizes == sizes
 
 # step 8: ungulp the videos (from the extended files) and check the result

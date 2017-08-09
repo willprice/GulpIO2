@@ -42,7 +42,8 @@ class AbstractDatasetAdapter(ABC):  # pragma: no cover
 class Custom20BNJsonAdapter(object):
 
     def __init__(self, json_file, folder, output_folder,
-                 shuffle=False, frame_size=-1, shm_dir_path='/dev/shm'):
+                 shuffle=False, frame_size=-1, frame_rate=8,
+                 shm_dir_path='/dev/shm'):
         self.json_file = json_file
         if json_file.endswith('.json.gz'):
             self.data = self.read_gz_json(json_file)
@@ -55,6 +56,7 @@ class Custom20BNJsonAdapter(object):
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
+        self.frame_rate = frame_rate
         self.shm_dir_path = shm_dir_path
         self.all_meta = self.get_meta()
         if self.shuffle:
@@ -98,8 +100,8 @@ class Custom20BNJsonAdapter(object):
             video_folder = os.path.join(self.folder, str(meta['id']))
             video_path = get_single_video_path(video_folder, format_='mp4')
             with temp_dir_for_bursting(self.shm_dir_path) as temp_burst_dir:
-                frame_paths = burst_video_into_frames(video_path,
-                                                      temp_burst_dir)
+                frame_paths = burst_video_into_frames(
+                    video_path, temp_burst_dir, frame_rate=self.frame_rate)
                 frames = list(resize_images(frame_paths, self.frame_size))
             result = {'meta': meta,
                       'frames': frames,
