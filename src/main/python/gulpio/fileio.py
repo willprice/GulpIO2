@@ -159,7 +159,7 @@ class GulpChunk(object):
         else:
             m = "This file does not support the mode: '{}'".format(flag)
             raise NotImplementedError(m)
-        yield 
+        yield
         self.flush()
         self.fp.close()
 
