@@ -61,7 +61,7 @@ json_serializer = JSONSerializer()
 
 class GulpChunk(object):
 
-    def __init__(self, chunk_id, output_path, expected_chunks,
+    def __init__(self, chunk_id, output_path, expected_chunks=10,
                  serializer=json_serializer):
         self.serializer = serializer
         self.output_path = output_path
@@ -130,6 +130,7 @@ class GulpChunk(object):
             self.meta_dict[str(id_)] = self.default_factory()
         self.meta_dict[str(id_)]['frame_info'].append(img_info)
         fp.write(record)
+
 
     def retrieve_meta_infos(self, id_):
         if str(id_) in self.meta_dict:
