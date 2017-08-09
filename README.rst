@@ -70,10 +70,11 @@ since this makes it easier to read JPEGs from disk.
 
 The layout of the meta file is a mapping, where each ``id`` representing a
 video is mapped to two further mappings, ``meta_data``, which contains
-arbitrary, user-defined meta-data. And ``frame_info``, which contains the
-length of the frame, the offset (index) into the data file and the number of
-bytes used for padding.  The `frame_info` is required to recover the frames
-from the data file.
+arbitrary, user-defined meta-data. And a triplet, ``frame_info``, which
+contains the offset (index) into the data file, the number of bytes used for
+padding and the total length of the frame (including padding). (``[<offset>,
+<padding>, <total_length>]``.) The `frame_info` is required to recover the
+frames from the data file.
 
 .. code::
 
