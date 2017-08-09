@@ -117,7 +117,6 @@ class OpenSource20BNAdapter(object):
                  shuffle=False, frame_size=-1, shm_dir_path='/dev/shm'):
         self.data = self.read_csv(csv_file)
         self.output_folder = output_folder
-        self.label2idx = self.create_label2idx_dict()
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
@@ -164,7 +163,8 @@ class OpenSource20BNAdapter(object):
                       'frames': frames,
                       'id': meta['id']}
             yield result
-
+        else:
+            self.label2idx = self.create_label2idx_dict()
 
 # class Input_from_csv(object):
 #
