@@ -60,14 +60,27 @@ json_serializer = JSONSerializer()
 
 
 class GulpDirectory(object):
+    """ Represents a directory containing *.gulp and *.gmeta files.
+
+    Args:
+        output_dir: (str) path to the directory containing the files.
+    """
 
     def __init__(self, output_dir):
         self.output_dir = output_dir
 
     def chunks(self):
+        """ Return a generator over existing GulpChunk objects which are ready
+        to be opened and read from. """
         return ((GulpChunk(*paths) for paths in self._existing_file_paths()))
 
     def new_chunks(self, total_new_chunks):
+        """ Return a generator over freshly setup GulpChunk objects which are ready
+        to be opened and written to.
+
+        Args:
+            total_new_chunks: (int) the total number of new chunks to setup
+        """
         return ((GulpChunk(*paths) for paths in
                  self._allocate_new_file_paths(total_new_chunks)))
 
