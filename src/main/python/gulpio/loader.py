@@ -1,260 +1,224 @@
-from __future__ import division
-import math
-import random
-import numbers
-import types
-import collections
 import numpy as np
-import cv2
-from PIL import Image, ImageOps
+import collections
+import sys
+import traceback
+import threading
+from multiprocessing import SimpleQueue, Process
+from gulpio.sampler import SequentialSampler, RandomSampler, BatchSampler
+if sys.version_info[0] == 2:
+    import Queue as queue
+    string_classes = basestring
+else:
+    import queue
+    string_classes = (str, bytes)
 
 
-class ComposeVideo(object):
-    r"""Composes several transforms together. It takes two lists of
-    transformations. One list is for image transformations, and the other one
-    is for videos. Image transforms are called per frame and video
-    transformes applied to the whole video with the same parameters.
-
-    Args:
-        img_transforms (List[Transform]): list of transforms to compose.
-        video_transforms (List[Transform]): list of transforms to compose.
-
-    Example:
-        >>> img_transforms = [transforms.Normalize()]
-        >>> video_transforms = [transforms.CenterCrop(224)]
-        >>> transforms.ComposeVideo(img_transforms, video_transforms)
-    """
-
-    def __init__(self, img_transforms, video_transforms):
-        self.img_transforms = img_transforms
-        self.video_transforms = video_transforms
-
-    def __call__(self, imgs, is_val):
-        for t in self.img_transforms:
-            for idx, img in enumerate(imgs):
-                imgs[idx] = t(img)
-        for t in self.video_transforms:
-            imgs = t(imgs)
-        imgs[i] = np.unsqueeze(img, 0)
-        return imgs
+_use_shared_memory = False
+"""Whether to use shared memory in default_collate"""
 
 
-class RandHorFlipVideo():
-    r""" Apply random horizontal flip to video """
+class ExceptionWrapper(object):
+    "Wraps an exception plus traceback to communicate across threads"
 
-    def __call__(self, imgs):
-        if random.random() < 0.5:
-            for idx, img in enumerate(imgs):
-                img = cv2.flip(img, 1)
-                imgs[idx] = img
-        return imgs
+    def __init__(self, exc_info):
+        self.exc_type = exc_info[0]
+        self.exc_msg = "".join(traceback.format_exception(*exc_info))
 
 
-class RandHorFlipVideo():
-    r""" Apply random vertical flip to video """
+def _worker_loop(dataset, index_queue, data_queue, collate_fn):
+    global _use_shared_memory
+    _use_shared_memory = True
 
-    def __call__(self, imgs):
-        if random.random() < 0.5:
-            for idx, img in enumerate(imgs):
-                img = cv2.flip(img, 0)
-                imgs[idx] = img
-        return imgs
-
-
-class Normalize(object):
-    """Normalize an tensor image with mean and standard deviation.
-    Given mean: (R, G, B) and std: (R, G, B),
-    will normalize each channel of the torch.*Tensor, i.e.
-    channel = (channel - mean) / std
-    Args:
-        mean (sequence): Sequence of means for R, G, B channels respecitvely.
-        std (sequence): Sequence of standard deviations for R, G, B channels
-            respecitvely.
-    """
-
-    def __init__(self, mean, std):
-        self.mean = mean
-        self.std = std
-
-    def __call__(self, tensor):
-        """
-        Args:
-            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
-        Returns:
-            Tensor: Normalized image.
-        """
-        # Relying on Numpy broadcasting abilities
-        tensor = (tensor - self.mean) / (self.std + 1e-8)
-        return tensor
-
-
-class UnitNorm(object):
-     r"""Instance wise unit norm"""
-
-     def __init__(self):
-         return
-
-     def __call__(self, tensor):
-         tensor = (tensor - tensor.mean()) / (tensor.std() + 1e-8)
-         return tensor
-
-
-class CenterCrop(object):
-    r"""Crops the given image at the center. It uses OpenCV.
-    Args:
-        size (sequence or int): Desired output size of the crop. If size is an
-            int instead of sequence like (w, h), a square crop (size, size) is
-            made.
-    """
-
-    def __init__(self, size):
-        if isinstance(size, numbers.Number):
-            self.size = (int(size), int(size))
+    while True:
+        r = index_queue.get()
+        if r is None:
+            data_queue.put(None)
+            break
+        idx, batch_indices = r
+        try:
+            samples = collate_fn([dataset[i] for i in batch_indices])
+        except Exception:
+            data_queue.put((idx, ExceptionWrapper(sys.exc_info())))
         else:
-            self.size = size
-        self.scale = Scale(size)
-
-    def __call__(self, img):
-        """
-        Args:
-            img (numpy.array): Image to be cropped.
-        Returns:
-            numpy.array: Cropped image.
-        """
-        w, h = img.size
-        if self.size[0] > w or self.size[1] > h:
-            img = self.scale(img)
-            w, h = img.size
-
-        th, tw = self.size
-        x1 = int(round((w - tw) / 2.))
-        y1 = int(round((h - th) / 2.))
-        return img.crop((x1, y1, x1 + tw, y1 + th))
+            data_queue.put((idx, samples))
 
 
-class RandomCropVideo(object):
-    """Crop the given image at a random location.
-    Args:
-        size (sequence or int): Desired output size of the crop. If size is an
-            int instead of sequence like (w, h), a square crop (size, size) is
-            made.
-        padding (int or sequence, optional): Optional padding on each border
-            of the image. Default is 0, i.e no padding. If a sequence of length
-            4 is provided, it is used to pad left, top, right, bottom borders
-            respectively.
+def default_collate(batch):
+    "Puts each data field into a tensor with outer dimension batch size"
+    if type(batch[0]).__module__ == 'numpy':
+        elem = batch[0]
+        if type(elem).__name__ == 'ndarray':
+            return np.stack(batch, 0)
+        if elem.shape == ():  # scalars
+            py_type = float if elem.dtype.name.startswith('float') else int
+            return numpy_type_map[elem.dtype.name](list(map(py_type, batch)))
+    elif isinstance(batch[0], int) or isinstance(batch[0], float):
+        return batch
+    elif isinstance(batch[0], collections.Sequence):
+        transposed = zip(*batch)
+        return [default_collate(samples) for samples in transposed]
+    raise TypeError(("batch must contain tensors or lists; found {}"
+                     .format(type(batch[0]))))
+
+
+class DataLoaderIter(object):
+    "Iterates once over the DataLoader's dataset, as specified by the sampler"
+
+    def __init__(self, loader):
+        self.dataset = loader.dataset
+        self.collate_fn = loader.collate_fn
+        self.batch_sampler = loader.batch_sampler
+        self.num_workers = loader.num_workers
+        self.done_event = threading.Event()
+
+        self.sample_iter = iter(self.batch_sampler)
+
+        if self.num_workers > 0:
+            self.index_queue = SimpleQueue()
+            self.data_queue = SimpleQueue()
+            self.batches_outstanding = 0
+            self.shutdown = False
+            self.send_idx = 0
+            self.rcvd_idx = 0
+            self.reorder_dict = {}
+
+            self.workers = [
+                Process(
+                    target=_worker_loop,
+                    args=(self.dataset, self.index_queue, self.data_queue, self.collate_fn))
+                for _ in range(self.num_workers)]
+
+            for w in self.workers:
+                w.daemon = True  # ensure that the worker exits on process exit
+                w.start()
+
+            # prime the prefetch loop
+            for _ in range(2 * self.num_workers):
+                self._put_indices()
+
+    def __len__(self):
+        return len(self.batch_sampler)
+
+    def __next__(self):
+        if self.num_workers == 0:  # same-process loading
+            indices = next(self.sample_iter)  # may raise StopIteration
+            batch = self.collate_fn([self.dataset[i] for i in indices])
+            return batch
+
+        # check if the next sample has already been generated
+        if self.rcvd_idx in self.reorder_dict:
+            batch = self.reorder_dict.pop(self.rcvd_idx)
+            return self._process_next_batch(batch)
+
+        if self.batches_outstanding == 0:
+            self._shutdown_workers()
+            raise StopIteration
+
+        while True:
+            assert (not self.shutdown and self.batches_outstanding > 0)
+            idx, batch = self.data_queue.get()
+            self.batches_outstanding -= 1
+            if idx != self.rcvd_idx:
+                # store out-of-order samples
+                self.reorder_dict[idx] = batch
+                continue
+            return self._process_next_batch(batch)
+
+    next = __next__  # Python 2 compatibility
+
+    def __iter__(self):
+        return self
+
+    def _put_indices(self):
+        assert self.batches_outstanding < 2 * self.num_workers
+        indices = next(self.sample_iter, None)
+        if indices is None:
+            return
+        self.index_queue.put((self.send_idx, indices))
+        self.batches_outstanding += 1
+        self.send_idx += 1
+
+    def _process_next_batch(self, batch):
+        self.rcvd_idx += 1
+        self._put_indices()
+        if isinstance(batch, ExceptionWrapper):
+            raise batch.exc_type(batch.exc_msg)
+        return batch
+
+    def __getstate__(self):
+        # TODO: add limited pickling support for sharing an iterator
+        # across multiple threads for HOGWILD.
+        # Probably the best way to do this is by moving the sample pushing
+        # to a separate thread and then just sharing the data queue
+        # but signalling the end is tricky without a non-blocking API
+        raise NotImplementedError("DataLoaderIterator cannot be pickled")
+
+    def _shutdown_workers(self):
+        if not self.shutdown:
+            self.shutdown = True
+            self.done_event.set()
+            for _ in self.workers:
+                self.index_queue.put(None)
+
+    def __del__(self):
+        if self.num_workers > 0:
+            self._shutdown_workers()
+
+
+class DataLoader(object):
+    """
+    Data loader. Combines a dataset and a sampler, and provides
+    single- or multi-process iterators over the dataset.
+    Arguments:
+        dataset (Dataset): dataset from which to load the data.
+        batch_size (int, optional): how many samples per batch to load
+            (default: 1).
+        shuffle (bool, optional): set to ``True`` to have the data reshuffled
+            at every epoch (default: False).
+        sampler (Sampler, optional): defines the strategy to draw samples from
+            the dataset. If specified, ``shuffle`` must be False.
+        batch_sampler (Sampler, optional): like sampler, but returns a batch of
+            indices at a time. Mutually exclusive with batch_size, shuffle,
+            sampler, and drop_last.
+        num_workers (int, optional): how many subprocesses to use for data
+            loading. 0 means that the data will be loaded in the main process
+            (default: 0)
+        collate_fn (callable, optional): merges a list of samples to form a mini-batch.
+        drop_last (bool, optional): set to ``True`` to drop the last incomplete batch,
+            if the dataset size is not divisible by the batch size. If False and
+            the size of dataset is not divisible by the batch size, then the last batch
+            will be smaller. (default: False)
     """
 
-    def __init__(self, size, padding=0):
-        if isinstance(size, numbers.Number):
-            self.size = (int(size), int(size))
-        else:
-            self.size = size
-        self.padding = padding
+    def __init__(self, dataset, batch_size=1, shuffle=False, sampler=None, batch_sampler=None,
+                 num_workers=0, collate_fn=default_collate, drop_last=False):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.collate_fn = collate_fn
+        self.drop_last = drop_last
 
-    def __call__(self, imgs):
-        """
-        Args:
-            img (numpy.array): Image to be cropped.
-        Returns:
-            numpy.array: Cropped image.
-        """
-        th, tw = self.size
-        h, w = imgs[0].shape[:2]
-        x1 = random.randint(0, w - tw)
-        y1 = random.randint(0, h - th)
-        for idx, img in enumerate(imgs):
-            if self.padding > 0:
-                img = cv2.copyMakeBorder(img, self.padding, self.padding,
-                                         self.padding, self.padding,
-                                         cv2.BORDER_CONSTANT, value=0)
-            # sample crop locations if not given
-            # it is necessary to keep cropping same in a video
-            img_crop = img[y1, x1, y1 + th, x1 + tw]
-            imgs[idx] = img_crop
-        return imgs
+        if batch_sampler is not None:
+            if batch_size > 1 or shuffle or sampler is not None or drop_last:
+                raise ValueError('batch_sampler is mutually exclusive with '
+                                 'batch_size, shuffle, sampler, and drop_last')
 
+        if sampler is not None and shuffle:
+            raise ValueError('sampler is mutually exclusive with shuffle')
 
-class JitterCropVideo(object):
-    """Random cropping with pre-defined set of w and h. 
-    Args:
-        padding (int or sequence, optional): Optional padding on each border
-            of the image. Default is 0, i.e no padding. If a sequence of length
-            4 is provided, it is used to pad left, top, right, bottom borders
-            respectively.
-    """
-
-    def __init__(self, padding=0, interpolation=Image.BILINEAR):
-        self.padding = padding
-        self.sample_sizes = [256, 224, 192, 168]
-        self.interpolation = interpolation
-
-    def __call__(self, img):
-        """
-        Args:
-            img (numpy.array): Image to be cropped.
-            locs (sequence, optional): crop locations computed from previous 
-                frames.
-        Returns:
-            numpy.array: Cropped image.
-        """
-        sample_w = random.choice(self.sample_sizes)
-        sample_h = random.choice(self.sample_sizes)
-        h, w = imgs[0].shape[:2]
-        x1 = random.randint(0, w - sample_w)
-        y1 = random.randint(0, h - sample_h)
-        for idx, img in enumerate(imgs):
-            if self.padding > 0:
-                img = cv2.copyMakeBorder(img, self.padding, self.padding,
-                                         self.padding, self.padding,
-                                         cv2.BORDER_CONSTANT, value=0)
-            # sample crop locations if not given
-            # it is necessary to keep cropping same in a video
-            img_crop = img[y1, x1, y1 + th, x1 + tw]
-            imgs[idx] = img_crop
-        return imgs
-
-
-class Scale(object):
-    """Rescale the input image to the given size.
-    Args:
-        size (sequence or int): Desired output size. If size is a sequence like
-            (w, h), output size will be matched to this. If size is an int,
-            smaller edge of the image will be matched to this number.
-            i.e, if height > width, then image will be rescaled to
-            (size * height / width, size)
-        interpolation (int, optional): Desired interpolation. Default is
-            ``cv2.INTER_LINEAR``
-    """
-
-    def __init__(self, size, interpolation=cv2.INTER_LINEAR):
-        assert isinstance(size, int) or (isinstance(size, collections.Iterable) and len(size) == 2)
-        self.size = size
-        self.interpolation = interpolation
-
-    def __call__(self, img):
-        """
-        Args:
-            img (numpy.array): Image to be scaled.
-        Returns:
-            numpy.array: Rescaled image.
-        """
-        if isinstance(self.size, int):
-            h, w = img.shape[:2]
-            if (w <= h and w == self.size) or (h <= w and h == self.size):
-                return img
-            if w < h:
-                ow = self.size
-                oh = int(self.size * h / w)
-                if ow < w:
-                    return cv2.resize(img, (ow, oh), cv2.INTER_AREA)
+        if batch_sampler is None:
+            if sampler is None:
+                if shuffle:
+                    sampler = RandomSampler(dataset)
                 else:
-                    return cv2.resize(img, (ow, oh))
-            else:
-                oh = self.size
-                ow = int(self.size * w / h)
-                if oh < h:
-                    return cv2.resize(img, (ow, oh), cv2.INTER_AREA)
-                else:
-                    return cv2.resize(img, (ow, oh))
-        else:
-            return cv2.resize(img, tuple(self.size))
+                    sampler = SequentialSampler(dataset)
+            batch_sampler = BatchSampler(sampler, batch_size, drop_last)
+
+        self.sampler = sampler
+        self.batch_sampler = batch_sampler
+
+    def __iter__(self):
+        return DataLoaderIter(self)
+
+    def __len__(self):
+        return len(self.batch_sampler)
