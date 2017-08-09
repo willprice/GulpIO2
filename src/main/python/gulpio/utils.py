@@ -31,7 +31,7 @@ def temp_dir_for_bursting(shm_dir_path='/dev/shm'):
     shutil.rmtree(temp_dir)
 
 
-def burst_frames_to_shm(vid_path, temp_burst_dir):
+def burst_frames_to_shm(vid_path, temp_burst_dir, frame_rate=None):
     """
     - To burst frames in a temporary directory in shared memory.
     - Directory name is chosen as random 128 bits so as to avoid clash
@@ -42,16 +42,22 @@ def burst_frames_to_shm(vid_path, temp_burst_dir):
     if not check_ffmpeg_exists():
         raise FFMPEGNotFound()
     try:
-        sh.ffmpeg('-i', vid_path,
-                  '-q:v', str(1),
-                  '-r', 8,
-                  '-f', 'image2', target_mask)
+        ffmpeg_args = [
+            '-i', vid_path,
+            '-q:v', str(1),
+            '-f', 'image2',
+            target_mask,
+        ]
+        if frame_rate:
+            ffmpeg_args.insert(2, '-r')
+            ffmpeg_args.insert(3, frame_rate)
+        sh.ffmpeg(*ffmpeg_args)
     except Exception as e:
         print(repr(e))
 
 
-def burst_video_into_frames(vid_path, temp_burst_dir):
-    burst_frames_to_shm(vid_path, temp_burst_dir)
+def burst_video_into_frames(vid_path, temp_burst_dir, frame_rate=None):
+    burst_frames_to_shm(vid_path, temp_burst_dir, frame_rate=frame_rate)
     return find_images_in_folder(temp_burst_dir, formats=['jpg'])
 
 
