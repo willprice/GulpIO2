@@ -91,7 +91,7 @@ expected_files = [
     'meta_1.gmeta',
     'meta_2.gmeta'
 ]
-assert expected_files == files 
+assert expected_files == files
 
 sizes = [os.path.getsize(os.path.join(output_dir, f)) for f in files]
 expected_sizes = [988800, 988800, 296640, 335, 22311, 22321, 6599]
@@ -141,4 +141,3 @@ assert expected_sizes == sizes
 # step 8: ungulp the videos (from the extended files) and check the result
 
 check_generated_files()
-
