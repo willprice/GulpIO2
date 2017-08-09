@@ -271,12 +271,13 @@ class TestGulpChunk(GulpChunkElement):
         self.assertFalse(output)
 
 
-class ChunkWriterElement(unittest.TestCase):
+class ChunkWriterElement(FSBase):
 
     def setUp(self):
+        super().setUp()
         self.adapter = mock.MagicMock()
         self.adapter.__len__.return_value = 1
-        self.output_folder = 'ANY_OUTPUT_FOLDER'
+        self.output_folder = os.path.join(self.temp_dir, 'ANY_OUTPUT_FOLDER')
         self.videos_per_chunk = 1
         self.chunk_writer = ChunkWriter(self.adapter,
                                         self.output_folder,
@@ -429,12 +430,13 @@ class TestChunkAppender(ChunkAppenderElement):
         self.assertEqual(3, chunk_id)
 
 
-class GulpIngestorElement(unittest.TestCase):
+class GulpIngestorElement(FSBase):
 
     @mock.patch('gulpio.adapters.AbstractDatasetAdapter')
     def setUp(self, mock_adapter):
+        super().setUp()
         self.adapter = mock_adapter
-        self.output_folder = 'ANY_OUTPUT_FOLDER'
+        self.output_folder = os.path.join(self.temp_dir, 'ANY_OUTPUT_FOLDER')
         self.videos_per_chunk = 1
         self.num_workers = 1
         self.gulp_ingestor = GulpIngestor(self.adapter,
@@ -481,12 +483,13 @@ class TestGulpIngestor(GulpIngestorElement):
         )
 
 
-class GulpAppenderElement(unittest.TestCase):
+class GulpAppenderElement(FSBase):
 
     @mock.patch('gulpio.adapters.AbstractDatasetAdapter')
     def setUp(self, mock_adapter):
+        super().setUp()
         self.adapter = mock_adapter
-        self.output_folder = 'ANY_OUTPUT_FOLDER'
+        self.output_folder = os.path.join(self.temp_dir, 'ANY_OUTPUT_FOLDER')
         self.videos_per_chunk = 1
         self.gulp_appender = GulpAppender(self.adapter,
                                           self.output_folder,
