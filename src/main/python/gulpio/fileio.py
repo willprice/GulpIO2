@@ -168,7 +168,7 @@ class GulpChunk(object):
         self.serializer.dump(self.meta_dict, self.meta_file_path)
 
     def append_meta(self, id_, meta_data):
-        if str(id_) not in self.meta_dict:
+        if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
             self.meta_dict[str(id_)] = self.default_factory()
         self.meta_dict[str(id_)]['meta_data'].append(meta_data)
 
