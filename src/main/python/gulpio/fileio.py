@@ -239,10 +239,9 @@ class ChunkAppender(object):
                 elif self.id_exists(id_):
                     print("Id '{}' exists already in gulped files".format(id_))
                 else:
-                    with gulp_file.open('wb'):
-                        gulp_file.append_meta(id_, meta_information)
-                        for frame in frames:
-                            gulp_file.write_frame(fp, id_, frame)
+                    gulp_file.append_meta(id_, meta_information)
+                    for frame in frames:
+                        gulp_file.write_frame(fp, id_, frame)
 
 
 def calculate_chunks(videos_per_chunk, num_videos):
