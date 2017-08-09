@@ -227,7 +227,7 @@ class ChunkWriter(object):
 
     def write_chunk(self, input_chunk, input_slice):
         with input_chunk.open('wb'):
-            for video in self.adapter.iter_data(slice(*input_slice)):
+            for video in self.adapter.iter_data(input_slice):
                 id_ = video['id']
                 meta_information = video['meta']
                 frames = video['frames']
