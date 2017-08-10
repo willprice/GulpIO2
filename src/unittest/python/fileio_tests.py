@@ -14,10 +14,8 @@ import unittest.mock as mock
 
 from gulpio.fileio import (GulpChunk,
                            ChunkWriter,
-                           ChunkAppender,
                            GulpIngestor,
-                           GulpAppender,
-                           calculate_chunks,
+                           calculate_chunk_slices,
                            json_serializer,
                            pickle_serializer,
                            ImgInfo,
@@ -73,30 +71,30 @@ class TestPickleSerializer(FSBase):
 class TestCalculateChunks(unittest.TestCase):
 
     def test_one_video_in_chunk(self):
-        expected = [(0, 1), (1, 2)]
-        result = calculate_chunks(1, 2)
+        expected = [slice(0, 1), slice(1, 2)]
+        result = calculate_chunk_slices(1, 2)
         self.assertEqual(expected, result)
 
     def test_two_videos_in_chunk_last_chunk_not_full(self):
-        expected = [(0, 2), (2, 3)]
-        result = calculate_chunks(2, 3)
+        expected = [slice(0, 2), slice(2, 3)]
+        result = calculate_chunk_slices(2, 3)
         self.assertEqual(expected, result)
 
     def test_two_videos_in_chunk_last_chunk_full(self):
-        expected = [(0, 2), (2, 4)]
-        result = calculate_chunks(2, 4)
+        expected = [slice(0, 2), slice(2, 4)]
+        result = calculate_chunk_slices(2, 4)
         self.assertEqual(expected, result)
 
     def test_videos_per_chunk_larger_num_videos(self):
-        expected = [(0, 2)]
-        result = calculate_chunks(100, 2)
+        expected = [slice(0, 2)]
+        result = calculate_chunk_slices(100, 2)
         self.assertEqual(expected, result)
 
     def test_no_videos_in_chunk(self):
-        self.assertRaises(AssertionError, calculate_chunks, 0, 1)
+        self.assertRaises(AssertionError, calculate_chunk_slices, 0, 1)
 
     def test_num_videos_is_zero(self):
-        self.assertRaises(AssertionError, calculate_chunks, 1, 0)
+        self.assertRaises(AssertionError, calculate_chunk_slices, 1, 0)
 
 
 class GulpChunkElement(FSBase):
