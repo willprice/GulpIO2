@@ -185,6 +185,13 @@ class TestGulpChunk(GulpChunkElement):
         expected = {'0': {'meta_data': [{'meta': 'ANY_META'}]}}
         self.assertEqual(expected, self.gulp_chunk.meta_dict)
 
+    def test_append_meta_initializes_correctly(self):
+        self.gulp_chunk.meta_dict = {}
+        self.gulp_chunk.append_meta(0, {'meta': 'ANY_META'})
+        expected = {'0': {'meta_data': [{'meta': 'ANY_META'}],
+                          'frame_info': []}}
+        self.assertEqual(expected, self.gulp_chunk.meta_dict)
+
     def test_pad_image(self):
         self.assertEqual(0, GulpChunk.pad_image(0))
         self.assertEqual(1, GulpChunk.pad_image(3))
@@ -263,7 +270,6 @@ class TestGulpChunk(GulpChunkElement):
         read_mock.assert_has_calls([mock.call('0'),
                                     mock.call('1'),
                                     mock.call('2')])
-
 
 
 class ChunkWriterElement(FSBase):
