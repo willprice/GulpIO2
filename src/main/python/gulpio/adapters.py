@@ -44,7 +44,6 @@ class Custom20BNAdapterMixin(object):
     def create_label2idx_dict(self, label_name):
         labels = sorted(set([item[label_name] for item in self.data]))
         labels2idx = {}
-        label_counter = 0
         for label_counter, label in enumerate(labels):
             labels2idx[label] = label_counter
         return labels2idx
@@ -124,7 +123,7 @@ class Custom20BNCsvJpegAdapter(AbstractDatasetAdapter,
                  shuffle=False, frame_size=-1, shm_dir_path='/dev/shm'):
         self.data = self.read_csv(csv_file)
         self.output_folder = output_folder
-        self.label2idx = self.create_label2idx_dict('label')
+        self.labels2idx = self.create_label2idx_dict('label')
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
@@ -144,7 +143,7 @@ class Custom20BNCsvJpegAdapter(AbstractDatasetAdapter,
     def get_meta(self):
         return [{'id': entry['id'],
                  'label': entry['label'],
-                 'idx': self.label2idx[entry['label']]}
+                 'idx': self.labels2idx[entry['label']]}
                 for entry in self.data]
 
     def __len__(self):
