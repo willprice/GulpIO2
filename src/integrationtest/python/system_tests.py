@@ -8,7 +8,7 @@ import shutil
 import numpy as np
 import numpy.testing as npt
 
-from gulpio.fileio import GulpDirectory
+from gulpio import GulpDirectory
 
 # step 0: setup
 

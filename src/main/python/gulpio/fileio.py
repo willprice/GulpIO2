@@ -159,7 +159,7 @@ class GulpChunk(object):
         else:
             m = "This file does not support the mode: '{}'".format(flag)
             raise NotImplementedError(m)
-        yield 
+        yield
         self.flush()
         self.fp.close()
 
@@ -168,7 +168,7 @@ class GulpChunk(object):
         self.serializer.dump(self.meta_dict, self.meta_file_path)
 
     def append_meta(self, id_, meta_data):
-        if str(id_) not in self.meta_dict:
+        if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
             self.meta_dict[str(id_)] = self.default_factory()
         self.meta_dict[str(id_)]['meta_data'].append(meta_data)
 
@@ -227,7 +227,7 @@ class ChunkWriter(object):
 
     def write_chunk(self, input_chunk, input_slice):
         with input_chunk.open('wb'):
-            for video in self.adapter.iter_data(slice(*input_slice)):
+            for video in self.adapter.iter_data(input_slice):
                 id_ = video['id']
                 meta_information = video['meta']
                 frames = video['frames']
@@ -240,10 +240,10 @@ class ChunkWriter(object):
                           .format(id_))
 
 
-def calculate_chunks(videos_per_chunk, num_videos):
+def calculate_chunk_slices(videos_per_chunk, num_videos):
     assert videos_per_chunk > 0
     assert num_videos > 0
-    return [(i, min(i + videos_per_chunk, num_videos))
+    return [slice(i, min(i + videos_per_chunk, num_videos))
             for i in range(0, num_videos, videos_per_chunk)]
 
 
@@ -258,8 +258,8 @@ class GulpIngestor(object):
 
     def __call__(self):
         ensure_output_dir_exists(self.output_folder)
-        chunk_slices = calculate_chunks(self.videos_per_chunk,
-                                        len(self.adapter))
+        chunk_slices = calculate_chunk_slices(self.videos_per_chunk,
+                                              len(self.adapter))
         gulp_directory = GulpDirectory(self.output_folder)
         new_chunks = gulp_directory.new_chunks(len(chunk_slices))
         chunk_writer = ChunkWriter(self.adapter)
