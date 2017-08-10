@@ -57,6 +57,7 @@ class Custom20BNAdapterMixin(object):
 
 class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
                                  Custom20BNAdapterMixin):
+    """ Adapter for 20BN datasets specified by JSON file and MP4 videos. """
 
     def __init__(self, json_file, folder, output_folder,
                  shuffle=False, frame_size=-1, frame_rate=8,
@@ -117,6 +118,7 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
 
 class Custom20BNCsvJpegAdapter(AbstractDatasetAdapter,
                                Custom20BNAdapterMixin):
+    """ Adapter for 20BN datasets specified by CSV file and JPEG frames. """
 
     def __init__(self, csv_file, folder, output_folder,
                  shuffle=False, frame_size=-1, shm_dir_path='/dev/shm'):
