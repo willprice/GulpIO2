@@ -193,9 +193,7 @@ class GulpChunk(object):
 
     def retrieve_meta_infos(self, id_):
         if str(id_) in self.meta_dict:
-            return ([ImgInfo(*self.meta_dict[str(id_)]['frame_info'][i])
-                     for i in range(len(self.meta_dict[str(id_)]
-                                                      ['frame_info']))],
+            return ([ImgInfo(*info) for info in self.meta_dict[str(id_)]['frame_info']],
                     dict(self.meta_dict[str(id_)]['meta_data'][0]))
 
     def read_frames(self, id_):
