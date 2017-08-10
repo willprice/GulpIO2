@@ -68,7 +68,7 @@ class GulpDirectory(object):
 
     def __init__(self, output_dir):
         self.output_dir = output_dir
-        self.all_meta_dicts = [c.meta_dict for c in self.chunks]
+        self.all_meta_dicts = [c.meta_dict for c in self.chunks()]
         self.chunk_lookup = {}
         for i, meta_dict in enumerate(self.all_meta_dicts):
             for id_ in meta_dict:
