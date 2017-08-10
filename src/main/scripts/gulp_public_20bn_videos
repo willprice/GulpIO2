@@ -32,7 +32,7 @@ Options:
 
 from docopt import docopt
 
-from gulpio.adapters import OpenSource20BNAdapter
+from gulpio.adapters import Custom20BNCsvJpegAdapter
 from gulpio.fileio import GulpIngestor
 
 if __name__ == '__main__':
@@ -48,11 +48,11 @@ if __name__ == '__main__':
     shuffle = arguments['--shuffle']
     shm_dir = arguments['--shm_dir']
 
-    adapter = OpenSource20BNAdapter(input_csv, videos_path, output_folder,
-                                    shuffle=shuffle,
-                                    frame_size=img_size,
-                                    shm_dir_path=shm_dir
-                                    )
+    adapter = Custom20BNCsvJpegAdapter(input_csv, videos_path, output_folder,
+                                       shuffle=shuffle,
+                                       frame_size=img_size,
+                                       shm_dir_path=shm_dir
+                                       )
     ingestor = GulpIngestor(adapter, output_folder, videos_per_chunk,
                             num_workers=num_workers)
     ingestor()

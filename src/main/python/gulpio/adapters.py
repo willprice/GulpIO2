@@ -39,7 +39,24 @@ class AbstractDatasetAdapter(ABC):  # pragma: no cover
         return NotImplementedError
 
 
-class Custom20BNJsonAdapter(object):
+class Custom20BNAdapterMixin(object):
+
+    def create_label2idx_dict(self, label_name):
+        labels = sorted(set([item[label_name] for item in self.data]))
+        labels2idx = {}
+        label_counter = 0
+        for label_counter, label in enumerate(labels):
+            labels2idx[label] = label_counter
+        return labels2idx
+
+    def write_label2idx_dict(self):
+        json.dump(self.labels2idx,
+                  open(os.path.join(self.output_folder, 'label2idx.json'),
+                       'w'))
+
+
+class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
+                                 Custom20BNAdapterMixin):
 
     def __init__(self, json_file, folder, output_folder,
                  shuffle=False, frame_size=-1, frame_rate=8,
@@ -52,7 +69,7 @@ class Custom20BNJsonAdapter(object):
         else:
             raise RuntimeError('Wrong data file format (.json.gz or .json)')
         self.output_folder = output_folder
-        self.labels2idx = self.create_label2idx_dict()
+        self.labels2idx = self.create_label2idx_dict('template')
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
@@ -78,19 +95,6 @@ class Custom20BNJsonAdapter(object):
                  'idx': self.labels2idx[entry['template']]}
                 for entry in self.data]
 
-    def create_label2idx_dict(self):
-        labels = sorted(set([item['template'] for item in self.data]))
-        labels2idx = {}
-        label_counter = 0
-        for label_counter, label in enumerate(labels):
-            labels2idx[label] = label_counter
-        return labels2idx
-
-    def write_label2idx_dict(self):
-        json.dump(self.labels2idx,
-                  open(os.path.join(self.output_folder, 'label2idx.json'),
-                       'w'))
-
     def __len__(self):
         return len(self.data)
 
@@ -111,13 +115,14 @@ class Custom20BNJsonAdapter(object):
             self.write_label2idx_dict()
 
 
-class OpenSource20BNAdapter(object):
+class Custom20BNCsvJpegAdapter(AbstractDatasetAdapter,
+                               Custom20BNAdapterMixin):
 
     def __init__(self, csv_file, folder, output_folder,
                  shuffle=False, frame_size=-1, shm_dir_path='/dev/shm'):
         self.data = self.read_csv(csv_file)
         self.output_folder = output_folder
-        self.label2idx = self.create_label2idx_dict()
+        self.label2idx = self.create_label2idx_dict('label')
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
@@ -140,21 +145,8 @@ class OpenSource20BNAdapter(object):
                  'idx': self.label2idx[entry['label']]}
                 for entry in self.data]
 
-    def create_label2idx_dict(self):
-        labels = sorted(set([item['label'] for item in self.data]))
-        labels2idx = {}
-        label_counter = 0
-        for label_counter, label in enumerate(labels):
-            labels2idx[label] = label_counter
-        return labels2idx
-
     def __len__(self):
         return len(self.data)
-
-    def write_label2idx_dict(self):
-        json.dump(self.labels2idx,
-                  open(os.path.join(self.output_folder, 'label2idx.json'),
-                       'w'))
 
     def iter_data(self, slice_element=None):
         slice_element = slice_element or slice(0, len(self))
@@ -168,34 +160,3 @@ class OpenSource20BNAdapter(object):
             yield result
         else:
             self.write_label2idx_dict()
-
-# class Input_from_csv(object):
-#
-#     def __init__(self, csv_file, num_labels=None):
-#         self.num_labels = num_labels
-#         self.data = self.read_input_from_csv(csv_file)
-#         self.labels2idx = self.create_labels_dict()
-#
-#     def read_input_from_csv(self, csv_file):
-#         print(" > Reading data list (csv)")
-#         return pd.read_csv(csv_file)
-#
-#     def create_labels_dict(self):
-#         labels = sorted(pd.unique(self.data['label']))
-#         if self.num_labels:
-#             assert len(labels) == self.num_labels
-#         labels2idx = {}
-#         for i, label in enumerate(labels):
-#             labels2idx[label] = i
-#         return labels2idx
-#
-#     def get_data(self):
-#         output = []
-#         for idx, row in self.data.iterrows():
-#             entry_dict = {}
-#             entry_dict['id'] = row.youtube_id
-#             entry_dict['label'] = row.label
-#             entry_dict['start_time'] = row.time_start
-#             entry_dict['end_time'] = row.time_end
-#             output.append(entry_dict)
-#         return output, self.labels2idx

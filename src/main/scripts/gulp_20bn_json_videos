@@ -34,7 +34,7 @@ Options:
 
 from docopt import docopt
 
-from gulpio.adapters import Custom20BNJsonAdapter
+from gulpio.adapters import Custom20BNJsonVideoAdapter
 from gulpio.fileio import GulpIngestor
 
 if __name__ == '__main__':
@@ -50,11 +50,13 @@ if __name__ == '__main__':
     shuffle = arguments['--shuffle']
     shm_dir = arguments['--shm_dir']
 
-    adapter = Custom20BNJsonAdapter(input_json, videos_path, output_folder,
-                                    shuffle=shuffle,
-                                    frame_size=img_size,
-                                    shm_dir_path=shm_dir
-                                    )
+    adapter = Custom20BNJsonVideoAdapter(input_json,
+                                         videos_path,
+                                         output_folder,
+                                         shuffle=shuffle,
+                                         frame_size=img_size,
+                                         shm_dir_path=shm_dir
+                                         )
     ingestor = GulpIngestor(adapter,
                             output_folder,
                             videos_per_chunk,
