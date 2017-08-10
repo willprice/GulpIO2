@@ -29,13 +29,12 @@ class ComposeVideo(object):
         self.img_transforms = img_transforms
         self.video_transforms = video_transforms
 
-    def __call__(self, imgs, is_val):
+    def __call__(self, imgs):
         for t in self.img_transforms:
             for idx, img in enumerate(imgs):
                 imgs[idx] = t(img)
         for t in self.video_transforms:
             imgs = t(imgs)
-        imgs[i] = np.unsqueeze(img, 0)
         return imgs
 
 
