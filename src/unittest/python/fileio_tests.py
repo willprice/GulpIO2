@@ -541,9 +541,9 @@ class RoundTripAdapter(AbstractDatasetAdapter):
         yield self.result2
 
 
-class TestRoundTrip(FSBase):
+class TestGulpDirectory(FSBase):
 
-    def test(self):
+    def test_round_trip(self):
         # first, write some garbage in
         adapter = RoundTripAdapter()
         output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
@@ -559,15 +559,27 @@ class TestRoundTrip(FSBase):
                                    (1, 1, 3)]
                                   ]
         expected_meta = [{'name': 'bunch of numpy arrays'}]
-        with gulp_chunk.open('rb'):
-            for i, id_ in enumerate(sorted(gulp_chunk.meta_dict.keys())):
-                frames, meta = gulp_chunk.read_frames(id_)
-                output_shapes = [numpy.array(frame).shape for frame in frames]
-                self.assertEqual(expected_meta[i], meta)
-                self.assertEqual(expected_output_shapes[i], output_shapes)
 
         with gulp_chunk.open('rb'):
             for i, (frames, meta) in enumerate(gulp_chunk.read_all()):
                 self.assertEqual(expected_meta[i], meta)
                 self.assertEqual(expected_output_shapes[i],
+                                 [numpy.array(f).shape for f in frames])
+
+        # now append/extend the gulps
+        GulpIngestor(RoundTripAdapter(), output_directory, 2, 1)()
+
+        # then, read it again
+        gulp_directory = GulpDirectory(output_directory)
+        gulp_chunk = next(gulp_directory.chunks())
+        expected_output_shapes = [(4, 1, 3),
+                                  (3, 1, 3),
+                                  (2, 1, 3),
+                                  (1, 1, 3)]
+        expected_meta = {'name': 'bunch of numpy arrays'}
+
+        with gulp_chunk.open('rb'):
+            for frames, meta in gulp_chunk.read_all():
+                self.assertEqual(expected_meta, meta)
+                self.assertEqual(expected_output_shapes,
                                  [numpy.array(f).shape for f in frames])
