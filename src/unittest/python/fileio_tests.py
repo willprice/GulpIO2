@@ -277,9 +277,7 @@ class ChunkWriterElement(FSBase):
         self.adapter.__len__.return_value = 1
         self.output_folder = os.path.join(self.temp_dir, 'ANY_OUTPUT_FOLDER')
         self.videos_per_chunk = 1
-        self.chunk_writer = ChunkWriter(self.adapter,
-                                        self.output_folder,
-                                        self.videos_per_chunk)
+        self.chunk_writer = ChunkWriter(self.adapter)
 
     def tearDown(self):
         pass
@@ -290,10 +288,6 @@ class TestChunkWriter(ChunkWriterElement):
     def test_initialization(self):
         self.assertEqual(self.adapter,
                          self.chunk_writer.adapter)
-        self.assertEqual(self.output_folder,
-                         self.chunk_writer.output_folder)
-        self.assertEqual(self.videos_per_chunk,
-                         self.chunk_writer.videos_per_chunk)
 
     @mock.patch('gulpio.fileio.GulpChunk')
     def test_write_chunk(self, mock_gulp):
@@ -303,129 +297,128 @@ class TestChunkWriter(ChunkWriterElement):
                    'frames': ['ANY_FRAME1', 'ANY_FRAME2'],
                    }
         self.adapter.iter_data = mock_iter_data
-        mock_gulp.open = mock.Mock()
-        self.chunk_writer.write_chunk((0, 1), 0)
-        mock_gulp().write_frame.assert_has_calls(
-            [mock.call(mock.call, 0, 'ANY_FRAME1'),
-             mock.call(mock.call, 0, 'ANY_FRAME2')]
+        self.chunk_writer.write_chunk(mock_gulp, slice(0, 1))
+        mock_gulp.write_frame.assert_has_calls(
+            [mock.call(0, 'ANY_FRAME1'),
+             mock.call(0, 'ANY_FRAME2')]
         )
 
 
-class ChunkAppenderElement(FSBase):
-
-    def setUp(self):
-        super().setUp()
-        self.adapter = mock.MagicMock()
-        self.adapter.__len__.return_value = 1
-        self.output_folder = os.path.join(self.temp_dir, 'ANY_OUTPUT_FOLDER')
-        os.makedirs(self.output_folder, exist_ok=True)
-        self.videos_per_chunk = 1
-        self.chunks = [(0, 1)]
-        self.chunk_appender = ChunkAppender(self.adapter,
-                                            self.output_folder,
-                                            self.videos_per_chunk)
-
-    def tearDown(self):
-        super().tearDown()
-        pass
-
-
-class TestChunkAppender(ChunkAppenderElement):
-
-    def test_initialization(self):
-        self.assertEqual(self.adapter,
-                         self.chunk_appender.adapter)
-        self.assertEqual(self.output_folder,
-                         self.chunk_appender.output_folder)
-        self.assertEqual(self.videos_per_chunk,
-                         self.chunk_appender.videos_per_chunk)
-        self.assertEqual(self.chunks,
-                         self.chunk_appender.chunks)
-
-    @mock.patch('gulpio.fileio.GulpChunk')
-    def test_append_chunk_with_new_video(self, mock_gulp):
-        def mock_iter_data(input_slice):
-            yield {'id': 0,
-                   'meta': {'meta': 'ANY_META'},
-                   'frames': ['ANY_FRAME1', 'ANY_FRAME2'],
-                   }
-        self.adapter.iter_data = mock_iter_data
-        mock_gulp.open = mock.Mock()
-        self.chunk_appender.append_chunk((0, 1))
-        mock_gulp().write_frame.assert_has_calls(
-            [mock.call(mock.call, 0, 'ANY_FRAME1'),
-             mock.call(mock.call, 0, 'ANY_FRAME2')]
-        )
-
-    @mock.patch('gulpio.fileio.GulpChunk')
-    def test_append_new_chunk_with_new_video(self, mock_gulp):
-        def mock_iter_data(input_slice):
-            yield {'id': 0,
-                   'meta': {'meta': 'ANY_META'},
-                   'frames': ['ANY_FRAME1', 'ANY_FRAME2'],
-                   }
-        self.adapter.iter_data = mock_iter_data
-        mock_gulp.open = mock.Mock()
-        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
-        self.chunk_appender.id_exists = mock.Mock()
-        self.chunk_appender.id_exists.return_value = False
-        self.chunk_appender.append_chunk((0, 1))
-        mock_gulp.assert_called_once_with(1, self.output_folder, 1)
-        mock_gulp().write_frame.assert_has_calls(
-            [mock.call(mock.call, 0, 'ANY_FRAME1'),
-             mock.call(mock.call, 0, 'ANY_FRAME2')]
-        )
-
-    @mock.patch('gulpio.fileio.GulpChunk')
-    def test_append_new_chunk_with_no_video(self, mock_gulp):
-        def mock_iter_data(input_slice):
-            yield {'id': 0,
-                   'meta': {'meta': 'ANY_META'},
-                   'frames': ['ANY_FRAME1', 'ANY_FRAME2'],
-                   }
-        self.adapter.iter_data = mock_iter_data
-        mock_gulp.open = mock.Mock()
-        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close
-        self.chunk_appender.id_exists = mock.Mock()
-        self.chunk_appender.id_exists.return_value = True
-        self.chunk_appender.append_chunk((0, 1))
-        mock_gulp.assert_called_once_with(1, self.output_folder, 1)
-        mock_gulp().write_frame.assert_has_calls([])
-
-    @mock.patch('gulpio.fileio.GulpChunk')
-    def test_id_exists(self, mock_gulp):
-        mock_gulp.open = mock.Mock()
-        mock_gulp.return_value.id_in_chunk = mock.Mock()
-        mock_gulp.return_value.id_in_chunk.return_value = False
-        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
-        output = self.chunk_appender.id_exists(0)
-        mock_gulp.assert_called_once_with('0', self.output_folder, 1)
-        self.assertFalse(output)
-
-    @mock.patch('gulpio.fileio.GulpChunk')
-    def test_id_not_exists(self, mock_gulp):
-        mock_gulp.open = mock.Mock()
-        mock_gulp.return_value.id_in_chunk = mock.Mock()
-        mock_gulp.return_value.id_in_chunk.return_value = True
-        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
-        output = self.chunk_appender.id_exists(0)
-        mock_gulp.assert_called_once_with('0', self.output_folder, 1)
-        self.assertTrue(output)
-
-    def test_find_chunk_id_next(self):
-        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
-        chunk_id = self.chunk_appender.find_chunk_id()
-        self.assertEqual(1, chunk_id)
-
-    def test_find_chunk_id_new(self):
-        chunk_id = self.chunk_appender.find_chunk_id()
-        self.assertEqual(0, chunk_id)
-
-    def test_find_chunk_id_missing(self):
-        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
-        open(os.path.join(self.output_folder, 'meta_2.gmeta'), 'w').close()
-        chunk_id = self.chunk_appender.find_chunk_id()
-        self.assertEqual(3, chunk_id)
+#class ChunkAppenderElement(FSBase):
+#
+#    def setUp(self):
+#        super().setUp()
+#        self.adapter = mock.MagicMock()
+#        self.adapter.__len__.return_value = 1
+#        self.output_folder = os.path.join(self.temp_dir, 'ANY_OUTPUT_FOLDER')
+#        os.makedirs(self.output_folder, exist_ok=True)
+#        self.videos_per_chunk = 1
+#        self.chunks = [(0, 1)]
+#        self.chunk_appender = ChunkAppender(self.adapter,
+#                                            self.output_folder,
+#                                            self.videos_per_chunk)
+#
+#    def tearDown(self):
+#        super().tearDown()
+#        pass
+#
+#
+#class TestChunkAppender(ChunkAppenderElement):
+#
+#    def test_initialization(self):
+#        self.assertEqual(self.adapter,
+#                         self.chunk_appender.adapter)
+#        self.assertEqual(self.output_folder,
+#                         self.chunk_appender.output_folder)
+#        self.assertEqual(self.videos_per_chunk,
+#                         self.chunk_appender.videos_per_chunk)
+#        self.assertEqual(self.chunks,
+#                         self.chunk_appender.chunks)
+#
+#    @mock.patch('gulpio.fileio.GulpChunk')
+#    def test_append_chunk_with_new_video(self, mock_gulp):
+#        def mock_iter_data(input_slice):
+#            yield {'id': 0,
+#                   'meta': {'meta': 'ANY_META'},
+#                   'frames': ['ANY_FRAME1', 'ANY_FRAME2'],
+#                   }
+#        self.adapter.iter_data = mock_iter_data
+#        mock_gulp.open = mock.Mock()
+#        self.chunk_appender.append_chunk((0, 1))
+#        mock_gulp().write_frame.assert_has_calls(
+#            [mock.call(mock.call, 0, 'ANY_FRAME1'),
+#             mock.call(mock.call, 0, 'ANY_FRAME2')]
+#        )
+#
+#    @mock.patch('gulpio.fileio.GulpChunk')
+#    def test_append_new_chunk_with_new_video(self, mock_gulp):
+#        def mock_iter_data(input_slice):
+#            yield {'id': 0,
+#                   'meta': {'meta': 'ANY_META'},
+#                   'frames': ['ANY_FRAME1', 'ANY_FRAME2'],
+#                   }
+#        self.adapter.iter_data = mock_iter_data
+#        mock_gulp.open = mock.Mock()
+#        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
+#        self.chunk_appender.id_exists = mock.Mock()
+#        self.chunk_appender.id_exists.return_value = False
+#        self.chunk_appender.append_chunk((0, 1))
+#        mock_gulp.assert_called_once_with(1, self.output_folder, 1)
+#        mock_gulp().write_frame.assert_has_calls(
+#            [mock.call(mock.call, 0, 'ANY_FRAME1'),
+#             mock.call(mock.call, 0, 'ANY_FRAME2')]
+#        )
+#
+#    @mock.patch('gulpio.fileio.GulpChunk')
+#    def test_append_new_chunk_with_no_video(self, mock_gulp):
+#        def mock_iter_data(input_slice):
+#            yield {'id': 0,
+#                   'meta': {'meta': 'ANY_META'},
+#                   'frames': ['ANY_FRAME1', 'ANY_FRAME2'],
+#                   }
+#        self.adapter.iter_data = mock_iter_data
+#        mock_gulp.open = mock.Mock()
+#        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close
+#        self.chunk_appender.id_exists = mock.Mock()
+#        self.chunk_appender.id_exists.return_value = True
+#        self.chunk_appender.append_chunk((0, 1))
+#        mock_gulp.assert_called_once_with(1, self.output_folder, 1)
+#        mock_gulp().write_frame.assert_has_calls([])
+#
+#    @mock.patch('gulpio.fileio.GulpChunk')
+#    def test_id_exists(self, mock_gulp):
+#        mock_gulp.open = mock.Mock()
+#        mock_gulp.return_value.id_in_chunk = mock.Mock()
+#        mock_gulp.return_value.id_in_chunk.return_value = False
+#        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
+#        output = self.chunk_appender.id_exists(0)
+#        mock_gulp.assert_called_once_with('0', self.output_folder, 1)
+#        self.assertFalse(output)
+#
+#    @mock.patch('gulpio.fileio.GulpChunk')
+#    def test_id_not_exists(self, mock_gulp):
+#        mock_gulp.open = mock.Mock()
+#        mock_gulp.return_value.id_in_chunk = mock.Mock()
+#        mock_gulp.return_value.id_in_chunk.return_value = True
+#        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
+#        output = self.chunk_appender.id_exists(0)
+#        mock_gulp.assert_called_once_with('0', self.output_folder, 1)
+#        self.assertTrue(output)
+#
+#    def test_find_chunk_id_next(self):
+#        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
+#        chunk_id = self.chunk_appender.find_chunk_id()
+#        self.assertEqual(1, chunk_id)
+#
+#    def test_find_chunk_id_new(self):
+#        chunk_id = self.chunk_appender.find_chunk_id()
+#        self.assertEqual(0, chunk_id)
+#
+#    def test_find_chunk_id_missing(self):
+#        open(os.path.join(self.output_folder, 'meta_0.gmeta'), 'w').close()
+#        open(os.path.join(self.output_folder, 'meta_2.gmeta'), 'w').close()
+#        chunk_id = self.chunk_appender.find_chunk_id()
+#        self.assertEqual(3, chunk_id)
 
 
 class GulpIngestorElement(FSBase):
