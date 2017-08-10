@@ -8,7 +8,7 @@ from gulpio.transforms import UnitNorm
 from gulpio.transforms import CenterCrop
 from gulpio.transforms import RandomCropVideo
 from gulpio.transforms import JitterCropVideo
-from gulpio.transforms import ComposeVideo
+from gulpio.transforms import ComposeVideo, Compose
 
 
 
@@ -124,4 +124,16 @@ class TestTransforms(unittest.TestCase):
         compose = ComposeVideo(img_transforms, video_transforms)
         vid = self._video(10)
         vid = compose(vid)
+        compose = ComposeVideo()
+        vid = self._video(10)
+        vid = compose(vid)
+
+    def test_compose(self):
+        transforms = [CenterCrop(30)]
+        compose = Compose(transforms) 
+        img = self._img()
+        img = compose(img)
+        compose = ComposeVideo()
+        img = self._img()
+        img = compose(img)
 

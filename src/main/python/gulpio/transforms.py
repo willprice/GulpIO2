@@ -9,6 +9,25 @@ import cv2
 from PIL import Image, ImageOps
 
 
+class Compose(object):
+    r"""Composes several transforms together. It is for image problems
+
+    Args:
+        transforms (List[Transform]): list of transforms to compose.
+
+    Example:
+        >>> transforms = [transforms.Normalize()]
+        >>> transforms.Compose(transforms)
+    """
+
+    def __init__(self, transforms):
+        self.transforms = transforms
+
+    def __call__(self, img):
+        for t in self.transforms:
+            img = t(img)
+        return img
+
 class ComposeVideo(object):
     r"""Composes several transforms together. It takes two lists of
     transformations. One list is for image transformations, and the other one
@@ -25,7 +44,7 @@ class ComposeVideo(object):
         >>> transforms.ComposeVideo(img_transforms, video_transforms)
     """
 
-    def __init__(self, img_transforms, video_transforms):
+    def __init__(self, img_transforms=[], video_transforms=[]):
         self.img_transforms = img_transforms
         self.video_transforms = video_transforms
 
