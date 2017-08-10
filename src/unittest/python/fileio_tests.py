@@ -16,6 +16,7 @@ import unittest.mock as mock
 from gulpio.fileio import (GulpChunk,
                            ChunkWriter,
                            GulpIngestor,
+                           GulpDirectory,
                            calculate_chunk_slices,
                            json_serializer,
                            pickle_serializer,
@@ -543,28 +544,30 @@ class RoundTripAdapter(AbstractDatasetAdapter):
 class TestRoundTrip(FSBase):
 
     def test(self):
+        # first, write some garbage in
         adapter = RoundTripAdapter()
         output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
         ingestor = GulpIngestor(adapter, output_directory, 2, 1)
         ingestor()
-        gc = GulpChunk(0, output_directory, 1)
+
+        # then, read it and make sure the garbage came back out
+        gulp_directory = GulpDirectory(output_directory)
+        gulp_chunk = next(gulp_directory.chunks())
         expected_output_shapes = [[(4, 1, 3),
                                    (3, 1, 3),
                                    (2, 1, 3),
                                    (1, 1, 3)]
                                   ]
         expected_meta = [{'name': 'bunch of numpy arrays'}]
-        with gc.open('rb') as ch_p:
-            for i, id_ in enumerate(sorted(gc.meta_dict.keys())):
-                frames, meta = gc.read_frames(ch_p, id_)
+        with gulp_chunk.open('rb'):
+            for i, id_ in enumerate(sorted(gulp_chunk.meta_dict.keys())):
+                frames, meta = gulp_chunk.read_frames(id_)
                 output_shapes = [numpy.array(frame).shape for frame in frames]
                 self.assertEqual(expected_meta[i], meta)
                 self.assertEqual(expected_output_shapes[i], output_shapes)
 
-        with gc.open('rb') as ch_p:
-            chunk_element = gc.read_chunk(ch_p)
-            for i, (frames_, meta_) in enumerate(chunk_element):
-                self.assertEqual(expected_meta[i], meta_)
+        with gulp_chunk.open('rb'):
+            for i, (frames, meta) in enumerate(gulp_chunk.read_all()):
+                self.assertEqual(expected_meta[i], meta)
                 self.assertEqual(expected_output_shapes[i],
-                                 [numpy.array(frame).shape
-                                  for frame in frames_])
+                                 [numpy.array(f).shape for f in frames])
