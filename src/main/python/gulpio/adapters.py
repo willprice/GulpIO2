@@ -117,6 +117,7 @@ class OpenSource20BNAdapter(object):
                  shuffle=False, frame_size=-1, shm_dir_path='/dev/shm'):
         self.data = self.read_csv(csv_file)
         self.output_folder = output_folder
+        self.label2idx = self.create_label2idx_dict()
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
@@ -145,13 +146,15 @@ class OpenSource20BNAdapter(object):
         label_counter = 0
         for label_counter, label in enumerate(labels):
             labels2idx[label] = label_counter
-        json.dump(labels2idx,
-                  open(os.path.join(self.output_folder, 'label2idx.json'),
-                       'w'))
         return labels2idx
 
     def __len__(self):
         return len(self.data)
+
+    def write_label2idx_dict(self):
+        json.dump(self.labels2idx,
+                  open(os.path.join(self.output_folder, 'label2idx.json'),
+                       'w'))
 
     def iter_data(self, slice_element=None):
         slice_element = slice_element or slice(0, len(self))
@@ -164,7 +167,7 @@ class OpenSource20BNAdapter(object):
                       'id': meta['id']}
             yield result
         else:
-            self.label2idx = self.create_label2idx_dict()
+            self.write_label2idx_dict()
 
 # class Input_from_csv(object):
 #
