@@ -461,19 +461,14 @@ class TestGulpIngestor(GulpIngestorElement):
         executor_mock = mock.Mock()
         executor_mock.map.return_value = []
         mock_process_pool.return_value.__enter__.return_value = executor_mock
-
-        mock_chunk_writer.return_value.__len__.return_value = 2
-        mock_chunk_writer.return_value.chunks = [(0, 1), (1, 2)]
-
+        self.gulp_ingestor.adapter.__len__.return_value = 2
         self.gulp_ingestor()
-        mock_chunk_writer.assert_called_once_with(self.adapter,
-                                                  self.output_folder,
-                                                  self.videos_per_chunk,
-                                                  )
+        mock_chunk_writer.assert_called_once_with(self.adapter)
+
         executor_mock.map.assert_called_once_with(
             mock_chunk_writer.return_value.write_chunk,
-            [(0, 1), (1, 2)],
-            range(2),
+            mock.ANY,
+            [slice(0, 1), slice(1, 2)],
         )
 
 
