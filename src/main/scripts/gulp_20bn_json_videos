@@ -8,7 +8,8 @@ data are video files.
 Usage:
     gulp_20bn_json_videos [--videos_per_chunk <videos_per_chunk>]
                           [--num_workers <num_workers>]
-                          [--image_size <image_size>]
+                          [--frame_size <frame_size>]
+                          [--frame_rate <frame_rate>]
                           [--shuffle]
                           [--extend]
                           [--shm_dir <shm_dir>]
@@ -26,7 +27,8 @@ Options:
     --version                               Show version.
     --videos_per_chunk=<videos_per_chunk>   Number of videos in one chunk [default: 100]
     --num_workers=<num_workers>             Number of parallel processes [default: 4]
-    --image_size=<image_size>               Size of smaller edge of resized frames [default: -1]
+    --frame_size=<frame_size>               Size of smaller edge of resized frames [default: -1]
+    --frame_rate=<frame_rate>               Frame rate when bursting videos [default: 8]
     --shuffle                               Shuffle the dataset before ingestion
     --extend                                Extend Gulps by further files
     --shm_dir=<shm_dir>                     Temporary directory for bursting frames [default: /dev/shm]
@@ -46,7 +48,8 @@ if __name__ == '__main__':
     output_folder = arguments['<output_directory>']
     videos_per_chunk = int(arguments['--videos_per_chunk'])
     num_workers = int(arguments['--num_workers'])
-    img_size = int(arguments['--image_size'])
+    frame_size = int(arguments['--frame_size'])
+    frame_rate = int(arguments['--frame_rate'])
     shuffle = arguments['--shuffle']
     shm_dir = arguments['--shm_dir']
 
@@ -54,8 +57,9 @@ if __name__ == '__main__':
                                          videos_path,
                                          output_folder,
                                          shuffle=shuffle,
-                                         frame_size=img_size,
-                                         shm_dir_path=shm_dir
+                                         frame_size=frame_size,
+                                         frame_rate=frame_rate,
+                                         shm_dir_path=shm_dir,
                                          )
     ingestor = GulpIngestor(adapter,
                             output_folder,
