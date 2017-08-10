@@ -53,7 +53,7 @@ that we use internally to gulp our video datasets.
 In order to read from the gulps, you can let yourself be inspired by the
 following snippet:
 
-.. code::
+.. code:: python
 
     # import the main interface for reading
     from gulpio import GulpDirectory
