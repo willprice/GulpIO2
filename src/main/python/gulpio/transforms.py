@@ -150,8 +150,49 @@ class CenterCrop(object):
         return img[y1 : y1 + th, x1 : x1 + tw]
 
 
-class RandomCropVideo(object):
+class RandomCrop(object):
     """Crop the given image at a random location.
+    Args:
+        size (sequence or int): Desired output size of the crop. If size is an
+            int instead of sequence like (w, h), a square crop (size, size) is
+            made.
+        padding (int or sequence, optional): Optional padding on each border
+            of the image. Default is 0, i.e no padding. If a sequence of length
+            4 is provided, it is used to pad left, top, right, bottom borders
+            respectively.
+    """
+
+    def __init__(self, size, padding=0):
+        if isinstance(size, numbers.Number):
+            self.size = (int(size), int(size))
+        else:
+            self.size = size
+        self.padding = padding
+
+    def __call__(self, img):
+        """
+        Args:
+            img (numpy.array): Image to be cropped.
+        Returns:
+            numpy.array: Cropped image.
+        """
+        th, tw = self.size
+        h, w = img.shape[:2]
+        x1 = random.randint(0, w - tw)
+        y1 = random.randint(0, h - th)
+        if self.padding > 0:
+            img = cv2.copyMakeBorder(img, self.padding, self.padding,
+                                     self.padding, self.padding,
+                                     cv2.BORDER_CONSTANT, value=0)
+        # sample crop locations if not given
+        # it is necessary to keep cropping same in a video
+        img_crop = img[y1:y1+th, x1:x1+tw]
+        return img_crop
+
+
+class RandomCropVideo(object):
+    """Crop the given video frames at a random location. Crop location is the
+    same for all the frames.
     Args:
         size (sequence or int): Desired output size of the crop. If size is an
             int instead of sequence like (w, h), a square crop (size, size) is
@@ -190,6 +231,42 @@ class RandomCropVideo(object):
             img_crop = img[y1:y1+th, x1:x1+tw]
             imgs[idx] = img_crop
         return imgs
+
+
+class JitterCrop(object):
+    """Random cropping with pre-defined set of w and h. 
+    Args:
+        sample_sizes (sequence, optional): possible crop sizes. 
+        padding (int or sequence, optional): Optional padding on each border
+            of the image. Default is 0, i.e no padding. If a sequence of length
+            4 is provided, it is used to pad left, top, right, bottom borders
+            respectively.
+    """
+
+    def __init__(self, sample_sizes=[256, 224, 192, 168], padding=0):
+        self.padding = padding
+        self.sample_sizes = sample_sizes
+
+    def __call__(self, imgs):
+        """
+        Args:
+            img (numpy.array): Image to be cropped.
+        Returns:
+            numpy.array: Cropped image.
+        """
+        sample_w = random.choice(self.sample_sizes)
+        sample_h = random.choice(self.sample_sizes)
+        h, w = imgs[0].shape[:2]
+        x1 = random.randint(0, w - sample_w)
+        y1 = random.randint(0, h - sample_h)
+        if self.padding > 0:
+            img = cv2.copyMakeBorder(img, self.padding, self.padding,
+                                     self.padding, self.padding,
+                                     cv2.BORDER_CONSTANT, value=0)
+        # sample crop locations if not given
+        # it is necessary to keep cropping same in a video
+        img_crop = img[y1:y1+sample_h, x1:x1+sample_w]
+        return img_crop
 
 
 class JitterCropVideo(object):

@@ -6,8 +6,8 @@ from gulpio.transforms import RandHorFlipVideo
 from gulpio.transforms import Normalize
 from gulpio.transforms import UnitNorm
 from gulpio.transforms import CenterCrop
-from gulpio.transforms import RandomCropVideo
-from gulpio.transforms import JitterCropVideo
+from gulpio.transforms import RandomCropVideo, RandomCrop
+from gulpio.transforms import JitterCropVideo, JitterCrop
 from gulpio.transforms import ComposeVideo, Compose
 
 
@@ -89,6 +89,25 @@ class TestTransforms(unittest.TestCase):
 
 
     def test_randomcrop(self):
+        img = self._img()
+        crop = RandomCrop(30)
+        img = crop(img)
+        assert img.shape[0] == 30 and img.shape[1] == 30
+        assert img.ndim == 3
+
+
+    def test_jittercropvideo(self):
+        img = self._img()
+        crop = JitterCrop([30, 20])
+        video = crop(img)
+        print(img.shape)
+        assert (img.shape[0] + img.shape[1] == 60) or \
+        (img.shape[0] + img.shape[1] == 50) or \
+        (img.shape[0] + img.shape[1] == 40)
+        assert img[0].ndim == 3
+
+
+    def test_randomcropvideo(self):
         video = self._video(10)
         crop = RandomCropVideo(30)
         video = crop(video)
@@ -97,7 +116,7 @@ class TestTransforms(unittest.TestCase):
         self._check_video_size(video)
 
 
-    def test_jittercrop(self):
+    def test_jittercropvideo(self):
         video = self._video(10)
         crop = JitterCropVideo([30, 20])
         video = crop(video)
