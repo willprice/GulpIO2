@@ -1,7 +1,6 @@
 import os
 import tempfile
 import shutil
-import json
 
 import numpy as np
 

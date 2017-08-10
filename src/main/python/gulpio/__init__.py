@@ -1,3 +1,3 @@
 __version__ = '$version'
 
-from .fileio import GulpDirectory
+from .fileio import GulpDirectory  # noqa

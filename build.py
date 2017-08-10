@@ -11,7 +11,7 @@ use_plugin("filter_resources")
 use_plugin('python.integrationtest')
 
 name = "gulpio"
-default_task = "publish"
+default_task = ["install_dependencies", "analyze", "publish"]
 version = count_travis()
 summary = "Binary storage format for deep learning on videos."
 authors = [Author("Eren Golge", "eren.golge@twentybn.com"),
@@ -37,3 +37,7 @@ def set_properties(project):
     project.get_property('coverage_exceptions').extend(
         ['gulpio.adapters'])
     project.set_property('integrationtest_inherit_environment', True)
+    project.set_property('flake8_include_scripts', True)
+    project.set_property('flake8_include_test_sources', True)
+    project.set_property('flake8_break_build', True)
+
