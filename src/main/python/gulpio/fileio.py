@@ -215,7 +215,7 @@ class GulpChunk(object):
         return frames, meta_data
 
     def read_all(self):
-        for i, id_ in enumerate(self.meta_dict.keys()):
+        for id_ in self.meta_dict.keys():
             frames, meta = self.read_frames(id_)
             yield frames, meta
 

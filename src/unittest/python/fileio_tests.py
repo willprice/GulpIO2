@@ -8,6 +8,7 @@ from collections import OrderedDict
 from io import BytesIO
 
 import numpy
+import numpy.testing as npt
 
 import unittest
 import unittest.mock as mock
@@ -238,40 +239,30 @@ class TestGulpChunk(GulpChunkElement):
             output = self.gulp_chunk.id_in_chunk(1)
         self.assertFalse(output)
 
-#     def test_close_when_open(self):
-#         f_mock = mock.Mock()
-#         flush_mock = mock.Mock()
-#         self.gulp_chunk.f = f_mock
-#         self.gulp_chunk.flush = flush_mock
-#         self.gulp_chunk.is_open = True
-#         self.gulp_chunk.close()
-#         self.assertEqual(self.gulp_chunk.is_open, False)
-#         f_mock.close.assert_called_once_with()
-#         flush_mock.assert_called_once_with()
-#
-#     def test_close_when_closed(self):
-#         self.gulp_chunk.is_open = False
-#         self.gulp_chunk.close()
-#
-#    def test_initialize_filenames(self):
-#        expected = (self.gulp_chunk.output_path + '/data_0.gulp',
-#                    self.gulp_chunk.output_path + '/meta_0.gmeta')
-#        outcome = self.gulp_chunk.initialize_filenames(0)
-#        self.assertEqual(expected, outcome)
+    def test_read_frames(self):
+        # use 'write_frame' to write a single image
+        self.gulp_chunk.meta_dict = OrderedDict()
+        self.gulp_chunk.fp = BytesIO()
+        image = numpy.ones((3, 3, 3), dtype='uint8')
+        self.gulp_chunk.write_frame(0, image)
+        self.gulp_chunk.meta_dict['0']['meta_data'].append({})
 
-#     def test_read_frame(self):
-#         # use 'write_frame' to write a single image
-#         bio = BytesIO()
-#         self.gulp_chunk.meta_dict = {'0': {'meta_data': [],
-#                                               'frame_info': []}}
-#         fp = bio
-#         image = numpy.ones((3, 3, 3), dtype='uint8')
-#         self.gulp_chunk.write_frame(fp, 0, image)
-#
-#         # recover the single frame using 'read'
-#         info = self.gulp_chunk.meta_dict['0']['frame_info'][0]
-#         result = self.gulp_chunk.read_frame(fp, info)
-#         npt.assert_array_equal(image, numpy.array(result))
+        # recover the single frame using 'read'
+        frames, meta = self.gulp_chunk.read_frames('0')
+        npt.assert_array_equal(image, numpy.array(frames[0]))
+        self.assertEqual({}, meta)
+
+    def test_read_all(self):
+        read_mock = mock.Mock()
+        read_mock.return_value = [], []
+        self.gulp_chunk.meta_dict = OrderedDict((('0', {}),
+                                                 ('1', {}),
+                                                 ('2', {})))
+        self.gulp_chunk.read_frames = read_mock
+        [_ for _ in self.gulp_chunk.read_all()]
+        read_mock.assert_has_calls([mock.call('0'),
+                                    mock.call('1'),
+                                    mock.call('2')])
 
 
 
