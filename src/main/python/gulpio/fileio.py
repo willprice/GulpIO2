@@ -127,9 +127,6 @@ class GulpDirectory(object):
             self.output_dir, 'meta_{}.gmeta'.format(chunk_id))
         return data_file_path, meta_file_path
 
-#    def pad_chunk_no(self, chunk_no):
-#        return str(chunk_no).zfill(len(str(self.expected_chunks)))
-
 
 class GulpChunk(object):
 
