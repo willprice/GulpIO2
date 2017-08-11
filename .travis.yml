@@ -24,7 +24,6 @@ install:
   - pip install -U pip setuptools
   - pip install --pre pybuilder
   - pyb -X install_dependencies
-  - export PATH="src/main/scripts/:$PATH"
 
 script:
   - pyb -X
