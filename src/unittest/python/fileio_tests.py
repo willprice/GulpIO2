@@ -7,7 +7,7 @@ import pickle
 from collections import OrderedDict
 from io import BytesIO
 
-import numpy
+import numpy as np
 import numpy.testing as npt
 
 import unittest
@@ -200,7 +200,7 @@ class TestGulpChunk(GulpChunkElement):
                                            'frame_info': [[1, 2, 3]]}}
         self.gulp_chunk.fp = bio
         with mock.patch('cv2.imencode') as imencode_mock:
-            imencode_mock.return_value = '', numpy.ones((1,), dtype='uint8')
+            imencode_mock.return_value = '', np.ones((1,), dtype='uint8')
             self.gulp_chunk.write_frame(0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {'0': {'meta_data': [{'test': 'ANY'}],
@@ -212,7 +212,7 @@ class TestGulpChunk(GulpChunkElement):
         self.gulp_chunk.meta_dict = {}
         self.gulp_chunk.fp = bio
         with mock.patch('cv2.imencode') as imencode_mock:
-            imencode_mock.return_value = '', numpy.ones((1,), dtype='uint8')
+            imencode_mock.return_value = '', np.ones((1,), dtype='uint8')
             self.gulp_chunk.write_frame(0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {'0': {'meta_data': [],
@@ -245,13 +245,13 @@ class TestGulpChunk(GulpChunkElement):
         # use 'write_frame' to write a single image
         self.gulp_chunk.meta_dict = OrderedDict()
         self.gulp_chunk.fp = BytesIO()
-        image = numpy.ones((3, 3, 3), dtype='uint8')
+        image = np.ones((3, 3, 3), dtype='uint8')
         self.gulp_chunk.write_frame(0, image)
         self.gulp_chunk.meta_dict['0']['meta_data'].append({})
 
         # recover the single frame using 'read'
         frames, meta = self.gulp_chunk.read_frames('0')
-        npt.assert_array_equal(image, numpy.array(frames[0]))
+        npt.assert_array_equal(image, np.array(frames[0]))
         self.assertEqual({}, meta)
 
     def test_read_all(self):
@@ -361,10 +361,10 @@ class RoundTripAdapter(AbstractDatasetAdapter):
         self.result2 = {
             'meta': {'name': 'bunch of numpy arrays'},
             'frames': [
-                numpy.ones((4, 1, 3), dtype='uint8'),
-                numpy.ones((3, 1, 3), dtype='uint8'),
-                numpy.ones((2, 1, 3), dtype='uint8'),
-                numpy.ones((1, 1, 3), dtype='uint8'),
+                np.ones((4, 1, 3), dtype='uint8'),
+                np.ones((3, 1, 3), dtype='uint8'),
+                np.ones((2, 1, 3), dtype='uint8'),
+                np.ones((1, 1, 3), dtype='uint8'),
             ],
             'id': 1,
         }
@@ -418,4 +418,4 @@ class TestGulpDirectory(FSBase):
             for frames, meta in gulp_chunk.read_all():
                 self.assertEqual(expected_meta, meta)
                 self.assertEqual(expected_output_shapes,
-                                 [numpy.array(f).shape for f in frames])
+                                 [np.array(f).shape for f in frames])
