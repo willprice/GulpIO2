@@ -125,7 +125,7 @@ class TestGulpChunk(GulpChunkElement):
         self.assertEqual(self.mock_json_serializer,
                          self.gulp_chunk.serializer)
 
-        self.assertEqual(self.gulp_chunk.meta_dict, None)
+        self.assertEqual(self.gulp_chunk.meta_dict, OrderedDict())
         self.assertEqual(self.gulp_chunk.fp, None)
 
     def test_get_or_create_dict_not_exists(self):
@@ -141,28 +141,22 @@ class TestGulpChunk(GulpChunkElement):
         self.assertEqual(expected, self.gulp_chunk.default_factory())
 
     def test_open_with_wb(self):
-        self.gulp_chunk.get_or_create_dict = mock.Mock()
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
             with self.gulp_chunk.open('wb'):
                 m.assert_called_once_with(
                     self.gulp_chunk.data_file_path, 'wb')
-                self.gulp_chunk.get_or_create_dict.assert_called_once_with()
 
     def test_open_with_rb(self):
-        self.gulp_chunk.get_or_create_dict = mock.Mock()
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
             with self.gulp_chunk.open('rb'):
                 m.assert_called_once_with(
                     self.gulp_chunk.data_file_path, 'rb')
-                self.gulp_chunk.get_or_create_dict.assert_called_once_with()
 
     def test_open_with_ab(self):
-        self.gulp_chunk.get_or_create_dict = mock.Mock()
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
             with self.gulp_chunk.open('ab'):
                 m.assert_called_once_with(
                     self.gulp_chunk.data_file_path, 'ab')
-                self.gulp_chunk.get_or_create_dict.assert_called_once_with()
 
     def test_open_unknown_flag(self):
         get_mock = mock.Mock()

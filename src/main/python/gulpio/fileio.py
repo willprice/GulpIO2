@@ -146,7 +146,7 @@ class GulpChunk(object):
         self.serializer = serializer
         self.data_file_path = data_file_path
         self.meta_file_path = meta_file_path
-        self.meta_dict = None
+        self.meta_dict = self.get_or_create_dict()
         self.fp = None
 
     def get_or_create_dict(self):
@@ -161,7 +161,6 @@ class GulpChunk(object):
 
     @contextmanager
     def open(self, flag='rb'):
-        self.meta_dict = self.get_or_create_dict()
         if flag in ['wb', 'rb', 'ab']:
             self.fp = open(self.data_file_path, flag)
         else:
