@@ -4,12 +4,14 @@ import os
 import json
 import csv
 import gzip
+import glob
 from abc import ABC, abstractmethod
 
 
 from .utils import (get_single_video_path,
                     find_images_in_folder,
                     resize_images,
+                    resize_by_short_edge,
                     burst_video_into_frames,
                     temp_dir_for_bursting,
                     )
@@ -168,6 +170,81 @@ class OpenSource20BNAdapter(object):
             yield result
         else:
             self.write_label2idx_dict()
+
+
+class ImageFolderAdapter():
+    r"""Parse the given folder assuming each subfolder is a category and it
+    includes the category images.
+    """
+
+    def __init__(self, folder, output_folder,
+                 file_extensions=['.jpg'], shuffle=False,
+                 img_size=-1, shm_dir_path='/dev/shm'):
+        self.file_extensions = file_extensions
+        self.data = self.parse_folder(folder)
+        self.output_folder = output_folder
+        self.label2idx = self.create_label2idx_dict()
+        self.folder = folder
+        self.shuffle = shuffle
+        self.img_size = img_size
+        self.shm_dir_path = shm_dir_path
+        self.all_meta = self.get_meta()
+        if self.shuffle:
+            random.shuffle(self.all_meta)
+
+    def parse_folder(self, folder):
+        img_paths = []
+        for extension in self.file_extensions:
+            search_pattern = os.path.join(folder+"**/*{}".format(extension))
+            paths = glob.glob(search_pattern, recursive=True)
+        img_paths.extend(paths)
+        img_paths = sorted(img_paths)
+        data = []
+        for img_path in img_paths:
+            path = os.path.dirname(img_path)
+            category_name = path.split('/')[-1]
+            img_name = os.path.basename(img_path)
+            category_name = category_name
+            data.append({'id': img_name, 'label': category_name, 'path': path})
+        return data
+
+    def get_meta(self):
+        return [{'id': entry['id'],
+                 'label': entry['label'],
+                 'path': entry['path'],
+                 'idx': self.label2idx[entry['label']]}
+                for entry in self.data]
+
+    def create_label2idx_dict(self):
+        labels = sorted(set([item['label'] for item in self.data]))
+        labels2idx = {}
+        label_counter = 0
+        for label_counter, label in enumerate(labels):
+            labels2idx[label] = label_counter
+        return labels2idx
+
+    def __len__(self):
+        return len(self.data)
+
+    def write_label2idx_dict(self):
+        json.dump(self.labels2idx,
+                  open(os.path.join(self.output_folder, 'label2idx.json'),
+                       'w'))
+
+    def iter_data(self, slice_element=None):
+        slice_element = slice_element or slice(0, len(self))
+        for meta in self.all_meta[slice_element]:
+            img_path = os.path.join(self.folder, str(meta['path']),
+                                    str(meta['id']))
+            print(img_path)
+            img = resize_by_short_edge(img_path, self.img_size)
+            result = {'meta': meta,
+                      'image': img,
+                      'id': meta['id']}
+            yield result
+        else:
+            self.write_label2idx_dict()
+
 
 # class Input_from_csv(object):
 #

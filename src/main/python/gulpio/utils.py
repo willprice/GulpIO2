@@ -70,6 +70,10 @@ def resize_images(imgs, img_size=-1):
 
 
 def resize_by_short_edge(img, size):
+    if isinstance(img, str) or isinstance(img, unicode):
+        img = cv2.imread(img)
+    if size < 1:
+        return img
     h, w = img.shape[0], img.shape[1]
     if h < w:
         scale = w / float(h)
