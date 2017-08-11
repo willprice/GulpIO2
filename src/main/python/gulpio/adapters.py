@@ -239,7 +239,7 @@ class ImageFolderAdapter():
             print(img_path)
             img = resize_by_short_edge(img_path, self.img_size)
             result = {'meta': meta,
-                      'image': img,
+                      'frames': [img],
                       'id': meta['id']}
             yield result
         else:
