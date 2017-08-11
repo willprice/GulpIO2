@@ -21,17 +21,30 @@ black_frame = np.zeros((100, 100, 3))
 white_frame = np.ones((100, 100, 3)) * 255
 
 
+def check_frames(frames):
+    for i, f in enumerate(frames):
+        arr = np.array(f)
+        if i % 2 != 0:
+            npt.assert_array_equal(white_frame, arr)
+        else:
+            npt.assert_array_equal(black_frame, arr)
+
+
 def check_generated_files():
+    # check all frames
     gulp_directory = GulpDirectory(output_dir)
     for chunk in gulp_directory.chunks():
         with chunk.open('rb'):
             for frames, meta in chunk.read_all():
-                for i, f in enumerate(frames):
-                    arr = np.array(f)
-                    if i % 2 != 0:
-                        npt.assert_array_equal(white_frame, arr)
-                    else:
-                        npt.assert_array_equal(black_frame, arr)
+                check_frames(frames)
+
+    # check random access for a few videos
+    frames, meta = gulp_directory[0]
+    check_frames(frames)
+    frames, meta = gulp_directory[11]
+    check_frames(frames)
+    frames, meta = gulp_directory[21]
+    check_frames(frames)
 
 
 # step 1: generate the videos and JSON file
@@ -54,7 +67,7 @@ sh.ffmpeg('-t', '10',
 json_content = []
 
 for i in range(25):
-    vid_id = str(i).zfill(3)
+    vid_id = str(i)
     os.makedirs(os.path.join(temp_dir, vid_id))
     sh.cp('source.mp4',
           os.path.join(vid_id, 'source_' + vid_id + '.mp4'),
@@ -90,8 +103,7 @@ expected_files = [
 assert expected_files == files
 
 sizes = [os.path.getsize(os.path.join(output_dir, f)) for f in files]
-expected_sizes = [659200, 659200, 197760, 335, 15111, 15121, 4439]
-
+expected_sizes = [659200, 659200, 197760, 302, 15059, 15083, 4430]
 print(expected_sizes, sizes)
 assert expected_sizes == sizes
 
@@ -130,7 +142,7 @@ expected_files = [
 assert expected_files == files
 
 sizes = [os.path.getsize(os.path.join(output_dir, f)) for f in files]
-expected_sizes = [659200, 659200, 197760, 131840, 28, 15111, 15121, 4439, 2911]
+expected_sizes = [659200, 659200, 197760, 131840, 26, 15059, 15083, 4430, 2905]
 print(expected_sizes, sizes)
 assert expected_sizes == sizes
 
