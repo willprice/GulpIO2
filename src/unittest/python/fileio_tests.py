@@ -395,12 +395,23 @@ class TestGulpDirectory(FSBase):
                                    (1, 1, 3)]
                                   ]
         expected_meta = [{'name': 'bunch of numpy arrays'}]
-
         with gulp_chunk.open('rb'):
             for i, (frames, meta) in enumerate(gulp_chunk.read_all()):
                 self.assertEqual(expected_meta[i], meta)
                 self.assertEqual(expected_output_shapes[i],
-                                 [numpy.array(f).shape for f in frames])
+                                 [np.array(f).shape for f in frames])
+
+        # check that random_access works
+        expected_frames = [
+            np.ones((4, 1, 3), dtype='uint8'),
+            np.ones((3, 1, 3), dtype='uint8'),
+            np.ones((2, 1, 3), dtype='uint8'),
+            np.ones((1, 1, 3), dtype='uint8'),
+        ]
+        received_frames, received_meta = gulp_directory[1]
+        for ef, rf in zip(expected_frames, received_frames):
+            npt.assert_array_equal(ef, np.array(rf))
+        self.assertEqual(expected_meta[0], received_meta)
 
         # now append/extend the gulps
         GulpIngestor(RoundTripAdapter(), output_directory, 2, 1)()

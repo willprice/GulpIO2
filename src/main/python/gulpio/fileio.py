@@ -90,7 +90,8 @@ class GulpDirectory(object):
                  self._allocate_new_file_paths(total_new_chunks)))
 
     def __getitem__(self, id_):
-        chunk_id = self.chunk_lookup[id]
+        id_ = str(id_)
+        chunk_id = self.chunk_lookup[id_]
         gulp_chunk = GulpChunk(*self._initialize_filenames(chunk_id))
         with gulp_chunk.open():
             return gulp_chunk[id_]
@@ -209,7 +210,7 @@ class GulpChunk(object):
                     dict(self.meta_dict[str(id_)]['meta_data'][0]))
 
     def __getitem__(self, id_):
-        return self.read_frames(self, id_)
+        return self.read_frames(id_)
 
     def read_frames(self, id_):
         frame_infos, meta_data = self.retrieve_meta_infos(id_)
