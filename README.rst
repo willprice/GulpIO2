@@ -47,8 +47,34 @@ you need to implement a short command line interface.
 You should be able to get going quickly by looking at the following examples,
 that we use internally to gulp our video datasets.
 
-* The class: `gulpio.adapters.Custom20BNJsonAdapter` `adapters.py <src/main/python/gulpio/adapters.py>`_
-* The script: `gulp_20bn_json_videos` `command line script <src/main/scripts/gulp_20bn_json_videos>`_
+* The class: ``gulpio.adapters.Custom20BNJsonAdapter`` `adapters.py <src/main/python/gulpio/adapters.py>`_
+* The script: ``gulp_20bn_json_videos`` `command line script <src/main/scripts/gulp_20bn_json_videos>`_
+
+And an example invocation would be:
+
+.. code::
+
+   $ gulp_20bn_json_videos videos.json input_dir output_dir
+   ...
+
+In order to read from the gulps, you can let yourself be inspired by the
+following snippet:
+
+.. code:: python
+
+    # import the main interface for reading
+    from gulpio import GulpDirectory
+    # instantiate the GulpDirectory
+    gulp_directory = GulpDirectory('/tmp/something_something_gulps')
+    # iterate over all chunks
+    for chunk in gulp_directory.chunks():
+        with chunk.open('rb'):
+            # for each 'video' get the metadata and all frames
+            for frames, meta in chunk.read_all():
+                # do something with the metadata
+                for i, f in enumerate(frames):
+                    # do something with the frames
+                    pass
 
 
 Format Description

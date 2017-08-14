@@ -41,7 +41,24 @@ class AbstractDatasetAdapter(ABC):  # pragma: no cover
         return NotImplementedError
 
 
-class Custom20BNJsonAdapter(object):
+class Custom20BNAdapterMixin(object):
+
+    def create_label2idx_dict(self, label_name):
+        labels = sorted(set([item[label_name] for item in self.data]))
+        labels2idx = {}
+        for label_counter, label in enumerate(labels):
+            labels2idx[label] = label_counter
+        return labels2idx
+
+    def write_label2idx_dict(self):
+        json.dump(self.labels2idx,
+                  open(os.path.join(self.output_folder, 'label2idx.json'),
+                       'w'))
+
+
+class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
+                                 Custom20BNAdapterMixin):
+    """ Adapter for 20BN datasets specified by JSON file and MP4 videos. """
 
     def __init__(self, json_file, folder, output_folder,
                  shuffle=False, frame_size=-1, frame_rate=8,
@@ -54,7 +71,7 @@ class Custom20BNJsonAdapter(object):
         else:
             raise RuntimeError('Wrong data file format (.json.gz or .json)')
         self.output_folder = output_folder
-        self.label2idx = self.create_label2idx_dict()
+        self.labels2idx = self.create_label2idx_dict('template')
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
@@ -80,19 +97,6 @@ class Custom20BNJsonAdapter(object):
                  'idx': self.label2idx[entry['template']]}
                 for entry in self.data]
 
-    def create_label2idx_dict(self):
-        labels = sorted(set([item['template'] for item in self.data]))
-        label2idx = {}
-        label_counter = 0
-        for label_counter, label in enumerate(labels):
-            label2idx[label] = label_counter
-        return label2idx
-
-    def write_label2idx_dict(self):
-        json.dump(self.label2idx,
-                  open(os.path.join(self.output_folder, 'label2idx.json'),
-                       'w'))
-
     def __len__(self):
         return len(self.data)
 
@@ -113,13 +117,15 @@ class Custom20BNJsonAdapter(object):
             self.write_label2idx_dict()
 
 
-class OpenSource20BNAdapter(object):
+class Custom20BNCsvJpegAdapter(AbstractDatasetAdapter,
+                               Custom20BNAdapterMixin):
+    """ Adapter for 20BN datasets specified by CSV file and JPEG frames. """
 
     def __init__(self, csv_file, folder, output_folder,
                  shuffle=False, frame_size=-1, shm_dir_path='/dev/shm'):
         self.data = self.read_csv(csv_file)
         self.output_folder = output_folder
-        self.label2idx = self.create_label2idx_dict()
+        self.labels2idx = self.create_label2idx_dict('label')
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
@@ -139,24 +145,11 @@ class OpenSource20BNAdapter(object):
     def get_meta(self):
         return [{'id': entry['id'],
                  'label': entry['label'],
-                 'idx': self.label2idx[entry['label']]}
+                 'idx': self.labels2idx[entry['label']]}
                 for entry in self.data]
-
-    def create_label2idx_dict(self):
-        labels = sorted(set([item['label'] for item in self.data]))
-        label2idx = {}
-        label_counter = 0
-        for label_counter, label in enumerate(labels):
-            label2idx[label] = label_counter
-        return label2idx
 
     def __len__(self):
         return len(self.data)
-
-    def write_label2idx_dict(self):
-        json.dump(self.label2idx,
-                  open(os.path.join(self.output_folder, 'label2idx.json'),
-                       'w'))
 
     def iter_data(self, slice_element=None):
         slice_element = slice_element or slice(0, len(self))
@@ -172,7 +165,7 @@ class OpenSource20BNAdapter(object):
             self.write_label2idx_dict()
 
 
-class ImageListAdapter():
+class ImageListAdapter(AbstractDatasetAdapter):
     r"""Give a list.txt in format:
 
         img_path,label_name
@@ -239,7 +232,7 @@ class ImageListAdapter():
             self.write_label2idx_dict()
 
 
-class ImageFolderAdapter():
+class ImageFolderAdapter(AbstractDatasetAdapter):
     r"""Parse the given folder assuming each subfolder is a category and it
     includes the category images.
     """

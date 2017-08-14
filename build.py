@@ -1,5 +1,6 @@
 from pybuilder.core import use_plugin, init, Author
 from pybuilder.vcs import count_travis
+import os
 
 use_plugin("python.core")
 use_plugin("python.unittest")
@@ -37,7 +38,8 @@ def set_properties(project):
     project.get_property('coverage_exceptions').extend(
         ['gulpio.adapters'])
     project.set_property('integrationtest_inherit_environment', True)
+    project.set_property('integrationtest_additional_environment',
+                         {'PATH': 'src/main/scripts:' + os.environ['PATH']})
     project.set_property('flake8_include_scripts', True)
     project.set_property('flake8_include_test_sources', True)
     project.set_property('flake8_break_build', True)
-
