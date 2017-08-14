@@ -172,6 +172,73 @@ class OpenSource20BNAdapter(object):
             self.write_label2idx_dict()
 
 
+class ImageListAdapter():
+    r"""Give a list.txt in format:
+
+        img_path,label_name
+        ...
+
+        and it iterates through images/
+    """
+
+    def __init__(self, input_file, output_folder, root_folder='',
+                 shuffle=False, img_size=-1):
+        self.item_list = [item.strip().split(',') for item in open(input_file, 'r')]
+        self.output_folder = output_folder
+        self.root_folder = root_folder
+        print("root  -- ", self.root_folder)
+        self.folder = root_folder
+        self.data = self.parse_paths(self.item_list)
+        self.label2idx = self.create_label2idx_dict()
+        self.shuffle = shuffle
+        self.img_size = img_size
+        self.all_meta = self.get_meta()
+        if self.shuffle:
+            random.shuffle(self.all_meta)
+
+    def parse_paths(self, item_list):
+        data = []
+        for img_path, label_name in item_list:
+            img_name = os.path.basename(img_path)
+            data.append({'id': img_name, 'label': label_name, 'path': img_path})
+        return data
+
+    def get_meta(self):
+        return [{'id': entry['id'],
+                 'label': entry['label'],
+                 'path': entry['path'],
+                 'idx': self.label2idx[entry['label']]}
+                for entry in self.data]
+
+    def create_label2idx_dict(self):
+        labels = sorted(set([item['label'] for item in self.data]))
+        label2idx = {}
+        label_counter = 0
+        for label_counter, label in enumerate(labels):
+            label2idx[label] = label_counter
+        return label2idx
+
+    def __len__(self):
+        return len(self.data)
+
+    def write_label2idx_dict(self):
+        json.dump(self.label2idx,
+                  open(os.path.join(self.output_folder, 'label2idx.json'),
+                       'w'))
+
+    def iter_data(self, slice_element=None):
+        slice_element = slice_element or slice(0, len(self))
+        for meta in self.all_meta[slice_element]:
+            img_path = os.path.join(self.root_folder, str(meta['path']))
+            img = resize_by_short_edge(img_path, self.img_size)
+            result = {'meta': meta,
+                      'frames': [img],
+                      'id': meta['id']}
+            yield result
+        else:
+            self.write_label2idx_dict()
+
+
 class ImageFolderAdapter():
     r"""Parse the given folder assuming each subfolder is a category and it
     includes the category images.
