@@ -72,7 +72,7 @@ def resize_images(imgs, img_size=-1):
 
 
 def resize_by_short_edge(img, size):
-    if isinstance(img, str) or isinstance(img, unicode):
+    if isinstance(img, str):
         img = cv2.imread(img)
         if img is None:
             raise RuntimeError("Image read None from path ", img)
