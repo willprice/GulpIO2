@@ -94,7 +94,7 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
     def get_meta(self):
         return [{'id': entry['id'],
                  'label': entry['template'],
-                 'idx': self.label2idx[entry['template']]}
+                 'idx': self.labels2idx[entry['template']]}
                 for entry in self.data]
 
     def __len__(self):
