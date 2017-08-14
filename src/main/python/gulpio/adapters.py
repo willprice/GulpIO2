@@ -54,7 +54,7 @@ class Custom20BNJsonAdapter(object):
         else:
             raise RuntimeError('Wrong data file format (.json.gz or .json)')
         self.output_folder = output_folder
-        self.labels2idx = self.create_label2idx_dict()
+        self.label2idx = self.create_label2idx_dict()
         self.folder = folder
         self.shuffle = shuffle
         self.frame_size = frame_size
@@ -77,19 +77,19 @@ class Custom20BNJsonAdapter(object):
     def get_meta(self):
         return [{'id': entry['id'],
                  'label': entry['template'],
-                 'idx': self.labels2idx[entry['template']]}
+                 'idx': self.label2idx[entry['template']]}
                 for entry in self.data]
 
     def create_label2idx_dict(self):
         labels = sorted(set([item['template'] for item in self.data]))
-        labels2idx = {}
+        label2idx = {}
         label_counter = 0
         for label_counter, label in enumerate(labels):
-            labels2idx[label] = label_counter
-        return labels2idx
+            label2idx[label] = label_counter
+        return label2idx
 
     def write_label2idx_dict(self):
-        json.dump(self.labels2idx,
+        json.dump(self.label2idx,
                   open(os.path.join(self.output_folder, 'label2idx.json'),
                        'w'))
 
@@ -144,17 +144,17 @@ class OpenSource20BNAdapter(object):
 
     def create_label2idx_dict(self):
         labels = sorted(set([item['label'] for item in self.data]))
-        labels2idx = {}
+        label2idx = {}
         label_counter = 0
         for label_counter, label in enumerate(labels):
-            labels2idx[label] = label_counter
-        return labels2idx
+            label2idx[label] = label_counter
+        return label2idx
 
     def __len__(self):
         return len(self.data)
 
     def write_label2idx_dict(self):
-        json.dump(self.labels2idx,
+        json.dump(self.label2idx,
                   open(os.path.join(self.output_folder, 'label2idx.json'),
                        'w'))
 
