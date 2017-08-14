@@ -64,6 +64,8 @@ def burst_video_into_frames(vid_path, temp_burst_dir, frame_rate=None):
 def resize_images(imgs, img_size=-1):
     for img in imgs:
         img = cv2.imread(img)
+        if img is None:
+            raise RuntimeError("Image read None from path", img)
         if img_size > 0:
             img = resize_by_short_edge(img, img_size)
         yield img
@@ -72,6 +74,8 @@ def resize_images(imgs, img_size=-1):
 def resize_by_short_edge(img, size):
     if isinstance(img, str) or isinstance(img, unicode):
         img = cv2.imread(img)
+        if img is None:
+            raise RuntimeError("Image read None from path ", img)
     if size < 1:
         return img
     h, w = img.shape[0], img.shape[1]

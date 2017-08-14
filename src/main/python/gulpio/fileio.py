@@ -175,7 +175,10 @@ class GulpChunk(object):
 
     def write_frame(self, id_, image):
         loc = self.fp.tell()
-        img_str = cv2.imencode('.jpg', image)[1].tostring()
+        try:
+            img_str = cv2.imencode('.jpg', image)[1].tostring()
+        except cv2.error as e:
+            raise RuntimeError("Encoding error for data-id ", id_)
         pad = self.pad_image(len(img_str))
         record = img_str.ljust(len(img_str) + pad, b'\0')
         img_info = ImgInfo(loc=loc,
