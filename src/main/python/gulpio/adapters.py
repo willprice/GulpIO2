@@ -179,7 +179,7 @@ class ImageFolderAdapter():
 
     def __init__(self, folder, output_folder,
                  file_extensions=['.jpg'], shuffle=False,
-                 img_size=-1, shm_dir_path='/dev/shm'):
+                 img_size=-1):
         self.file_extensions = file_extensions
         self.data = self.parse_folder(folder)
         self.output_folder = output_folder
@@ -187,7 +187,6 @@ class ImageFolderAdapter():
         self.folder = folder
         self.shuffle = shuffle
         self.img_size = img_size
-        self.shm_dir_path = shm_dir_path
         self.all_meta = self.get_meta()
         if self.shuffle:
             random.shuffle(self.all_meta)
@@ -217,17 +216,17 @@ class ImageFolderAdapter():
 
     def create_label2idx_dict(self):
         labels = sorted(set([item['label'] for item in self.data]))
-        labels2idx = {}
+        label2idx = {}
         label_counter = 0
         for label_counter, label in enumerate(labels):
-            labels2idx[label] = label_counter
-        return labels2idx
+            label2idx[label] = label_counter
+        return label2idx
 
     def __len__(self):
         return len(self.data)
 
     def write_label2idx_dict(self):
-        json.dump(self.labels2idx,
+        json.dump(self.label2idx,
                   open(os.path.join(self.output_folder, 'label2idx.json'),
                        'w'))
 
@@ -236,7 +235,6 @@ class ImageFolderAdapter():
         for meta in self.all_meta[slice_element]:
             img_path = os.path.join(self.folder, str(meta['path']),
                                     str(meta['id']))
-            print(img_path)
             img = resize_by_short_edge(img_path, self.img_size)
             result = {'meta': meta,
                       'frames': [img],
@@ -251,7 +249,7 @@ class ImageFolderAdapter():
 #     def __init__(self, csv_file, num_labels=None):
 #         self.num_labels = num_labels
 #         self.data = self.read_input_from_csv(csv_file)
-#         self.labels2idx = self.create_labels_dict()
+#         self.label2idx = self.create_labels_dict()
 #
 #     def read_input_from_csv(self, csv_file):
 #         print(" > Reading data list (csv)")
@@ -261,10 +259,10 @@ class ImageFolderAdapter():
 #         labels = sorted(pd.unique(self.data['label']))
 #         if self.num_labels:
 #             assert len(labels) == self.num_labels
-#         labels2idx = {}
+#         label2idx = {}
 #         for i, label in enumerate(labels):
-#             labels2idx[label] = i
-#         return labels2idx
+#             label2idx[label] = i
+#         return label2idx
 #
 #     def get_data(self):
 #         output = []
@@ -275,4 +273,4 @@ class ImageFolderAdapter():
 #             entry_dict['start_time'] = row.time_start
 #             entry_dict['end_time'] = row.time_end
 #             output.append(entry_dict)
-#         return output, self.labels2idx
+#         return output, self.label2idx
