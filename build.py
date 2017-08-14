@@ -1,5 +1,6 @@
 from pybuilder.core import use_plugin, init, Author
 from pybuilder.vcs import count_travis
+import os
 
 use_plugin("python.core")
 use_plugin("python.unittest")
@@ -8,10 +9,10 @@ use_plugin("python.flake8")
 use_plugin("python.coverage")
 use_plugin("python.distutils")
 use_plugin("filter_resources")
-
+use_plugin('python.integrationtest')
 
 name = "gulpio"
-default_task = "publish"
+default_task = ["install_dependencies", "analyze", "publish"]
 version = count_travis()
 summary = "Binary storage format for deep learning on videos."
 authors = [Author("Eren Golge", "eren.golge@twentybn.com"),
@@ -36,3 +37,9 @@ def set_properties(project):
         ['**/gulpio/__init__.py'])
     project.get_property('coverage_exceptions').extend(
         ['gulpio.adapters'])
+    project.set_property('integrationtest_inherit_environment', True)
+    project.set_property('integrationtest_additional_environment',
+                         {'PATH': 'src/main/scripts:' + os.environ['PATH']})
+    project.set_property('flake8_include_scripts', True)
+    project.set_property('flake8_include_test_sources', True)
+    project.set_property('flake8_break_build', True)

@@ -1,7 +1,6 @@
 import os
 import tempfile
 import shutil
-import json
 
 import numpy as np
 
@@ -39,16 +38,32 @@ class TestCheckFFMPEGExists(unittest.TestCase):
 
 class TestBurstVideoIntoFrames(unittest.TestCase):
 
-    def test(self):
+    def test_mp4(self):
         video_path = os.path.join(os.path.dirname(__file__), 'test.mp4')
         with temp_dir_for_bursting() as temp_burst_dir:
             imgs = burst_video_into_frames(video_path, temp_burst_dir)
+        # different ffmpeg versions, yield slightly different numbers
+        self.assertIn(len(imgs), [140, 141])
+
+    def test_mp4_with_lower_frame_rate(self):
+        video_path = os.path.join(os.path.dirname(__file__), 'test.mp4')
+        with temp_dir_for_bursting() as temp_burst_dir:
+            imgs = burst_video_into_frames(video_path, temp_burst_dir,
+                                           frame_rate=8)
         self.assertEqual(39, len(imgs))
 
     def test_webm(self):
         video_path = os.path.join(os.path.dirname(__file__), 'test.webm')
         with temp_dir_for_bursting() as temp_burst_dir:
             imgs = burst_video_into_frames(video_path, temp_burst_dir)
+        # different ffmpeg versions, yield slightly different numbers
+        self.assertIn(len(imgs), [140, 141])
+
+    def test_webm_with_lower_frame_rate(self):
+        video_path = os.path.join(os.path.dirname(__file__), 'test.webm')
+        with temp_dir_for_bursting() as temp_burst_dir:
+            imgs = burst_video_into_frames(video_path, temp_burst_dir,
+                                           frame_rate=8)
         self.assertEqual(39, len(imgs))
 
 
