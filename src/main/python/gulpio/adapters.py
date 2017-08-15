@@ -223,7 +223,12 @@ class ImageListAdapter(AbstractDatasetAdapter):
         slice_element = slice_element or slice(0, len(self))
         for meta in self.all_meta[slice_element]:
             img_path = os.path.join(self.root_folder, str(meta['path']))
-            img = resize_by_short_edge(img_path, self.img_size)
+            try:
+                img = resize_by_short_edge(img_path, self.img_size)
+            except RuntimeError as e:
+                print(e)
+                continue # skip the item if image is not readable
+            meta.pop('path', None) # don't store path
             result = {'meta': meta,
                       'frames': [img],
                       'id': meta['id']}
