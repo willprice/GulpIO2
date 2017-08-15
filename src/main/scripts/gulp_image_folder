@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+
+"""gulp_20bn_json_videos
+
+Gulp an image dataset that is in the following format;
+
+images_directory
+        |-> label1
+                |-> image1.jpg
+                |-> image2.jpg
+                ...
+        |-> label2
+        ...
+
+Usage:
+    gulp_image_folder [--images_per_chunk <images_per_chunk>]
+                           [--num_workers <num_workers>]
+                           [--image_size <image_size>]
+                           [--shuffle]
+                           <images_directory> <output_directory>
+    gulp_image_folder (-h | --help)
+    gulp_image_folder --version
+
+Arguments:
+    images_directory:                       Base directory for video files
+    output_directory:                       Output directory for GulpIO files
+
+Options:
+    -h --help                               Show this screen.
+    --version                               Show version.
+    --images_per_chunk=<images_per_chunk>   Number of images in one chunk [default: 100]
+    --num_workers=<num_workers>             Number of parallel processes [default: 4]
+    --image_size=<image_size>               Size of smaller edge of resized frames [default: -1]
+    --shuffle                               Shuffle the dataset before ingestion
+"""
+
+from docopt import docopt
+
+from gulpio.adapters import ImageFolderAdapter
+from gulpio.fileio import GulpIngestor
+
+if __name__ == '__main__':
+    arguments = docopt(__doc__)
+    print(arguments)
+
+    images_path = arguments['<images_directory>']
+    output_folder = arguments['<output_directory>']
+    images_per_chunk = int(arguments['--images_per_chunk'])
+    num_workers = int(arguments['--num_workers'])
+    img_size = int(arguments['--image_size'])
+    shuffle = arguments['--shuffle']
+
+    adapter = ImageFolderAdapter(images_path, output_folder,
+                                    shuffle=shuffle,
+                                    img_size=img_size
+                                    )
+
+    ingestor = GulpIngestor(adapter,
+                            output_folder,
+                            images_per_chunk,
+                            num_workers)
+    ingestor()
