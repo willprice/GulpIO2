@@ -28,7 +28,7 @@ def check_frames(frames, color=None):
             npt.assert_array_equal(white_frame, arr)
         elif color == 'black':
             npt.assert_array_equal(black_frame, arr)
-        else:
+        elif color == 'alternating':
             if i % 2 != 0:
                 npt.assert_array_equal(white_frame, arr)
             else:
@@ -45,7 +45,7 @@ def check_generated_files():
 
     # check random access for a few videos
     frames, meta = gulp_directory[0]
-    check_frames(frames)
+    check_frames(frames, 'alternating')
     frames, meta = gulp_directory[(11, slice(0, None, 2))]
     check_frames(frames, 'black')
     frames, meta = gulp_directory[(21, slice(1, None, 2))]
