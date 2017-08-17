@@ -223,14 +223,17 @@ class GulpChunk(object):
         frame_infos, meta_data = self.retrieve_meta_infos(id_)
         frames = []
         slice_element = slice_ or slice(0, len(frame_infos))
-        for frame_info in frame_infos[slice_element]:
+
+        def extract_frame(frame_info):
             self.fp.seek(frame_info.loc)
             record = self.fp.read(frame_info.length)
             img_str = record[:-frame_info.pad]
             nparr = np.fromstring(img_str, np.uint8)
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            frames.append(Image.fromarray(img))
+            return img
+        frames = [Image.fromarray(extract_frame(frame_info))
+                  for frame_info in frame_infos[slice_element]]
         return frames, meta_data
 
     def read_all(self):
