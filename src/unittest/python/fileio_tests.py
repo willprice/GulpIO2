@@ -111,9 +111,6 @@ class GulpChunkElement(FSBase):
                                     self.meta_file_path,
                                     mock_json_serializer)
 
-    def tearDown(self):
-        super().tearDown()
-
 
 class TestGulpChunk(GulpChunkElement):
 
@@ -276,9 +273,6 @@ class ChunkWriterElement(FSBase):
         self.output_folder = os.path.join(self.temp_dir, 'ANY_OUTPUT_FOLDER')
         self.videos_per_chunk = 1
         self.chunk_writer = ChunkWriter(self.adapter)
-
-    def tearDown(self):
-        pass
 
 
 class TestChunkWriter(ChunkWriterElement):
