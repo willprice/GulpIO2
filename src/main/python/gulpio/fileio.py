@@ -90,7 +90,12 @@ class GulpDirectory(object):
                  self._allocate_new_file_paths(total_new_chunks)))
 
     def __getitem__(self, element):
-        id_, slice_ = element
+        if type(element) == tuple and len(element) == 2:
+            id_, slice_ = element
+        elif type(element) == int:
+            id_, slice_ = element, None
+        else:
+            raise("Undefined input type! id or (id, slice) expected")
         id_ = str(id_)
         chunk_id = self.chunk_lookup[id_]
         gulp_chunk = GulpChunk(*self._initialize_filenames(chunk_id))
