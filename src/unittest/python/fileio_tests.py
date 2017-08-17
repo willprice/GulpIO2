@@ -431,16 +431,36 @@ class RoundTripAdapter(AbstractDatasetAdapter):
             ],
             'id': 1,
         }
+        self.result3 = {
+            'meta': {'name': 'shorter_video'},
+            'frames': [
+                np.ones((4, 1, 3), dtype='uint8'),
+                np.ones((3, 1, 3), dtype='uint8'),
+            ],
+            'id': 2,
+        }
 
     def __len__(self):
-        return 2
+        return 3
 
     def iter_data(self, slice_element=None):
         yield self.result1
         yield self.result2
+        yield self.result3
 
 
 class TestGulpDirectory(FSBase):
+
+    def test_init(self):
+        adapter = RoundTripAdapter()
+        output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
+        ingestor = GulpIngestor(adapter, output_directory, 2, 1)
+        ingestor()
+        gulp_directory = GulpDirectory(output_directory)
+        self.assertEqual(gulp_directory.output_dir, output_directory)
+        self.assertEqual(gulp_directory.all_meta_dicts, [{}])
+        self.assertEqual(gulp_directory.chunk_lookup, {})
+        self.assertEqual(gulp_directory.merged_meta_dict, {})
 
     def test_round_trip(self):
         # first, write some garbage in
