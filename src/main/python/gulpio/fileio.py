@@ -90,9 +90,9 @@ class GulpDirectory(object):
                  self._allocate_new_file_paths(total_new_chunks)))
 
     def __getitem__(self, element):
-        if type(element) == tuple and len(element) == 2:
+        if isinstance(element, tuple) and len(element) == 2:
             id_, slice_ = element
-        elif type(element) == int:
+        elif isinstance(element, int):
             id_, slice_ = element, None
         else:
             raise("Undefined input type! id or (id, slice) expected")
