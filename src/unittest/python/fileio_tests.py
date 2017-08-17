@@ -408,7 +408,7 @@ class TestGulpDirectory(FSBase):
             np.ones((2, 1, 3), dtype='uint8'),
             np.ones((1, 1, 3), dtype='uint8'),
         ]
-        received_frames, received_meta = gulp_directory[(1, None)]
+        received_frames, received_meta = gulp_directory[1]
         for ef, rf in zip(expected_frames, received_frames):
             npt.assert_array_equal(ef, np.array(rf))
         self.assertEqual(expected_meta[0], received_meta)
