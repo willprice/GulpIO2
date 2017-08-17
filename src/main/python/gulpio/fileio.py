@@ -68,6 +68,11 @@ class GulpDirectory(object):
 
     def __init__(self, output_dir):
         self.output_dir = output_dir
+        self.all_meta_dicts = [c.meta_dict for c in self.chunks()]
+        self.chunk_lookup = {}
+        for i, meta_dict in enumerate(self.all_meta_dicts):
+            for id_ in meta_dict:
+                self.chunk_lookup[id_] = i
 
     def chunks(self):
         """ Return a generator over existing GulpChunk objects which are ready
@@ -83,6 +88,13 @@ class GulpDirectory(object):
         """
         return ((GulpChunk(*paths) for paths in
                  self._allocate_new_file_paths(total_new_chunks)))
+
+    def __getitem__(self, id_):
+        id_ = str(id_)
+        chunk_id = self.chunk_lookup[id_]
+        gulp_chunk = GulpChunk(*self._initialize_filenames(chunk_id))
+        with gulp_chunk.open():
+            return gulp_chunk[id_]
 
     def _find_existing_data_paths(self):
         return sorted(glob.glob(os.path.join(self.output_dir, 'data*.gulp')))
@@ -135,7 +147,7 @@ class GulpChunk(object):
         self.serializer = serializer
         self.data_file_path = data_file_path
         self.meta_file_path = meta_file_path
-        self.meta_dict = None
+        self.meta_dict = self.get_or_create_dict()
         self.fp = None
 
     def get_or_create_dict(self):
@@ -150,7 +162,6 @@ class GulpChunk(object):
 
     @contextmanager
     def open(self, flag='rb'):
-        self.meta_dict = self.get_or_create_dict()
         if flag in ['wb', 'rb', 'ab']:
             self.fp = open(self.data_file_path, flag)
         else:
@@ -196,6 +207,9 @@ class GulpChunk(object):
         if str(id_) in self.meta_dict:
             return ([ImgInfo(*info) for info in self.meta_dict[str(id_)]['frame_info']],
                     dict(self.meta_dict[str(id_)]['meta_data'][0]))
+
+    def __getitem__(self, id_):
+        return self.read_frames(id_)
 
     def read_frames(self, id_):
         frame_infos, meta_data = self.retrieve_meta_infos(id_)

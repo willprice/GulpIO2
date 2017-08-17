@@ -7,7 +7,7 @@ import pickle
 from collections import OrderedDict
 from io import BytesIO
 
-import numpy
+import numpy as np
 import numpy.testing as npt
 
 import unittest
@@ -125,7 +125,7 @@ class TestGulpChunk(GulpChunkElement):
         self.assertEqual(self.mock_json_serializer,
                          self.gulp_chunk.serializer)
 
-        self.assertEqual(self.gulp_chunk.meta_dict, None)
+        self.assertEqual(self.gulp_chunk.meta_dict, OrderedDict())
         self.assertEqual(self.gulp_chunk.fp, None)
 
     def test_get_or_create_dict_not_exists(self):
@@ -141,28 +141,22 @@ class TestGulpChunk(GulpChunkElement):
         self.assertEqual(expected, self.gulp_chunk.default_factory())
 
     def test_open_with_wb(self):
-        self.gulp_chunk.get_or_create_dict = mock.Mock()
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
             with self.gulp_chunk.open('wb'):
                 m.assert_called_once_with(
                     self.gulp_chunk.data_file_path, 'wb')
-                self.gulp_chunk.get_or_create_dict.assert_called_once_with()
 
     def test_open_with_rb(self):
-        self.gulp_chunk.get_or_create_dict = mock.Mock()
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
             with self.gulp_chunk.open('rb'):
                 m.assert_called_once_with(
                     self.gulp_chunk.data_file_path, 'rb')
-                self.gulp_chunk.get_or_create_dict.assert_called_once_with()
 
     def test_open_with_ab(self):
-        self.gulp_chunk.get_or_create_dict = mock.Mock()
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
             with self.gulp_chunk.open('ab'):
                 m.assert_called_once_with(
                     self.gulp_chunk.data_file_path, 'ab')
-                self.gulp_chunk.get_or_create_dict.assert_called_once_with()
 
     def test_open_unknown_flag(self):
         get_mock = mock.Mock()
@@ -206,7 +200,7 @@ class TestGulpChunk(GulpChunkElement):
                                            'frame_info': [[1, 2, 3]]}}
         self.gulp_chunk.fp = bio
         with mock.patch('cv2.imencode') as imencode_mock:
-            imencode_mock.return_value = '', numpy.ones((1,), dtype='uint8')
+            imencode_mock.return_value = '', np.ones((1,), dtype='uint8')
             self.gulp_chunk.write_frame(0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {'0': {'meta_data': [{'test': 'ANY'}],
@@ -218,7 +212,7 @@ class TestGulpChunk(GulpChunkElement):
         self.gulp_chunk.meta_dict = {}
         self.gulp_chunk.fp = bio
         with mock.patch('cv2.imencode') as imencode_mock:
-            imencode_mock.return_value = '', numpy.ones((1,), dtype='uint8')
+            imencode_mock.return_value = '', np.ones((1,), dtype='uint8')
             self.gulp_chunk.write_frame(0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {'0': {'meta_data': [],
@@ -251,13 +245,13 @@ class TestGulpChunk(GulpChunkElement):
         # use 'write_frame' to write a single image
         self.gulp_chunk.meta_dict = OrderedDict()
         self.gulp_chunk.fp = BytesIO()
-        image = numpy.ones((3, 3, 3), dtype='uint8')
+        image = np.ones((3, 3, 3), dtype='uint8')
         self.gulp_chunk.write_frame(0, image)
         self.gulp_chunk.meta_dict['0']['meta_data'].append({})
 
         # recover the single frame using 'read'
         frames, meta = self.gulp_chunk.read_frames('0')
-        npt.assert_array_equal(image, numpy.array(frames[0]))
+        npt.assert_array_equal(image, np.array(frames[0]))
         self.assertEqual({}, meta)
 
     def test_read_all(self):
@@ -367,10 +361,10 @@ class RoundTripAdapter(AbstractDatasetAdapter):
         self.result2 = {
             'meta': {'name': 'bunch of numpy arrays'},
             'frames': [
-                numpy.ones((4, 1, 3), dtype='uint8'),
-                numpy.ones((3, 1, 3), dtype='uint8'),
-                numpy.ones((2, 1, 3), dtype='uint8'),
-                numpy.ones((1, 1, 3), dtype='uint8'),
+                np.ones((4, 1, 3), dtype='uint8'),
+                np.ones((3, 1, 3), dtype='uint8'),
+                np.ones((2, 1, 3), dtype='uint8'),
+                np.ones((1, 1, 3), dtype='uint8'),
             ],
             'id': 1,
         }
@@ -401,12 +395,23 @@ class TestGulpDirectory(FSBase):
                                    (1, 1, 3)]
                                   ]
         expected_meta = [{'name': 'bunch of numpy arrays'}]
-
         with gulp_chunk.open('rb'):
             for i, (frames, meta) in enumerate(gulp_chunk.read_all()):
                 self.assertEqual(expected_meta[i], meta)
                 self.assertEqual(expected_output_shapes[i],
-                                 [numpy.array(f).shape for f in frames])
+                                 [np.array(f).shape for f in frames])
+
+        # check that random_access works
+        expected_frames = [
+            np.ones((4, 1, 3), dtype='uint8'),
+            np.ones((3, 1, 3), dtype='uint8'),
+            np.ones((2, 1, 3), dtype='uint8'),
+            np.ones((1, 1, 3), dtype='uint8'),
+        ]
+        received_frames, received_meta = gulp_directory[1]
+        for ef, rf in zip(expected_frames, received_frames):
+            npt.assert_array_equal(ef, np.array(rf))
+        self.assertEqual(expected_meta[0], received_meta)
 
         # now append/extend the gulps
         GulpIngestor(RoundTripAdapter(), output_directory, 2, 1)()
@@ -424,4 +429,4 @@ class TestGulpDirectory(FSBase):
             for frames, meta in gulp_chunk.read_all():
                 self.assertEqual(expected_meta, meta)
                 self.assertEqual(expected_output_shapes,
-                                 [numpy.array(f).shape for f in frames])
+                                 [np.array(f).shape for f in frames])
