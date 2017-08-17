@@ -203,7 +203,7 @@ class GulpChunk(object):
         for frame_info in frame_infos:
             self.fp.seek(frame_info.loc)
             record = self.fp.read(frame_info.length)
-            img_str = record[:-frame_info.pad]
+            img_str = record[:len(record)-frame_info.pad]
             nparr = np.fromstring(img_str, np.uint8)
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
