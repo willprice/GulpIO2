@@ -141,22 +141,28 @@ class TestGulpChunk(GulpChunkElement):
         self.assertEqual(expected, self.gulp_chunk.default_factory())
 
     def test_open_with_wb(self):
+        self.gulp_chunk.flush = mock.Mock()
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
             with self.gulp_chunk.open('wb'):
                 m.assert_called_once_with(
                     self.gulp_chunk.data_file_path, 'wb')
+            self.gulp_chunk.flush.assert_called_once_with()
 
     def test_open_with_rb(self):
+        self.gulp_chunk.flush = mock.Mock()
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
             with self.gulp_chunk.open('rb'):
                 m.assert_called_once_with(
                     self.gulp_chunk.data_file_path, 'rb')
+            self.assertFalse(self.gulp_chunk.flush.called)
 
     def test_open_with_ab(self):
+        self.gulp_chunk.flush = mock.Mock()
         with mock.patch('builtins.open', new_callable=mock.mock_open()) as m:
             with self.gulp_chunk.open('ab'):
                 m.assert_called_once_with(
                     self.gulp_chunk.data_file_path, 'ab')
+            self.gulp_chunk.flush.assert_called_once_with()
 
     def test_open_unknown_flag(self):
         get_mock = mock.Mock()
