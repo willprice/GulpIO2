@@ -39,11 +39,11 @@ def check_generated_files():
                 check_frames(frames)
 
     # check random access for a few videos
-    frames, meta = gulp_directory[0]
+    frames, meta = gulp_directory[(0, None)]
     check_frames(frames)
-    frames, meta = gulp_directory[11]
+    frames, meta = gulp_directory[(11, None)]
     check_frames(frames)
-    frames, meta = gulp_directory[21]
+    frames, meta = gulp_directory[(21, None)]
     check_frames(frames)
 
 

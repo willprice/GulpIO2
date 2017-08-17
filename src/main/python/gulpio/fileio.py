@@ -89,12 +89,13 @@ class GulpDirectory(object):
         return ((GulpChunk(*paths) for paths in
                  self._allocate_new_file_paths(total_new_chunks)))
 
-    def __getitem__(self, id_):
+    def __getitem__(self, element):
+        id_, slice_ = element
         id_ = str(id_)
         chunk_id = self.chunk_lookup[id_]
         gulp_chunk = GulpChunk(*self._initialize_filenames(chunk_id))
         with gulp_chunk.open():
-            return gulp_chunk[id_]
+            return gulp_chunk[id_, slice_]
 
     def _find_existing_data_paths(self):
         return sorted(glob.glob(os.path.join(self.output_dir, 'data*.gulp')))
@@ -205,16 +206,19 @@ class GulpChunk(object):
 
     def retrieve_meta_infos(self, id_):
         if str(id_) in self.meta_dict:
-            return ([ImgInfo(*info) for info in self.meta_dict[str(id_)]['frame_info']],
+            return ([ImgInfo(*info)
+                     for info in self.meta_dict[str(id_)]['frame_info']],
                     dict(self.meta_dict[str(id_)]['meta_data'][0]))
 
-    def __getitem__(self, id_):
-        return self.read_frames(id_)
+    def __getitem__(self, element):
+        id_, slice_ = element
+        return self.read_frames(id_, slice_)
 
-    def read_frames(self, id_):
+    def read_frames(self, id_, slice_=None):
         frame_infos, meta_data = self.retrieve_meta_infos(id_)
         frames = []
-        for frame_info in frame_infos:
+        slice_element = slice_ or slice(0, len(frame_infos))
+        for frame_info in frame_infos[slice_element]:
             self.fp.seek(frame_info.loc)
             record = self.fp.read(frame_info.length)
             img_str = record[:-frame_info.pad]
