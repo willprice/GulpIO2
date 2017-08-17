@@ -264,15 +264,15 @@ class TestGulpChunk(GulpChunkElement):
         # use 'write_frame' to write a single image
         self.gulp_chunk.meta_dict = OrderedDict()
         self.gulp_chunk.fp = BytesIO()
-        image = numpy.ones((1,4), dtype='uint8')
+        image = numpy.ones((1, 4), dtype='uint8')
         with mock.patch('cv2.imencode') as imencode_mock:
-            imencode_mock.return_value = '', numpy.ones((1,4), dtype='uint8')
+            imencode_mock.return_value = '', numpy.ones((1, 4), dtype='uint8')
             self.gulp_chunk.write_frame(0, image)
         self.gulp_chunk.meta_dict['0']['meta_data'].append({})
         with mock.patch('cv2.imdecode', lambda x, y:
-                        numpy.array(x).reshape((1,4))):
+                        numpy.array(x).reshape((1, 4))):
             with mock.patch('cv2.cvtColor', lambda x, y: x):
-        # recover the single frame using 'read'
+                # recover the single frame using 'read'
                 frames, meta = self.gulp_chunk.read_frames('0')
         npt.assert_array_equal(image, numpy.array(frames[0]))
         self.assertEqual({}, meta)
