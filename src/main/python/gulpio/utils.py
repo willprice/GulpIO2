@@ -17,6 +17,8 @@ from contextlib import contextmanager
 class FFMPEGNotFound(Exception):
     pass
 
+class UndefinedInputType(Exception):
+    pass
 
 def check_ffmpeg_exists():
     return os.system('ffmpeg -version > /dev/null') == 0

@@ -14,7 +14,7 @@ from PIL import Image
 from collections import namedtuple, OrderedDict
 from tqdm import tqdm
 
-from .utils import ensure_output_dir_exists
+from .utils import ensure_output_dir_exists, UndefinedInputType
 
 
 ImgInfo = namedtuple('ImgInfo', ['loc',
@@ -59,6 +59,16 @@ pickle_serializer = PickleSerializer()
 json_serializer = JSONSerializer()
 
 
+def extract_input_for_getitem(element):
+    if isinstance(element, tuple) and len(element) == 2:
+        id_, slice_ = element
+    elif isinstance(element, int):
+        id_, slice_ = element, None
+    else:
+        raise UndefinedInputType("Undefined input type! id or (id, slice) expected")
+    return id_, slice_
+
+
 class GulpDirectory(object):
     """ Represents a directory containing *.gulp and *.gmeta files.
 
@@ -90,17 +100,12 @@ class GulpDirectory(object):
                  self._allocate_new_file_paths(total_new_chunks)))
 
     def __getitem__(self, element):
-        if isinstance(element, tuple) and len(element) == 2:
-            id_, slice_ = element
-        elif isinstance(element, int):
-            id_, slice_ = element, None
-        else:
-            raise("Undefined input type! id or (id, slice) expected")
+        id_, _ = extract_input_for_getitem(element)
         id_ = str(id_)
         chunk_id = self.chunk_lookup[id_]
         gulp_chunk = GulpChunk(*self._initialize_filenames(chunk_id))
         with gulp_chunk.open():
-            return gulp_chunk[id_, slice_]
+            return gulp_chunk[element]
 
     def _find_existing_data_paths(self):
         return sorted(glob.glob(os.path.join(self.output_dir, 'data*.gulp')))
@@ -216,7 +221,7 @@ class GulpChunk(object):
                     dict(self.meta_dict[str(id_)]['meta_data'][0]))
 
     def __getitem__(self, element):
-        id_, slice_ = element
+        id_, slice_ = extract_input_for_getitem(element)
         return self.read_frames(id_, slice_)
 
     def read_frames(self, id_, slice_=None):
