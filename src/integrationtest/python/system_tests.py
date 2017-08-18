@@ -48,7 +48,7 @@ def check_generated_files():
     check_frames(frames, 'alternating')
     frames, meta = gulp_directory[(11, slice(0, None, 2))]
     check_frames(frames, 'black')
-    frames, meta = gulp_directory[(21, slice(1, None, 2))]
+    frames, meta = gulp_directory[21, 1::2]
     check_frames(frames, 'white')
 
 
