@@ -87,7 +87,7 @@ class TestExtractInputForGetitem(unittest.TestCase):
         self.assertEqual(res_slice, slice(1, 2))
 
     def test_input_too_large_tuple(self):
-        element = (1,2,3)
+        element = (1, 2, 3)
         with self.assertRaises(UndefinedInputType):
             extract_input_for_getitem(element)
 
