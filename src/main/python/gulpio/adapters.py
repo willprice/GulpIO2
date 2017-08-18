@@ -71,9 +71,9 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
         self.output_folder = output_folder
         self.labels2idx = self.create_label2idx_dict('template')
         self.folder = folder
-        self.shuffle = shuffle
-        self.frame_size = frame_size
-        self.frame_rate = frame_rate
+        self.shuffle = bool(shuffle)
+        self.frame_size = int(frame_size)
+        self.frame_rate = int(frame_rate)
         self.shm_dir_path = shm_dir_path
         self.all_meta = self.get_meta()
         if self.shuffle:
