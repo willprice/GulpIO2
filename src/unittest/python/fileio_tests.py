@@ -367,6 +367,26 @@ class TestGulpIngestor(GulpIngestorElement):
         )
 
 
+class DummyVideosAdapter(AbstractDatasetAdapter):
+
+    def __init__(self, num_videos):
+        self.num_videos = num_videos
+        self.ids = [str(np.random.randint(0, 1000))
+                    for i in range(num_videos)]
+
+    def __len__(self):
+        return self.num_videos
+
+    def iter_data(self, slice_element=None):
+        slice_element = slice_element or slice(0, len(self))
+        for id_ in self.ids[slice_element]:
+            yield {
+                'meta': {'id': id_},
+                'frames': [np.zeros((1, 1, 3))],
+                'id': id_,
+            }
+
+
 class RoundTripAdapter(AbstractDatasetAdapter):
 
     def __init__(self):
@@ -447,3 +467,23 @@ class TestGulpDirectory(FSBase):
                 self.assertEqual(expected_meta, meta)
                 self.assertEqual(expected_output_shapes,
                                  [np.array(f).shape for f in frames])
+
+    def test_random_access(self):
+        # ingest dummy videos
+        adapter = DummyVideosAdapter(num_videos=25)
+        output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
+        ingestor = GulpIngestor(adapter, output_directory, 2, 1)
+        ingestor()
+
+        # create gulp directory
+        gulp_directory = GulpDirectory(output_directory)
+
+        # check all videos can be accessed
+        for id_ in adapter.ids:
+            with self.subTest(id_=id_):
+                # check img id is in the lookup table
+                self.assertTrue(id_ in gulp_directory.chunk_lookup)
+                # check the img can be accessed
+                img, meta = gulp_directory[id_]
+                # check the meta id match
+                self.assertEqual(meta['id'], id_)
