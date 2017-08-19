@@ -14,7 +14,7 @@ from PIL import Image
 from collections import namedtuple, OrderedDict
 from tqdm import tqdm
 
-from .utils import ensure_output_dir_exists
+from .utils import ensure_output_dir_exists, UndefinedInputType
 
 
 ImgInfo = namedtuple('ImgInfo', ['loc',
@@ -59,6 +59,16 @@ pickle_serializer = PickleSerializer()
 json_serializer = JSONSerializer()
 
 
+def extract_input_for_getitem(element):
+    if isinstance(element, tuple) and len(element) == 2:
+        id_, slice_ = element
+    elif isinstance(element, int):
+        id_, slice_ = element, None
+    else:
+        raise UndefinedInputType("Undefined input type! id or (id, slice) expected")
+    return id_, slice_
+
+
 class GulpDirectory(object):
     """ Represents a directory containing *.gulp and *.gmeta files.
 
@@ -89,12 +99,13 @@ class GulpDirectory(object):
         return ((GulpChunk(*paths) for paths in
                  self._allocate_new_file_paths(total_new_chunks)))
 
-    def __getitem__(self, id_):
+    def __getitem__(self, element):
+        id_, _ = extract_input_for_getitem(element)
         id_ = str(id_)
         chunk_id = self.chunk_lookup[id_]
         gulp_chunk = GulpChunk(*self._initialize_filenames(chunk_id))
         with gulp_chunk.open():
-            return gulp_chunk[id_]
+            return gulp_chunk[element]
 
     def _find_existing_data_paths(self):
         return sorted(glob.glob(os.path.join(self.output_dir, 'data*.gulp')))
@@ -205,23 +216,29 @@ class GulpChunk(object):
 
     def retrieve_meta_infos(self, id_):
         if str(id_) in self.meta_dict:
-            return ([ImgInfo(*info) for info in self.meta_dict[str(id_)]['frame_info']],
+            return ([ImgInfo(*info)
+                     for info in self.meta_dict[str(id_)]['frame_info']],
                     dict(self.meta_dict[str(id_)]['meta_data'][0]))
 
-    def __getitem__(self, id_):
-        return self.read_frames(id_)
+    def __getitem__(self, element):
+        id_, slice_ = extract_input_for_getitem(element)
+        return self.read_frames(id_, slice_)
 
-    def read_frames(self, id_):
+    def read_frames(self, id_, slice_=None):
         frame_infos, meta_data = self.retrieve_meta_infos(id_)
         frames = []
-        for frame_info in frame_infos:
+        slice_element = slice_ or slice(0, len(frame_infos))
+
+        def extract_frame(frame_info):
             self.fp.seek(frame_info.loc)
             record = self.fp.read(frame_info.length)
             img_str = record[:len(record)-frame_info.pad]
             nparr = np.fromstring(img_str, np.uint8)
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            frames.append(Image.fromarray(img))
+            return img
+        frames = [Image.fromarray(extract_frame(frame_info))
+                  for frame_info in frame_infos[slice_element]]
         return frames, meta_data
 
     def read_all(self):

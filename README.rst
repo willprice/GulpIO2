@@ -76,6 +76,29 @@ following snippet:
                     # do something with the frames
                     pass
 
+Alternatively, a video with a specific ``id`` can be directly accessed via:
+
+.. code:: python
+
+    # import the main interface for reading
+    from gulpio import GulpDirectory
+    #instantiate the GulpDirectory
+    gulp_directory = GulpDirectory('/tmp/something_something_gulps')
+    frames, meta = gulp_directory[<id>]
+
+For down-sampling or loading only a part of a video, a python slice can be
+passed as well:
+
+.. code:: python
+
+    frames, meta = gulp_directory[<id>, slice(1,10,2)]
+
+or:
+
+.. code:: python
+
+    frames, meta = gulp_directory[<id>, 1:10:2]
+
 
 Format Description
 ==================

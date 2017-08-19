@@ -21,13 +21,18 @@ black_frame = np.zeros((100, 100, 3))
 white_frame = np.ones((100, 100, 3)) * 255
 
 
-def check_frames(frames):
+def check_frames(frames, color=None):
     for i, f in enumerate(frames):
         arr = np.array(f)
-        if i % 2 != 0:
+        if color == 'white':
             npt.assert_array_equal(white_frame, arr)
-        else:
+        elif color == 'black':
             npt.assert_array_equal(black_frame, arr)
+        elif color == 'alternating':
+            if i % 2 != 0:
+                npt.assert_array_equal(white_frame, arr)
+            else:
+                npt.assert_array_equal(black_frame, arr)
 
 
 def check_generated_files():
@@ -40,11 +45,11 @@ def check_generated_files():
 
     # check random access for a few videos
     frames, meta = gulp_directory[0]
-    check_frames(frames)
-    frames, meta = gulp_directory[11]
-    check_frames(frames)
-    frames, meta = gulp_directory[21]
-    check_frames(frames)
+    check_frames(frames, 'alternating')
+    frames, meta = gulp_directory[(11, slice(0, None, 2))]
+    check_frames(frames, 'black')
+    frames, meta = gulp_directory[21, 1::2]
+    check_frames(frames, 'white')
 
 
 # step 1: generate the videos and JSON file

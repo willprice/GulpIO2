@@ -20,8 +20,10 @@ from gulpio.fileio import (GulpChunk,
                            calculate_chunk_slices,
                            json_serializer,
                            pickle_serializer,
+                           extract_input_for_getitem,
                            ImgInfo,
                            )
+from gulpio.utils import UndefinedInputType
 from gulpio.adapters import AbstractDatasetAdapter
 
 
@@ -68,6 +70,31 @@ class TestPickleSerializer(FSBase):
         pickle_serializer.dump(content, filename)
         received_content = pickle_serializer.load(filename)
         self.assertEqual(content, received_content)
+
+
+class TestExtractInputForGetitem(unittest.TestCase):
+
+    def test_input_int(self):
+        id_ = 1
+        res_id, res_slice = extract_input_for_getitem(id_)
+        self.assertEqual(res_id, id_)
+        self.assertEqual(res_slice, None)
+
+    def test_input_tuple(self):
+        element = (1, slice(1, 2))
+        res_id, res_slice = extract_input_for_getitem(element)
+        self.assertEqual(res_id, 1)
+        self.assertEqual(res_slice, slice(1, 2))
+
+    def test_input_too_large_tuple(self):
+        element = (1, 2, 3)
+        with self.assertRaises(UndefinedInputType):
+            extract_input_for_getitem(element)
+
+    def test_wrong_input_type(self):
+        element = "WRONG_INPUT"
+        with self.assertRaises(UndefinedInputType):
+            extract_input_for_getitem(element)
 
 
 class TestCalculateChunks(unittest.TestCase):
