@@ -80,9 +80,9 @@ class GulpDirectory(object):
         self.output_dir = output_dir
         self.all_meta_dicts = [c.meta_dict for c in self.chunks()]
         self.chunk_lookup = {}
-        for i, meta_dict in enumerate(self.all_meta_dicts):
+        for chunk_id, meta_dict in zip(self._chunk_ids(), self.all_meta_dicts):
             for id_ in meta_dict:
-                self.chunk_lookup[id_] = i
+                self.chunk_lookup[id_] = chunk_id
 
     def chunks(self):
         """ Return a generator over existing GulpChunk objects which are ready
