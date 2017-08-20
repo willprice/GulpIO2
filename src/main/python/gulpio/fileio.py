@@ -62,8 +62,8 @@ json_serializer = JSONSerializer()
 def extract_input_for_getitem(element):
     if isinstance(element, tuple) and len(element) == 2:
         id_, slice_ = element
-    elif isinstance(element, int):
-        id_, slice_ = element, None
+    elif isinstance(element, (int, str)):
+        id_, slice_ = str(element), None
     else:
         raise UndefinedInputType("Undefined input type! id or (id, slice) expected")
     return id_, slice_
