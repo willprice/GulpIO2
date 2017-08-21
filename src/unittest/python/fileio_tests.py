@@ -397,8 +397,8 @@ class DummyVideosAdapter(AbstractDatasetAdapter):
 
     def __init__(self, num_videos):
         self.num_videos = num_videos
-        self.ids = [str(np.random.randint(0, 1000))
-                    for i in range(num_videos)]
+        self.ids = [str(i) for i in range(num_videos)]
+        np.random.shuffle(self.ids)
 
     def __len__(self):
         return self.num_videos
