@@ -84,7 +84,6 @@ class GulpDirectory(object):
             for id_ in meta_dict:
                 self.chunk_lookup[id_] = chunk_id
         self.merged_meta_dict = {}
-        print(self.all_meta_dicts)
         for d in self.all_meta_dicts:
             for k in d.keys():
                 assert k not in self.merged_meta_dict, "Duplicate id detected {}".format(k)
