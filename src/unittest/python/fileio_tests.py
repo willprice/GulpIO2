@@ -541,7 +541,8 @@ class TestGulpDirectory(FSBase):
         self.assertEqual(expected_meta[0], received_meta)
 
         # now append/extend the gulps
-        GulpIngestor(RoundTripAdapter(), output_directory, 2, 1)()
+        GulpIngestor(RoundTripAdapter(ids=[3, 4, 5]),
+                     output_directory, 2, 1)()
 
         # then, read it again
         gulp_directory = GulpDirectory(output_directory)
