@@ -463,9 +463,48 @@ class TestGulpDirectory(FSBase):
         ingestor()
         gulp_directory = GulpDirectory(output_directory)
         self.assertEqual(gulp_directory.output_dir, output_directory)
-        self.assertEqual(gulp_directory.all_meta_dicts, [{}])
-        self.assertEqual(gulp_directory.chunk_lookup, {})
-        self.assertEqual(gulp_directory.merged_meta_dict, {})
+
+        expected_all_meta_dicts = [
+            OrderedDict([('1',
+                         OrderedDict([('frame_info',
+                                      [[0, 1, 632],
+                                       [632, 1, 632],
+                                       [1264, 1, 632],
+                                       [1896, 1, 632]]),
+                                      ('meta_data',
+                                       [OrderedDict(
+                                           [('name',
+                                             'bunch of numpy arrays')])])]))]),
+            OrderedDict([('2',
+                        OrderedDict([('frame_info',
+                                     [[0, 1, 632],
+                                      [632, 1, 632]]),
+                                    ('meta_data',
+                                     [OrderedDict(
+                                        [('name', 'shorter_video')])])]))])]
+        self.assertEqual(gulp_directory.all_meta_dicts,
+                         expected_all_meta_dicts)
+
+        self.assertEqual(gulp_directory.chunk_lookup, {'1': 0, '2': 1})
+
+        expected_merged_meta_dict = {
+            '1': OrderedDict([('frame_info',
+                              [[0, 1, 632],
+                               [632, 1, 632],
+                               [1264, 1, 632],
+                               [1896, 1, 632]]),
+                              ('meta_data',
+                               [OrderedDict(
+                                   [('name',
+                                     'bunch of numpy arrays')])])]),
+            '2': OrderedDict([('frame_info',
+                              [[0, 1, 632],
+                               [632, 1, 632]]),
+                              ('meta_data',
+                               [OrderedDict([('name',
+                                              'shorter_video')])])])}
+        self.assertEqual(gulp_directory.merged_meta_dict,
+                         expected_merged_meta_dict)
 
     def test_round_trip(self):
         # first, write some garbage in
