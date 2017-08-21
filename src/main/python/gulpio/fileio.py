@@ -175,7 +175,7 @@ class GulpChunk(object):
 
     @staticmethod
     def default_factory():
-        return {'meta_data': [], 'frame_info': []}
+        return OrderedDict([('frame_info', []), ('meta_data', [])])
 
     @contextmanager
     def open(self, flag='rb'):
