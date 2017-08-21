@@ -15,11 +15,48 @@ from docopt import docopt
 
 from gulpio.fileio import GulpDirectory
 
-arguments = docopt(__doc__)
 
-gulp_directory = GulpDirectory(arguments['gulp_directory'])
-
-for chunk in gulp_directory.chunks():
-    chunk_size = os.stat(chunk.data_file_path).st_size
+def check_file_size_larger_zero(filename):
+    chunk_size = os.stat(filename).st_size
     if chunk_size == 0:
-        print("Chunk with ID: {} has file size 0".format(chunk))
+        return False
+    return True
+
+
+def check_data_file_size(meta_dict, data_filename):
+    last_frame_info = meta_dict[next(reversed(meta_dict))]['frame_info'][-1]
+    data_file_size_from_meta = last_frame_info[0] + last_frame_info[2]
+    data_file_size = os.stat(data_filename).st_size
+    if data_file_size != data_file_size_from_meta:
+        return False
+    return True
+
+
+
+def check_file_sizes(gulp_directory):
+    broken_meta_files = {"message": "Broken meta files (size 0)", "files": []}
+    broken_data_files = {"message": "Broken data files (size 0)", "files": []}
+    broken_data_file_size = {"message": "Wrong data files size", "files": []}
+    for chunk in gulp_directory.chunks():
+       if not check_file_size_larger_zero(chunk.meta_file_path):
+           broken_meta_files["files"].append(chunk.meta_file_path)
+       if not check_file_size_larger_zero(chunk.data_file_path):
+           broken_data_files["files"].append(chunk.data_file_path)
+       with chunk.open():
+            if not check_data_file_size(chunk.meta_dict, chunk.data_file_path):
+                broken_data_file_size["files"].append(chunk.data_file_path)
+
+    return broken_meta_files, broken_data_files, broken_data_file_size
+
+def check_for_failures(results):
+    for result in results:
+        if len(result["files"]) > 0:
+            print("Test failed: {} for files: {}".format(result["message"],
+                                                         result["files"]))
+
+if __name__ == '__main__':
+    arguments = docopt(__doc__)
+
+    gulp_directory = GulpDirectory(arguments['<gulp_directory>'])
+    results = check_file_sizes(gulp_directory)
+    check_for_failures(results)
