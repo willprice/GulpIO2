@@ -10,7 +10,7 @@ Arguments:
 
 """
 import os
-
+import collections
 from docopt import docopt
 
 from gulpio.fileio import GulpDirectory
@@ -32,31 +32,48 @@ def check_data_file_size(meta_dict, data_filename):
     return True
 
 
-
 def check_file_sizes(gulp_directory):
-    broken_meta_files = {"message": "Broken meta files (size 0)", "files": []}
-    broken_data_files = {"message": "Broken data files (size 0)", "files": []}
-    broken_data_file_size = {"message": "Wrong data files size", "files": []}
+    broken_meta_files = {"message": "Broken meta files (size 0)",
+                         "occurences": []}
+    broken_data_files = {"message": "Broken data files (size 0)",
+                         "occurences": []}
+    broken_data_file_size = {"message": "Wrong data files size",
+                             "occurences": []}
     for chunk in gulp_directory.chunks():
        if not check_file_size_larger_zero(chunk.meta_file_path):
-           broken_meta_files["files"].append(chunk.meta_file_path)
+           broken_meta_files["occurences"].append(chunk.meta_file_path)
        if not check_file_size_larger_zero(chunk.data_file_path):
-           broken_data_files["files"].append(chunk.data_file_path)
+           broken_data_files["occurences"].append(chunk.data_file_path)
        with chunk.open():
             if not check_data_file_size(chunk.meta_dict, chunk.data_file_path):
-                broken_data_file_size["files"].append(chunk.data_file_path)
+                broken_data_file_size["occurences"].append(chunk.data_file_path)
 
-    return broken_meta_files, broken_data_files, broken_data_file_size
+    return [broken_meta_files, broken_data_files, broken_data_file_size]
+
+
+def check_for_duplicate_ids(gulp_directory):
+    double_ids = {"message": "Ids occur more than once in Gulps",
+                  "occurences": []}
+    all_ids = []
+    for chunk in gulp_directory.chunks():
+        all_ids.extend(chunk.meta_dict.keys())
+    c = collections.Counter(all_ids)
+    duplicates = [i for i in c if c[i]>1]
+    if len(duplicates) > 0:
+        double_ids["occurences"].extend(duplicates)
+    return [double_ids]
+
 
 def check_for_failures(results):
     for result in results:
-        if len(result["files"]) > 0:
-            print("Test failed: {} for files: {}".format(result["message"],
-                                                         result["files"]))
+            print("Test: {} failed for: {}".format(result["message"],
+                                                   result["occurences"]))
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
-
+    results = []
     gulp_directory = GulpDirectory(arguments['<gulp_directory>'])
-    results = check_file_sizes(gulp_directory)
+    results.extend(check_file_sizes(gulp_directory))
+    results.extend(check_for_duplicate_ids(gulp_directory))
+    print(results)
     check_for_failures(results)
