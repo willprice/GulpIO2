@@ -415,11 +415,11 @@ class DummyVideosAdapter(AbstractDatasetAdapter):
 
 class RoundTripAdapter(AbstractDatasetAdapter):
 
-    def __init__(self):
+    def __init__(self, ids=[0, 1, 2]):
         self.result1 = {
             'meta': {'name': 'empty video'},
             'frames': [],
-            'id': 0,
+            'id': ids[0],
         }
         self.result2 = {
             'meta': {'name': 'bunch of numpy arrays'},
@@ -429,7 +429,7 @@ class RoundTripAdapter(AbstractDatasetAdapter):
                 np.ones((2, 1, 3), dtype='uint8'),
                 np.ones((1, 1, 3), dtype='uint8'),
             ],
-            'id': 1,
+            'id': ids[1],
         }
         self.result3 = {
             'meta': {'name': 'shorter_video'},
@@ -437,16 +437,21 @@ class RoundTripAdapter(AbstractDatasetAdapter):
                 np.ones((4, 1, 3), dtype='uint8'),
                 np.ones((3, 1, 3), dtype='uint8'),
             ],
-            'id': 2,
+            'id': ids[2],
         }
+        self.results = [
+            self.result1,
+            self.result2,
+            self.result3,
+        ]
 
     def __len__(self):
         return 3
 
     def iter_data(self, slice_element=None):
-        yield self.result1
-        yield self.result2
-        yield self.result3
+        slice_element = slice_element or slice(0, len(self))
+        for r in self.results[slice_element]:
+            yield r
 
 
 class TestGulpDirectory(FSBase):
