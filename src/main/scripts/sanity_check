@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+"""sanity_check
+
+Usage:
+    sanity_check <gulp_directory>
+
+Arguments:
+    gulp_directory      Directory where the Gulp-Files are located
+
+"""
+import os
+
+from docopt import docopt
+
+from gulpio.fileio import GulpDirectory
+
+arguments = docopt(__doc__)
+
+gulp_directory = GulpDirectory(arguments['gulp_directory'])
+
+for chunk in gulp_directory.chunks():
+    chunk_size = os.stat(chunk.data_file_path).st_size
+    if chunk_size == 0:
+        print("Chunk with ID: {} has file size 0".format(chunk))
