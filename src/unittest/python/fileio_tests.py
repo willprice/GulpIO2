@@ -312,6 +312,33 @@ class TestGulpChunk(GulpChunkElement):
                                     mock.call('1'),
                                     mock.call('2')])
 
+    def test_read_all_with_filtering(self):
+        read_mock = mock.Mock()
+        read_mock.return_value = [], []
+        self.gulp_chunk.meta_dict = OrderedDict((('0', {}),
+                                                 ('1', {}),
+                                                 ('2', {})))
+        self.gulp_chunk.read_frames = read_mock
+        # test with filtering
+        [_ for _ in self.gulp_chunk.read_all(accepted_ids=['0', '1'])]
+        read_mock.assert_has_calls([mock.call('0'),
+                                    mock.call('1')])
+
+    def test_read_all_with_shuffling(self):
+        read_mock = mock.Mock()
+        read_mock.return_value = [], []
+        ids = ['%s' % id_ for id_ in range(5)]
+        self.gulp_chunk.meta_dict = OrderedDict([('%s' % id_, {})
+                                                 for id_ in ids])
+        self.gulp_chunk.read_frames = read_mock
+        # test with shuffling
+        np.random.seed(123)
+        np.random.shuffle(ids)
+        np.random.seed(123)
+        [_ for _ in self.gulp_chunk.read_all(shuffle=True)]
+        print(ids)
+        read_mock.assert_has_calls([mock.call(id_) for id_ in ids])
+
 
 class ChunkWriterElement(FSBase):
 
