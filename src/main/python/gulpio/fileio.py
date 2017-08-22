@@ -83,6 +83,12 @@ class GulpDirectory(object):
         for chunk_id, meta_dict in zip(self._chunk_ids(), self.all_meta_dicts):
             for id_ in meta_dict:
                 self.chunk_lookup[id_] = chunk_id
+        self.merged_meta_dict = {}
+        for d in self.all_meta_dicts:
+            for k in d.keys():
+                assert k not in self.merged_meta_dict, "Duplicate id detected {}".format(k)
+            else:
+                self.merged_meta_dict.update(d)
 
     def chunks(self):
         """ Return a generator over existing GulpChunk objects which are ready
@@ -169,7 +175,7 @@ class GulpChunk(object):
 
     @staticmethod
     def default_factory():
-        return {'meta_data': [], 'frame_info': []}
+        return OrderedDict([('frame_info', []), ('meta_data', [])])
 
     @contextmanager
     def open(self, flag='rb'):

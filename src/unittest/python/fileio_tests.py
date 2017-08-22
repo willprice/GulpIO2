@@ -415,11 +415,11 @@ class DummyVideosAdapter(AbstractDatasetAdapter):
 
 class RoundTripAdapter(AbstractDatasetAdapter):
 
-    def __init__(self):
+    def __init__(self, ids=[0, 1, 2]):
         self.result1 = {
             'meta': {'name': 'empty video'},
             'frames': [],
-            'id': 0,
+            'id': ids[0],
         }
         self.result2 = {
             'meta': {'name': 'bunch of numpy arrays'},
@@ -429,18 +429,82 @@ class RoundTripAdapter(AbstractDatasetAdapter):
                 np.ones((2, 1, 3), dtype='uint8'),
                 np.ones((1, 1, 3), dtype='uint8'),
             ],
-            'id': 1,
+            'id': ids[1],
         }
+        self.result3 = {
+            'meta': {'name': 'shorter_video'},
+            'frames': [
+                np.ones((4, 1, 3), dtype='uint8'),
+                np.ones((3, 1, 3), dtype='uint8'),
+            ],
+            'id': ids[2],
+        }
+        self.results = [
+            self.result1,
+            self.result2,
+            self.result3,
+        ]
 
     def __len__(self):
-        return 2
+        return 3
 
     def iter_data(self, slice_element=None):
-        yield self.result1
-        yield self.result2
+        slice_element = slice_element or slice(0, len(self))
+        for r in self.results[slice_element]:
+            yield r
 
 
 class TestGulpDirectory(FSBase):
+
+    def test_init(self):
+        adapter = RoundTripAdapter()
+        output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
+        ingestor = GulpIngestor(adapter, output_directory, 2, 1)
+        ingestor()
+        gulp_directory = GulpDirectory(output_directory)
+        self.assertEqual(gulp_directory.output_dir, output_directory)
+
+        expected_all_meta_dicts = [
+            OrderedDict([('1',
+                         OrderedDict([('frame_info',
+                                      [[0, 1, 632],
+                                       [632, 1, 632],
+                                       [1264, 1, 632],
+                                       [1896, 1, 632]]),
+                                      ('meta_data',
+                                       [OrderedDict(
+                                           [('name',
+                                             'bunch of numpy arrays')])])]))]),
+            OrderedDict([('2',
+                        OrderedDict([('frame_info',
+                                     [[0, 1, 632],
+                                      [632, 1, 632]]),
+                                    ('meta_data',
+                                     [OrderedDict(
+                                        [('name', 'shorter_video')])])]))])]
+        self.assertEqual(gulp_directory.all_meta_dicts,
+                         expected_all_meta_dicts)
+
+        self.assertEqual(gulp_directory.chunk_lookup, {'1': 0, '2': 1})
+
+        expected_merged_meta_dict = {
+            '1': OrderedDict([('frame_info',
+                              [[0, 1, 632],
+                               [632, 1, 632],
+                               [1264, 1, 632],
+                               [1896, 1, 632]]),
+                              ('meta_data',
+                               [OrderedDict(
+                                   [('name',
+                                     'bunch of numpy arrays')])])]),
+            '2': OrderedDict([('frame_info',
+                              [[0, 1, 632],
+                               [632, 1, 632]]),
+                              ('meta_data',
+                               [OrderedDict([('name',
+                                              'shorter_video')])])])}
+        self.assertEqual(gulp_directory.merged_meta_dict,
+                         expected_merged_meta_dict)
 
     def test_round_trip(self):
         # first, write some garbage in
@@ -477,7 +541,8 @@ class TestGulpDirectory(FSBase):
         self.assertEqual(expected_meta[0], received_meta)
 
         # now append/extend the gulps
-        GulpIngestor(RoundTripAdapter(), output_directory, 2, 1)()
+        GulpIngestor(RoundTripAdapter(ids=[3, 4, 5]),
+                     output_directory, 2, 1)()
 
         # then, read it again
         gulp_directory = GulpDirectory(output_directory)
