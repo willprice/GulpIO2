@@ -215,7 +215,7 @@ class GulpChunk(object):
         self.meta_dict[str(id_)]['frame_info'].append(img_info)
         self.fp.write(record)
 
-    def id_in_chunk(self, id_):
+    def __contains__(self, id_):
         return self._get_frame_infos(id_)
 
     def _get_frame_infos(self, id_):

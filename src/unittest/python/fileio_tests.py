@@ -256,18 +256,18 @@ class TestGulpChunk(GulpChunkElement):
         expected = ([ImgInfo(loc=1, pad=2, length=3)], {'meta': 'ANY_META'})
         self.assertEqual(expected, output)
 
-    def test_id_in_chunk(self):
+    def test_contains(self):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': [{}],
                                            'frame_info': []}}
         with mock.patch('gulpio.fileio.GulpChunk.open'):
-            output = self.gulp_chunk.id_in_chunk(0)
+            output = 0 in self.gulp_chunk
         self.assertTrue(output)
 
-    def test_id_not_in_chunk(self):
+    def test_contains_if_id_not_in_chunk(self):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': [{}],
                                            'frame_info': []}}
         with mock.patch('gulpio.fileio.GulpChunk.open'):
-            output = self.gulp_chunk.id_in_chunk(1)
+            output = 1 in self.gulp_chunk
         self.assertFalse(output)
 
     def test_read_frames(self):
