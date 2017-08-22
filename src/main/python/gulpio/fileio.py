@@ -245,7 +245,8 @@ class GulpChunk(object):
         ids = self.meta_dict.keys()
 
         if accepted_ids is not None:
-            ids = list(set(ids) & set(accepted_ids))
+            intersection = list(set(ids) & set(accepted_ids))
+            ids = [id_ for id_ in ids if id_ in intersection]
 
         if shuffle:
             ids = list(ids)
