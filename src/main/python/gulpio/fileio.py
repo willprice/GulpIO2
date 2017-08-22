@@ -174,7 +174,7 @@ class GulpChunk(object):
             return OrderedDict()
 
     @staticmethod
-    def default_factory():
+    def _default_factory():
         return OrderedDict([('frame_info', []), ('meta_data', [])])
 
     @contextmanager
@@ -195,7 +195,7 @@ class GulpChunk(object):
 
     def append_meta(self, id_, meta_data):
         if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
-            self.meta_dict[str(id_)] = self.default_factory()
+            self.meta_dict[str(id_)] = self._default_factory()
         self.meta_dict[str(id_)]['meta_data'].append(meta_data)
 
     @staticmethod
@@ -210,8 +210,8 @@ class GulpChunk(object):
         img_info = ImgInfo(loc=loc,
                            length=len(record),
                            pad=pad)
-        if str(id_) not in self.meta_dict:
-            self.meta_dict[str(id_)] = self.default_factory()
+        if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
+            self.meta_dict[str(id_)] = self._default_factory()
         self.meta_dict[str(id_)]['frame_info'].append(img_info)
         self.fp.write(record)
 

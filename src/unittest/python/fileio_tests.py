@@ -160,8 +160,8 @@ class TestGulpChunk(GulpChunkElement):
         self.mock_json_serializer.load.called_once_with(self.meta_file_path)
 
     def test_default_factory(self):
-        expected = {'meta_data': [], 'frame_info': []}
-        self.assertEqual(expected, self.gulp_chunk.default_factory())
+        expected = OrderedDict([('frame_info', []), ('meta_data', [])])
+        self.assertEqual(expected, self.gulp_chunk._default_factory())
 
     def test_open_with_wb(self):
         self.gulp_chunk.flush = mock.Mock()
