@@ -73,13 +73,20 @@ def extract_input_for_getitem(element):
 class GulpDirectory(object):
     """ Represents a directory containing *.gulp and *.gmeta files.
 
-    Attributes:
-        all_meta_dicts: (list of dicts) all meta dicts from all chunks
-        chunk_lookup: (dict int -> str) mapping element id to chunk index
-        merged_meta_dict: all meta dicts merged
+    Parameters
+    ----------
+    output_dir: (str)
+        Path to the directory containing the files.
 
-    Args:
-        output_dir: (str) path to the directory containing the files.
+    Attributes
+    ----------
+    all_meta_dicts: (list of dicts)
+        All meta dicts from all chunks as a list.
+    chunk_lookup: (dict: int -> str)
+        Mapping element id to chunk index.
+    merged_meta_dict: (dict: id -> meta dict)
+        all meta dicts merged
+
     """
 
     def __init__(self, output_dir):
@@ -110,8 +117,10 @@ class GulpDirectory(object):
         """ Return a generator over freshly setup GulpChunk objects which are ready
         to be opened and written to.
 
-        Args:
-            total_new_chunks: (int) the total number of new chunks to setup
+        Parameters
+        ----------
+        total_new_chunks: (int)
+            The total number of new chunks to initialize.
         """
         return ((GulpChunk(*paths) for paths in
                  self._allocate_new_file_paths(total_new_chunks)))
