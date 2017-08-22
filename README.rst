@@ -122,10 +122,19 @@ Here is a more visual example:
 
 .. image:: docs/data_file_layout.png
 
-As you can see there are 6 *records* in the example. The first has one byte
-padding, the second two, the third zero, the fourth has one again, the fifth
-one has 3 bytes of padding, and the sixth and last one---which has a length of
-8 bytes---has a single byte of padding.
+As you can see there are 6 *records* in the example. They have the following
+paddings and lengths:
+
+=====  =====  =====
+ID     LEN    PAD
+=====  =====  =====
+0      4      1
+1      4      2
+2      4      0
+3      4      1
+4      4      3
+5      8      1
+=====  =====  =====
 
 The layout of the meta file is a mapping, where each ``id`` representing a
 video is mapped to two further mappings, ``meta_data``, which contains
