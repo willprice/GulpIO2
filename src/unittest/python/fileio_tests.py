@@ -327,7 +327,7 @@ class TestGulpChunk(GulpChunkElement):
             np.random.seed(123)
             [_ for _ in self.gulp_chunk.read_all(shuffle=True)]
             # check numpy.random.shuffle has been called
-            ids = ['%d' % i for i in range(5)]
+            ids = ['{}'.format(i) for i in range(5)]
             shuffle_mock.assert_called_once_with(ids)
             # check videos are accessed in the correct order
             np.random.seed(123)
@@ -340,7 +340,7 @@ class TestGulpChunk(GulpChunkElement):
             [_ for _ in self.gulp_chunk.read_all(accepted_ids=['0', '1', '2'],
                                                  shuffle=True)]
             # check numpy.random.shuffle has been called
-            ids = ['%d' % i for i in range(3)]
+            ids = ['{}'.format(i) for i in range(3)]
             shuffle_mock.assert_called_once_with(ids)
             # check videos are accessed in the correct order
             np.random.seed(123)
