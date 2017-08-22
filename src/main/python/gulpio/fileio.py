@@ -177,6 +177,10 @@ class GulpChunk(object):
     def _default_factory():
         return OrderedDict([('frame_info', []), ('meta_data', [])])
 
+    @staticmethod
+    def _pad_image(number):
+        return (4 - (number % 4)) % 4
+
     @contextmanager
     def open(self, flag='rb'):
         if flag in ['wb', 'rb', 'ab']:
@@ -198,14 +202,10 @@ class GulpChunk(object):
             self.meta_dict[str(id_)] = self._default_factory()
         self.meta_dict[str(id_)]['meta_data'].append(meta_data)
 
-    @staticmethod
-    def pad_image(number):
-        return (4 - (number % 4)) % 4
-
     def write_frame(self, id_, image):
         loc = self.fp.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
-        pad = self.pad_image(len(img_str))
+        pad = self._pad_image(len(img_str))
         record = img_str.ljust(len(img_str) + pad, b'\0')
         img_info = ImgInfo(loc=loc,
                            length=len(record),

@@ -217,11 +217,11 @@ class TestGulpChunk(GulpChunkElement):
         self.assertEqual(expected, self.gulp_chunk.meta_dict)
 
     def test_pad_image(self):
-        self.assertEqual(0, GulpChunk.pad_image(0))
-        self.assertEqual(1, GulpChunk.pad_image(3))
-        self.assertEqual(2, GulpChunk.pad_image(2))
-        self.assertEqual(3, GulpChunk.pad_image(1))
-        self.assertEqual(0, GulpChunk.pad_image(4))
+        self.assertEqual(0, GulpChunk._pad_image(0))
+        self.assertEqual(1, GulpChunk._pad_image(3))
+        self.assertEqual(2, GulpChunk._pad_image(2))
+        self.assertEqual(3, GulpChunk._pad_image(1))
+        self.assertEqual(0, GulpChunk._pad_image(4))
 
     def test_write_frame(self):
         bio = BytesIO()
