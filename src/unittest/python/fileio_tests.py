@@ -374,10 +374,8 @@ class TestChunkWriter(ChunkWriterElement):
                    }
         self.adapter.iter_data = mock_iter_data
         self.chunk_writer.write_chunk(mock_gulp, slice(0, 1))
-        mock_gulp.write_frame.assert_has_calls(
-            [mock.call(0, 'ANY_FRAME1'),
-             mock.call(0, 'ANY_FRAME2')]
-        )
+        mock_gulp.append.assert_called_once_with(
+            0, {'meta': 'ANY_META'}, ['ANY_FRAME1', 'ANY_FRAME2'])
 
 
 class GulpIngestorElement(FSBase):

@@ -210,6 +210,10 @@ class GulpChunk(object):
         self.fp.flush()
         self.serializer.dump(self.meta_dict, self.meta_file_path)
 
+    def append(self, id_, meta_data, frames):
+        self.append_meta(id_, meta_data)
+        self.write_frames(id_, frames)
+
     def append_meta(self, id_, meta_data):
         if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
             self.meta_dict[str(id_)] = self._default_factory()
@@ -274,11 +278,10 @@ class ChunkWriter(object):
         with input_chunk.open('wb'):
             for video in self.adapter.iter_data(input_slice):
                 id_ = video['id']
-                meta_information = video['meta']
+                meta_data = video['meta']
                 frames = video['frames']
                 if len(frames) > 0:
-                    input_chunk.append_meta(id_, meta_information)
-                    input_chunk.write_frames(id_, frames)
+                    input_chunk.append(id_, meta_data, frames)
                 else:
                     print("Failed to write video with id: {}; no frames"
                           .format(id_))
