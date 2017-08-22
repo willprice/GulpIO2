@@ -33,24 +33,24 @@ def check_data_file_size_larger_zero(gulp_directory):
     return result
 
 
-def check_data_file_size(chunk):
+def check_data_file_size(gulp_directory):
+    result = []
     for chunk in gulp_directory.chunks():
         last_frame_info = (chunk.meta_dict[next(reversed(chunk.meta_dict))]
                                           ['frame_info']
                                           [-1])
         data_file_size_from_meta = last_frame_info[0] + last_frame_info[2]
         data_file_size = os.stat(chunk.data_file_path).st_size
-        return data_file_size == data_file_size_from_meta
-
+        if not data_file_size == data_file_size_from_meta:
+            result.append(chunk.data_file_path)
+    return result
 
 def run_tests(gulp_directory):
     result = []
-    for chunk in gulp_directory.chunks():
-        for test in TESTS:
-            if not test["check"](chunk):
-                test["occurences"].append(chunk.meta_file_path) # TODO: ID
+    for test in TESTS:
+        test["occurences"] = test["check"](gulp_directory)
         result.append(test)
-    return result 
+    return result
 
 
 def extract_all_ids(gulp_directory):
@@ -65,10 +65,9 @@ def get_duplicate_entries(list_):
     return [i for i in c if c[i]>1]
 
 
-def check_for_duplicate_ids(chunk):
-    double_ids["occurences"] = get_duplicate_entries(
+def check_for_duplicate_ids(gulp_directory):
+    return get_duplicate_entries(
         extract_all_ids(gulp_directory))
-    return [double_ids]
 
 
 def check_for_failures(results):
