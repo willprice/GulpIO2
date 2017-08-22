@@ -113,9 +113,28 @@ The layout of the ``*.gulp`` file is as follows:
 
     |-jpeg-|-pad-|-jpeg-|-pad-|...
 
+
 Essentially, the data file is simply a series of concatenated JPEG images, i.e.
 the frames of the video. Each frame is padded to be divisible by four bytes,
 since this makes it easier to read JPEGs from disk.
+
+Here is a more visual example:
+
+.. image:: docs/data_file_layout.png
+
+As you can see there are 6 *records* in the example. They have the following
+paddings and lengths:
+
+=====  =====  =====
+FRAME  LEN    PAD
+=====  =====  =====
+0      4      1
+1      4      2
+2      4      0
+3      4      1
+4      4      3
+5      8      1
+=====  =====  =====
 
 The layout of the meta file is a mapping, where each ``id`` representing a
 video is mapped to two further mappings, ``meta_data``, which contains
