@@ -228,6 +228,10 @@ class GulpChunk(object):
         self.meta_dict[str(id_)]['frame_info'].append(img_info)
         self.fp.write(record)
 
+    def write_frames(self, id_, frames):
+        for frame in frames:
+            self.write_frame(id_, frame)
+
     def read_frames(self, id_, slice_=None):
         frame_infos, meta_data = self._get_frame_infos(id_)
         frames = []
@@ -274,8 +278,7 @@ class ChunkWriter(object):
                 frames = video['frames']
                 if len(frames) > 0:
                     input_chunk.append_meta(id_, meta_information)
-                    for frame in frames:
-                        input_chunk.write_frame(id_, frame)
+                    input_chunk.write_frames(id_, frames)
                 else:
                     print("Failed to write video with id: {}; no frames"
                           .format(id_))
