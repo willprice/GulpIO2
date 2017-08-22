@@ -120,7 +120,7 @@ since this makes it easier to read JPEGs from disk.
 
 Here is a more visual example:
 
-.. image:: docs/data_file_layout.pdf
+.. image:: docs/data_file_layout.png
 
 As you can see there are 5 *records* in the example. The first has one byte
 padding, the second two, the third zero, the fourth has one again and the fifth
