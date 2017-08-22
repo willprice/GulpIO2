@@ -174,6 +174,9 @@ class GulpChunk(object):
         id_, slice_ = extract_input_for_getitem(element)
         return self.read_frames(id_, slice_)
 
+    def __iter__(self):
+        return self.read_all()
+
     def _get_frame_infos(self, id_):
         if str(id_) in self.meta_dict:
             return ([ImgInfo(*info)

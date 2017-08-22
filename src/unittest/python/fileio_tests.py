@@ -300,7 +300,7 @@ class TestGulpChunk(GulpChunkElement):
         npt.assert_array_equal(image, np.array(frames[0]))
         self.assertEqual({}, meta)
 
-    def test_read_all(self):
+    def test_iter(self):
         read_mock = mock.Mock()
         read_mock.return_value = [], []
         self.gulp_chunk.meta_dict = OrderedDict((('0', {}),
@@ -309,7 +309,7 @@ class TestGulpChunk(GulpChunkElement):
                                                  ('3', {}),
                                                  ('4', {})))
         self.gulp_chunk.read_frames = read_mock
-        [_ for _ in self.gulp_chunk.read_all()]
+        [_ for _ in self.gulp_chunk]
         read_mock.assert_has_calls([mock.call('0'),
                                     mock.call('1'),
                                     mock.call('2'),
@@ -556,7 +556,7 @@ class TestGulpDirectory(FSBase):
                                   ]
         expected_meta = [{'name': 'bunch of numpy arrays'}]
         with gulp_chunk.open('rb'):
-            for i, (frames, meta) in enumerate(gulp_chunk.read_all()):
+            for i, (frames, meta) in enumerate(gulp_chunk):
                 self.assertEqual(expected_meta[i], meta)
                 self.assertEqual(expected_output_shapes[i],
                                  [np.array(f).shape for f in frames])
@@ -587,7 +587,7 @@ class TestGulpDirectory(FSBase):
         expected_meta = {'name': 'bunch of numpy arrays'}
 
         with gulp_chunk.open('rb'):
-            for frames, meta in gulp_chunk.read_all():
+            for frames, meta in gulp_chunk:
                 self.assertEqual(expected_meta, meta)
                 self.assertEqual(expected_output_shapes,
                                  [np.array(f).shape for f in frames])
