@@ -252,7 +252,7 @@ class TestGulpChunk(GulpChunkElement):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': [{'meta': 'ANY_META'}],
                                            'frame_info': [[1, 2, 3]]}}
         with mock.patch('gulpio.fileio.GulpChunk.open'):
-            output = self.gulp_chunk.retrieve_meta_infos('0')
+            output = self.gulp_chunk._retrieve_meta_infos('0')
         expected = ([ImgInfo(loc=1, pad=2, length=3)], {'meta': 'ANY_META'})
         self.assertEqual(expected, output)
 
