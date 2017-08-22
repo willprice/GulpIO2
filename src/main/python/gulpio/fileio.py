@@ -170,15 +170,15 @@ class GulpChunk(object):
     def __contains__(self, id_):
         return self._get_frame_infos(id_)
 
+    def __getitem__(self, element):
+        id_, slice_ = extract_input_for_getitem(element)
+        return self.read_frames(id_, slice_)
+
     def _get_frame_infos(self, id_):
         if str(id_) in self.meta_dict:
             return ([ImgInfo(*info)
                      for info in self.meta_dict[str(id_)]['frame_info']],
                     dict(self.meta_dict[str(id_)]['meta_data'][0]))
-
-    def __getitem__(self, element):
-        id_, slice_ = extract_input_for_getitem(element)
-        return self.read_frames(id_, slice_)
 
     def _get_or_create_dict(self):
         if os.path.exists(self.meta_file_path):
@@ -193,26 +193,6 @@ class GulpChunk(object):
     @staticmethod
     def _pad_image(number):
         return (4 - (number % 4)) % 4
-
-    @contextmanager
-    def open(self, flag='rb'):
-        if flag in ['wb', 'rb', 'ab']:
-            self.fp = open(self.data_file_path, flag)
-        else:
-            m = "This file does not support the mode: '{}'".format(flag)
-            raise NotImplementedError(m)
-        yield
-        if flag in ['wb', 'ab']:
-            self.flush()
-        self.fp.close()
-
-    def flush(self):
-        self.fp.flush()
-        self.serializer.dump(self.meta_dict, self.meta_file_path)
-
-    def append(self, id_, meta_data, frames):
-        self.append_meta(id_, meta_data)
-        self.write_frames(id_, frames)
 
     def append_meta(self, id_, meta_data):
         if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
@@ -235,6 +215,26 @@ class GulpChunk(object):
     def write_frames(self, id_, frames):
         for frame in frames:
             self.write_frame(id_, frame)
+
+    @contextmanager
+    def open(self, flag='rb'):
+        if flag in ['wb', 'rb', 'ab']:
+            self.fp = open(self.data_file_path, flag)
+        else:
+            m = "This file does not support the mode: '{}'".format(flag)
+            raise NotImplementedError(m)
+        yield
+        if flag in ['wb', 'ab']:
+            self.flush()
+        self.fp.close()
+
+    def flush(self):
+        self.fp.flush()
+        self.serializer.dump(self.meta_dict, self.meta_file_path)
+
+    def append(self, id_, meta_data, frames):
+        self.append_meta(id_, meta_data)
+        self.write_frames(id_, frames)
 
     def read_frames(self, id_, slice_=None):
         frame_infos, meta_data = self._get_frame_infos(id_)
