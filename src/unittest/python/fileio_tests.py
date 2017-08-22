@@ -152,11 +152,11 @@ class TestGulpChunk(GulpChunkElement):
         self.assertEqual(self.gulp_chunk.fp, None)
 
     def test_get_or_create_dict_not_exists(self):
-        self.assertEqual(self.gulp_chunk.get_or_create_dict(), OrderedDict())
+        self.assertEqual(self.gulp_chunk._get_or_create_dict(), OrderedDict())
 
     def test_get_or_create_dict_exists(self):
         open(self.meta_file_path, 'w').close()
-        self.gulp_chunk.get_or_create_dict()
+        self.gulp_chunk._get_or_create_dict()
         self.mock_json_serializer.load.called_once_with(self.meta_file_path)
 
     def test_default_factory(self):
@@ -189,7 +189,7 @@ class TestGulpChunk(GulpChunkElement):
 
     def test_open_unknown_flag(self):
         get_mock = mock.Mock()
-        self.gulp_chunk.get_or_create_dict = get_mock
+        self.gulp_chunk._get_or_create_dict = get_mock
         with self.assertRaises(NotImplementedError):
             with self.gulp_chunk.open('NO_SUCH_FLAG'):
                 pass

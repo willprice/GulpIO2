@@ -164,10 +164,10 @@ class GulpChunk(object):
         self.serializer = serializer
         self.data_file_path = data_file_path
         self.meta_file_path = meta_file_path
-        self.meta_dict = self.get_or_create_dict()
+        self.meta_dict = self._get_or_create_dict()
         self.fp = None
 
-    def get_or_create_dict(self):
+    def _get_or_create_dict(self):
         if os.path.exists(self.meta_file_path):
             return self.serializer.load(self.meta_file_path)
         else:
