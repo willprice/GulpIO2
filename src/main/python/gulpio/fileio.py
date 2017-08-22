@@ -167,6 +167,19 @@ class GulpChunk(object):
         self.meta_dict = self._get_or_create_dict()
         self.fp = None
 
+    def __contains__(self, id_):
+        return self._get_frame_infos(id_)
+
+    def _get_frame_infos(self, id_):
+        if str(id_) in self.meta_dict:
+            return ([ImgInfo(*info)
+                     for info in self.meta_dict[str(id_)]['frame_info']],
+                    dict(self.meta_dict[str(id_)]['meta_data'][0]))
+
+    def __getitem__(self, element):
+        id_, slice_ = extract_input_for_getitem(element)
+        return self.read_frames(id_, slice_)
+
     def _get_or_create_dict(self):
         if os.path.exists(self.meta_file_path):
             return self.serializer.load(self.meta_file_path)
@@ -214,19 +227,6 @@ class GulpChunk(object):
             self.meta_dict[str(id_)] = self._default_factory()
         self.meta_dict[str(id_)]['frame_info'].append(img_info)
         self.fp.write(record)
-
-    def __contains__(self, id_):
-        return self._get_frame_infos(id_)
-
-    def _get_frame_infos(self, id_):
-        if str(id_) in self.meta_dict:
-            return ([ImgInfo(*info)
-                     for info in self.meta_dict[str(id_)]['frame_info']],
-                    dict(self.meta_dict[str(id_)]['meta_data'][0]))
-
-    def __getitem__(self, element):
-        id_, slice_ = extract_input_for_getitem(element)
-        return self.read_frames(id_, slice_)
 
     def read_frames(self, id_, slice_=None):
         frame_infos, meta_data = self._get_frame_infos(id_)
