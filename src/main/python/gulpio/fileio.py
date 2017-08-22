@@ -216,9 +216,7 @@ class GulpChunk(object):
         self.fp.write(record)
 
     def id_in_chunk(self, id_):
-        if self._get_frame_infos(id_):
-            return True
-        return False
+        return self._get_frame_infos(id_)
 
     def _get_frame_infos(self, id_):
         if str(id_) in self.meta_dict:
