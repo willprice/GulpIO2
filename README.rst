@@ -126,7 +126,7 @@ As you can see there are 6 *records* in the example. They have the following
 paddings and lengths:
 
 =====  =====  =====
-ID     LEN    PAD
+FRAME  LEN    PAD
 =====  =====  =====
 0      4      1
 1      4      2
