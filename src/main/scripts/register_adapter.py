@@ -10,7 +10,6 @@ Arguments:
 
 """
 import os
-import sys
 import stat
 import inspect
 import importlib
@@ -18,7 +17,6 @@ from docopt import docopt
 import jinja2
 
 TEMPLATE_FILE = "template.jinja"
-
 
 
 def make_file_name(class_name):
@@ -29,7 +27,7 @@ def make_file_name(class_name):
         else:
             result += letter
     if result[0] == '_':
-        result=result[1:]
+        result = result[1:]
     return result
 
 
@@ -42,19 +40,20 @@ def extract_parameters_from_adapter(init_args):
 
 
 def generate_script(parameters, defaults, adapter_file, class_name):
-    templateLoader = jinja2.FileSystemLoader( searchpath="./" )
-    templateEnv = jinja2.Environment( loader=templateLoader )
+    templateLoader = jinja2.FileSystemLoader(searchpath="./")
+    templateEnv = jinja2.Environment(loader=templateLoader)
     templateEnv.globals.update(zip=zip, reversed=reversed)
 
-    template = templateEnv.get_template( TEMPLATE_FILE )
+    template = templateEnv.get_template(TEMPLATE_FILE)
 
-    templateVars = { "filename": filename,
-                     "adapter_file": adapter_file,
-                     "class_name": class_name,
-                     "parameters" : parameters,
-                     "defaults" : defaults }
+    templateVars = {"filename": filename,
+                    "adapter_file": adapter_file,
+                    "class_name": class_name,
+                    "parameters": parameters,
+                    "defaults": defaults}
 
-    return template.render( templateVars )
+    return template.render(templateVars)
+
 
 def write_command_line_script(filename, script_string):
     print(script_string)
