@@ -73,6 +73,11 @@ def extract_input_for_getitem(element):
 class GulpDirectory(object):
     """ Represents a directory containing *.gulp and *.gmeta files.
 
+    Attributes:
+        all_meta_dicts: (list of dicts) all meta dicts from all chunks
+        chunk_lookup: (dict int -> str) mapping element id to chunk index
+        merged_meta_dict: all meta dicts merged
+
     Args:
         output_dir: (str) path to the directory containing the files.
     """
