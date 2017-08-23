@@ -300,7 +300,7 @@ class TestGulpChunk(GulpChunkElement):
         npt.assert_array_equal(image, np.array(frames[0]))
         self.assertEqual({}, meta)
 
-    def test_iter(self):
+    def test_read_all(self):
         read_mock = mock.Mock()
         read_mock.return_value = [], []
         self.gulp_chunk.meta_dict = OrderedDict((('0', {}),
