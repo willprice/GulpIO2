@@ -300,11 +300,11 @@ def calculate_chunk_slices(videos_per_chunk, num_videos):
 class GulpIngestor(object):
 
     def __init__(self, adapter, output_folder, videos_per_chunk, num_workers):
-        assert num_workers > 0
+        assert int(num_workers) > 0
         self.adapter = adapter
         self.output_folder = output_folder
-        self.videos_per_chunk = videos_per_chunk
-        self.num_workers = num_workers
+        self.videos_per_chunk = int(videos_per_chunk)
+        self.num_workers = int(num_workers)
 
     def __call__(self):
         ensure_output_dir_exists(self.output_folder)
