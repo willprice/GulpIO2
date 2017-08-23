@@ -11,6 +11,7 @@ def check_meta_file_size_larger_zero(gulp_directory):
             for chunk in gulp_directory.chunks()
             if os.stat(chunk.meta_file_path).st_size == 0]
 
+
 def check_data_file_size_larger_zero(gulp_directory):
     return [chunk.data_file_path
             for chunk in gulp_directory.chunks()
@@ -58,6 +59,6 @@ def get_duplicate_entries(list_):
 def check_for_failures(result):
     print("Sanity Check: {}".format(result["message"]))
     if len(result["failures"]):
-        print("Test failed for: {}".format(result["occurences"]))
+        print("Test failed for: {}".format(result["failures"]))
     else:
         print("Test passed")
