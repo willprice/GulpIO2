@@ -247,8 +247,18 @@ class GulpChunk(object):
                   for frame_info in frame_infos[slice_element]]
         return frames, meta_data
 
-    def read_all(self):
-        for id_ in self.meta_dict.keys():
+    def read_all(self, accepted_ids=None, shuffle=False):
+        ids = self.meta_dict.keys()
+
+        if accepted_ids is not None:
+            intersection = list(set(ids) & set(accepted_ids))
+            ids = [id_ for id_ in ids if id_ in intersection]
+
+        if shuffle:
+            ids = list(ids)
+            np.random.shuffle(ids)
+
+        for id_ in ids:
             frames, meta = self.read_frames(id_)
             yield frames, meta
 

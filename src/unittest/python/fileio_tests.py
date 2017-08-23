@@ -305,12 +305,47 @@ class TestGulpChunk(GulpChunkElement):
         read_mock.return_value = [], []
         self.gulp_chunk.meta_dict = OrderedDict((('0', {}),
                                                  ('1', {}),
-                                                 ('2', {})))
+                                                 ('2', {}),
+                                                 ('3', {}),
+                                                 ('4', {})))
         self.gulp_chunk.read_frames = read_mock
         [_ for _ in self.gulp_chunk.read_all()]
         read_mock.assert_has_calls([mock.call('0'),
                                     mock.call('1'),
+                                    mock.call('2'),
+                                    mock.call('3'),
+                                    mock.call('4')])
+
+        # test with filtering
+        [_ for _ in self.gulp_chunk.read_all(accepted_ids=['0', '1', '2'])]
+        read_mock.assert_has_calls([mock.call('0'),
+                                    mock.call('1'),
                                     mock.call('2')])
+
+        # test with shuffling
+        with mock.patch('numpy.random.shuffle') as shuffle_mock:
+            np.random.seed(123)
+            [_ for _ in self.gulp_chunk.read_all(shuffle=True)]
+            # check numpy.random.shuffle has been called
+            ids = ['{}'.format(i) for i in range(5)]
+            shuffle_mock.assert_called_once_with(ids)
+            # check videos are accessed in the correct order
+            np.random.seed(123)
+            np.random.shuffle(ids)
+            read_mock.assert_has_calls([mock.call(id_) for id_ in ids])
+
+        # test with shuffling and filtering
+        with mock.patch('numpy.random.shuffle') as shuffle_mock:
+            np.random.seed(123)
+            [_ for _ in self.gulp_chunk.read_all(accepted_ids=['0', '1', '2'],
+                                                 shuffle=True)]
+            # check numpy.random.shuffle has been called
+            ids = ['{}'.format(i) for i in range(3)]
+            shuffle_mock.assert_called_once_with(ids)
+            # check videos are accessed in the correct order
+            np.random.seed(123)
+            np.random.shuffle(ids)
+            read_mock.assert_has_calls([mock.call(id_) for id_ in ids])
 
 
 class ChunkWriterElement(FSBase):
