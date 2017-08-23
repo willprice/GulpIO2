@@ -176,12 +176,11 @@ class ImageListAdapter(AbstractDatasetAdapter):
 
     def __init__(self, input_file, output_folder, root_folder='',
                  shuffle=False, img_size=-1):
-        self.item_list = [item.strip().split(',') for item in open(input_file, 'r')]
+        item_list = [item.strip().split(',') for item in open(input_file, 'r')]
         self.output_folder = output_folder
         self.root_folder = root_folder
-        print("root  -- ", self.root_folder)
         self.folder = root_folder
-        self.data = self.parse_paths(self.item_list)
+        self.data = self.parse_paths(item_list)
         self.label2idx = self.create_label2idx_dict()
         self.shuffle = shuffle
         self.img_size = img_size
@@ -221,7 +220,8 @@ class ImageListAdapter(AbstractDatasetAdapter):
 
     def iter_data(self, slice_element=None):
         slice_element = slice_element or slice(0, len(self))
-        for meta in self.all_meta[slice_element]:
+        self.all_meta = self.all_meta[slice_element]
+        for meta in self.all_meta:
             img_path = os.path.join(self.root_folder, str(meta['path']))
             try:
                 img = resize_by_short_edge(img_path, self.img_size)
