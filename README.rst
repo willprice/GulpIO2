@@ -59,14 +59,14 @@ And an example invocation would be:
    ...
 
 Additionally, if you would like to ingest your dataset from the command line,
-the `register_adapter` script can be used to generate the command line interface
+the ``register_adapter`` script can be used to generate the command line interface
 for the new adapter, simply call:
 
 .. code::
 
     register_adapter gulpio.adapters <NewAdapterClassName>
 
-The new adapter will be available from the command line as `new_adapter_class_name`.
+The new adapter will be available from the command line as ``new_adapter_class_name``.
 
 Read a 'Gulped' Dataset
 -----------------------
