@@ -64,7 +64,7 @@ for the new adapter, simply call:
 
 .. code::
 
-    register_adapter gulpio.adapters <NewAdapterClassName>
+    $ register_adapter gulpio.adapters <NewAdapterClassName>
 
 The new adapter will be available from the command line as ``new_adapter_class_name``.
 
