@@ -1,19 +1,6 @@
-#!/usr/bin/env python
-
-"""sanity_check
-
-Usage:
-    sanity_check <gulp_directory>
-
-Arguments:
-    gulp_directory      Directory where the Gulp-Files are located
-
-"""
 import os
 import collections
-from docopt import docopt
 
-from gulpio.fileio import GulpDirectory
 
 ###############################################################################
 #                           Checks                                            #
@@ -56,29 +43,6 @@ def check_for_duplicate_ids(gulp_directory):
 
 
 ###############################################################################
-#                           Execute Tests                                     #
-###############################################################################
-
-def run_tests(gulp_directory):
-    result = []
-    for test in TESTS:
-        test["failures"] = test["check"](gulp_directory)
-        check_for_failures(test)
-
-
-###############################################################################
-#                           Print Results                                     #
-###############################################################################
-
-def check_for_failures(result):
-    print("Sanity Check: {}".format(result["message"]))
-    if len(result["failures"]):
-        print("Test failed for: {}".format(result["occurences"]))
-    else:
-        print("Test passed")
-
-
-###############################################################################
 #                           Helper Functions                                  #
 ###############################################################################
 
@@ -95,21 +59,12 @@ def get_duplicate_entries(list_):
 
 
 ###############################################################################
-#                            Define Tests                                     #
+#                           Print Results                                     #
 ###############################################################################
 
-TESTS = [{"message": "Check for empty meta files",
-          "check": check_meta_file_size_larger_zero},
-         {"message": "Check for empty data files",
-          "check": check_data_file_size_larger_zero},
-         {"message": "Check data file size equals size in meta file",
-          "check": check_data_file_size},
-         {"message": "Check presence of duplicate ids",
-          "check": check_for_duplicate_ids},
-         ]
-
-if __name__ == '__main__':
-    arguments = docopt(__doc__)
-    results = []
-    gulp_directory = GulpDirectory(arguments['<gulp_directory>'])
-    results = run_tests(gulp_directory)
+def check_for_failures(result):
+    print("Sanity Check: {}".format(result["message"]))
+    if len(result["failures"]):
+        print("Test failed for: {}".format(result["occurences"]))
+    else:
+        print("Test passed")
