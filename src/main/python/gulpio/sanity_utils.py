@@ -7,21 +7,14 @@ import collections
 ###############################################################################
 
 def check_meta_file_size_larger_zero(gulp_directory):
-    result = []
-    for chunk in gulp_directory.chunks():
-        chunk_size = os.stat(chunk.meta_file_path).st_size
-        if chunk_size == 0:
-            result.append(chunk.meta_file_path)
-    return result
-
+    return [chunk.meta_file_path
+            for chunk in gulp_directory.chunks()
+            if os.stat(chunk.meta_file_path).st_size == 0]
 
 def check_data_file_size_larger_zero(gulp_directory):
-    result = []
-    for chunk in gulp_directory.chunks():
-        chunk_size = os.stat(chunk.data_file_path).st_size
-        if chunk_size == 0:
-            result.append(chunk.meta_file_path)
-    return result
+    return [chunk.data_file_path
+            for chunk in gulp_directory.chunks()
+            if os.stat(chunk.data_file_path).st_size == 0]
 
 
 def check_data_file_size(gulp_directory):
