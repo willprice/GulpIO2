@@ -70,7 +70,7 @@ following snippet:
     for chunk in gulp_directory.chunks():
         with chunk.open('rb'):
             # for each 'video' get the metadata and all frames
-            for frames, meta in chunk.read_all():
+            for frames, meta in chunk:
                 # do something with the metadata
                 for i, f in enumerate(frames):
                     # do something with the frames

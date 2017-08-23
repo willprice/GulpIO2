@@ -152,16 +152,16 @@ class TestGulpChunk(GulpChunkElement):
         self.assertEqual(self.gulp_chunk.fp, None)
 
     def test_get_or_create_dict_not_exists(self):
-        self.assertEqual(self.gulp_chunk.get_or_create_dict(), OrderedDict())
+        self.assertEqual(self.gulp_chunk._get_or_create_dict(), OrderedDict())
 
     def test_get_or_create_dict_exists(self):
         open(self.meta_file_path, 'w').close()
-        self.gulp_chunk.get_or_create_dict()
+        self.gulp_chunk._get_or_create_dict()
         self.mock_json_serializer.load.called_once_with(self.meta_file_path)
 
     def test_default_factory(self):
-        expected = {'meta_data': [], 'frame_info': []}
-        self.assertEqual(expected, self.gulp_chunk.default_factory())
+        expected = OrderedDict([('frame_info', []), ('meta_data', [])])
+        self.assertEqual(expected, self.gulp_chunk._default_factory())
 
     def test_open_with_wb(self):
         self.gulp_chunk.flush = mock.Mock()
@@ -189,7 +189,7 @@ class TestGulpChunk(GulpChunkElement):
 
     def test_open_unknown_flag(self):
         get_mock = mock.Mock()
-        self.gulp_chunk.get_or_create_dict = get_mock
+        self.gulp_chunk._get_or_create_dict = get_mock
         with self.assertRaises(NotImplementedError):
             with self.gulp_chunk.open('NO_SUCH_FLAG'):
                 pass
@@ -217,11 +217,11 @@ class TestGulpChunk(GulpChunkElement):
         self.assertEqual(expected, self.gulp_chunk.meta_dict)
 
     def test_pad_image(self):
-        self.assertEqual(0, GulpChunk.pad_image(0))
-        self.assertEqual(1, GulpChunk.pad_image(3))
-        self.assertEqual(2, GulpChunk.pad_image(2))
-        self.assertEqual(3, GulpChunk.pad_image(1))
-        self.assertEqual(0, GulpChunk.pad_image(4))
+        self.assertEqual(0, GulpChunk._pad_image(0))
+        self.assertEqual(1, GulpChunk._pad_image(3))
+        self.assertEqual(2, GulpChunk._pad_image(2))
+        self.assertEqual(3, GulpChunk._pad_image(1))
+        self.assertEqual(0, GulpChunk._pad_image(4))
 
     def test_write_frame(self):
         bio = BytesIO()
@@ -248,26 +248,26 @@ class TestGulpChunk(GulpChunkElement):
                               'frame_info': [ImgInfo(0, 3, 4)]}}
             self.assertEqual(expected, self.gulp_chunk.meta_dict)
 
-    def test_retrieve_meta_infos(self):
+    def test_get_frame_infos(self):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': [{'meta': 'ANY_META'}],
                                            'frame_info': [[1, 2, 3]]}}
         with mock.patch('gulpio.fileio.GulpChunk.open'):
-            output = self.gulp_chunk.retrieve_meta_infos('0')
+            output = self.gulp_chunk._get_frame_infos('0')
         expected = ([ImgInfo(loc=1, pad=2, length=3)], {'meta': 'ANY_META'})
         self.assertEqual(expected, output)
 
-    def test_id_in_chunk(self):
+    def test_contains(self):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': [{}],
                                            'frame_info': []}}
         with mock.patch('gulpio.fileio.GulpChunk.open'):
-            output = self.gulp_chunk.id_in_chunk(0)
+            output = 0 in self.gulp_chunk
         self.assertTrue(output)
 
-    def test_id_not_in_chunk(self):
+    def test_contains_if_id_not_in_chunk(self):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': [{}],
                                            'frame_info': []}}
         with mock.patch('gulpio.fileio.GulpChunk.open'):
-            output = self.gulp_chunk.id_in_chunk(1)
+            output = 1 in self.gulp_chunk
         self.assertFalse(output)
 
     def test_read_frames(self):
@@ -300,7 +300,7 @@ class TestGulpChunk(GulpChunkElement):
         npt.assert_array_equal(image, np.array(frames[0]))
         self.assertEqual({}, meta)
 
-    def test_read_all(self):
+    def test_iter(self):
         read_mock = mock.Mock()
         read_mock.return_value = [], []
         self.gulp_chunk.meta_dict = OrderedDict((('0', {}),
@@ -309,7 +309,23 @@ class TestGulpChunk(GulpChunkElement):
                                                  ('3', {}),
                                                  ('4', {})))
         self.gulp_chunk.read_frames = read_mock
-        [_ for _ in self.gulp_chunk.read_all()]
+        [_ for _ in self.gulp_chunk]
+        read_mock.assert_has_calls([mock.call('0'),
+                                    mock.call('1'),
+                                    mock.call('2'),
+                                    mock.call('3'),
+                                    mock.call('4')])
+
+    def test_iter_all(self):
+        read_mock = mock.Mock()
+        read_mock.return_value = [], []
+        self.gulp_chunk.meta_dict = OrderedDict((('0', {}),
+                                                 ('1', {}),
+                                                 ('2', {}),
+                                                 ('3', {}),
+                                                 ('4', {})))
+        self.gulp_chunk.read_frames = read_mock
+        [_ for _ in self.gulp_chunk.iter_all()]
         read_mock.assert_has_calls([mock.call('0'),
                                     mock.call('1'),
                                     mock.call('2'),
@@ -317,7 +333,7 @@ class TestGulpChunk(GulpChunkElement):
                                     mock.call('4')])
 
         # test with filtering
-        [_ for _ in self.gulp_chunk.read_all(accepted_ids=['0', '1', '2'])]
+        [_ for _ in self.gulp_chunk.iter_all(accepted_ids=['0', '1', '2'])]
         read_mock.assert_has_calls([mock.call('0'),
                                     mock.call('1'),
                                     mock.call('2')])
@@ -325,7 +341,7 @@ class TestGulpChunk(GulpChunkElement):
         # test with shuffling
         with mock.patch('numpy.random.shuffle') as shuffle_mock:
             np.random.seed(123)
-            [_ for _ in self.gulp_chunk.read_all(shuffle=True)]
+            [_ for _ in self.gulp_chunk.iter_all(shuffle=True)]
             # check numpy.random.shuffle has been called
             ids = ['{}'.format(i) for i in range(5)]
             shuffle_mock.assert_called_once_with(ids)
@@ -337,7 +353,7 @@ class TestGulpChunk(GulpChunkElement):
         # test with shuffling and filtering
         with mock.patch('numpy.random.shuffle') as shuffle_mock:
             np.random.seed(123)
-            [_ for _ in self.gulp_chunk.read_all(accepted_ids=['0', '1', '2'],
+            [_ for _ in self.gulp_chunk.iter_all(accepted_ids=['0', '1', '2'],
                                                  shuffle=True)]
             # check numpy.random.shuffle has been called
             ids = ['{}'.format(i) for i in range(3)]
@@ -374,10 +390,8 @@ class TestChunkWriter(ChunkWriterElement):
                    }
         self.adapter.iter_data = mock_iter_data
         self.chunk_writer.write_chunk(mock_gulp, slice(0, 1))
-        mock_gulp.write_frame.assert_has_calls(
-            [mock.call(0, 'ANY_FRAME1'),
-             mock.call(0, 'ANY_FRAME2')]
-        )
+        mock_gulp.append.assert_called_once_with(
+            0, {'meta': 'ANY_META'}, ['ANY_FRAME1', 'ANY_FRAME2'])
 
 
 class GulpIngestorElement(FSBase):
@@ -558,7 +572,7 @@ class TestGulpDirectory(FSBase):
                                   ]
         expected_meta = [{'name': 'bunch of numpy arrays'}]
         with gulp_chunk.open('rb'):
-            for i, (frames, meta) in enumerate(gulp_chunk.read_all()):
+            for i, (frames, meta) in enumerate(gulp_chunk):
                 self.assertEqual(expected_meta[i], meta)
                 self.assertEqual(expected_output_shapes[i],
                                  [np.array(f).shape for f in frames])
@@ -589,7 +603,7 @@ class TestGulpDirectory(FSBase):
         expected_meta = {'name': 'bunch of numpy arrays'}
 
         with gulp_chunk.open('rb'):
-            for frames, meta in gulp_chunk.read_all():
+            for frames, meta in gulp_chunk:
                 self.assertEqual(expected_meta, meta)
                 self.assertEqual(expected_output_shapes,
                                  [np.array(f).shape for f in frames])

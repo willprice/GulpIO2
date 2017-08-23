@@ -164,18 +164,60 @@ class GulpChunk(object):
         self.serializer = serializer
         self.data_file_path = data_file_path
         self.meta_file_path = meta_file_path
-        self.meta_dict = self.get_or_create_dict()
+        self.meta_dict = self._get_or_create_dict()
         self.fp = None
 
-    def get_or_create_dict(self):
+    def __contains__(self, id_):
+        return self._get_frame_infos(id_)
+
+    def __getitem__(self, element):
+        id_, slice_ = extract_input_for_getitem(element)
+        return self.read_frames(id_, slice_)
+
+    def __iter__(self):
+        return self.iter_all()
+
+    def _get_frame_infos(self, id_):
+        if str(id_) in self.meta_dict:
+            return ([ImgInfo(*info)
+                     for info in self.meta_dict[str(id_)]['frame_info']],
+                    dict(self.meta_dict[str(id_)]['meta_data'][0]))
+
+    def _get_or_create_dict(self):
         if os.path.exists(self.meta_file_path):
             return self.serializer.load(self.meta_file_path)
         else:
             return OrderedDict()
 
     @staticmethod
-    def default_factory():
+    def _default_factory():
         return OrderedDict([('frame_info', []), ('meta_data', [])])
+
+    @staticmethod
+    def _pad_image(number):
+        return (4 - (number % 4)) % 4
+
+    def append_meta(self, id_, meta_data):
+        if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
+            self.meta_dict[str(id_)] = self._default_factory()
+        self.meta_dict[str(id_)]['meta_data'].append(meta_data)
+
+    def write_frame(self, id_, image):
+        loc = self.fp.tell()
+        img_str = cv2.imencode('.jpg', image)[1].tostring()
+        pad = self._pad_image(len(img_str))
+        record = img_str.ljust(len(img_str) + pad, b'\0')
+        img_info = ImgInfo(loc=loc,
+                           length=len(record),
+                           pad=pad)
+        if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
+            self.meta_dict[str(id_)] = self._default_factory()
+        self.meta_dict[str(id_)]['frame_info'].append(img_info)
+        self.fp.write(record)
+
+    def write_frames(self, id_, frames):
+        for frame in frames:
+            self.write_frame(id_, frame)
 
     @contextmanager
     def open(self, flag='rb'):
@@ -193,45 +235,12 @@ class GulpChunk(object):
         self.fp.flush()
         self.serializer.dump(self.meta_dict, self.meta_file_path)
 
-    def append_meta(self, id_, meta_data):
-        if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
-            self.meta_dict[str(id_)] = self.default_factory()
-        self.meta_dict[str(id_)]['meta_data'].append(meta_data)
-
-    @staticmethod
-    def pad_image(number):
-        return (4 - (number % 4)) % 4
-
-    def write_frame(self, id_, image):
-        loc = self.fp.tell()
-        img_str = cv2.imencode('.jpg', image)[1].tostring()
-        pad = self.pad_image(len(img_str))
-        record = img_str.ljust(len(img_str) + pad, b'\0')
-        img_info = ImgInfo(loc=loc,
-                           length=len(record),
-                           pad=pad)
-        if str(id_) not in self.meta_dict:
-            self.meta_dict[str(id_)] = self.default_factory()
-        self.meta_dict[str(id_)]['frame_info'].append(img_info)
-        self.fp.write(record)
-
-    def id_in_chunk(self, id_):
-        if self.retrieve_meta_infos(id_):
-            return True
-        return False
-
-    def retrieve_meta_infos(self, id_):
-        if str(id_) in self.meta_dict:
-            return ([ImgInfo(*info)
-                     for info in self.meta_dict[str(id_)]['frame_info']],
-                    dict(self.meta_dict[str(id_)]['meta_data'][0]))
-
-    def __getitem__(self, element):
-        id_, slice_ = extract_input_for_getitem(element)
-        return self.read_frames(id_, slice_)
+    def append(self, id_, meta_data, frames):
+        self.append_meta(id_, meta_data)
+        self.write_frames(id_, frames)
 
     def read_frames(self, id_, slice_=None):
-        frame_infos, meta_data = self.retrieve_meta_infos(id_)
+        frame_infos, meta_data = self._get_frame_infos(id_)
         frames = []
         slice_element = slice_ or slice(0, len(frame_infos))
 
@@ -247,7 +256,7 @@ class GulpChunk(object):
                   for frame_info in frame_infos[slice_element]]
         return frames, meta_data
 
-    def read_all(self, accepted_ids=None, shuffle=False):
+    def iter_all(self, accepted_ids=None, shuffle=False):
         ids = self.meta_dict.keys()
 
         if accepted_ids is not None:
@@ -272,12 +281,10 @@ class ChunkWriter(object):
         with input_chunk.open('wb'):
             for video in self.adapter.iter_data(input_slice):
                 id_ = video['id']
-                meta_information = video['meta']
+                meta_data = video['meta']
                 frames = video['frames']
                 if len(frames) > 0:
-                    input_chunk.append_meta(id_, meta_information)
-                    for frame in frames:
-                        input_chunk.write_frame(id_, frame)
+                    input_chunk.append(id_, meta_data, frames)
                 else:
                     print("Failed to write video with id: {}; no frames"
                           .format(id_))
