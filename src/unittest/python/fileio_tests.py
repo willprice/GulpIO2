@@ -300,7 +300,7 @@ class TestGulpChunk(GulpChunkElement):
         npt.assert_array_equal(image, np.array(frames[0]))
         self.assertEqual({}, meta)
 
-    def test_iter_all(self):
+    def test_iter(self):
         read_mock = mock.Mock()
         read_mock.return_value = [], []
         self.gulp_chunk.meta_dict = OrderedDict((('0', {}),
@@ -310,6 +310,22 @@ class TestGulpChunk(GulpChunkElement):
                                                  ('4', {})))
         self.gulp_chunk.read_frames = read_mock
         [_ for _ in self.gulp_chunk]
+        read_mock.assert_has_calls([mock.call('0'),
+                                    mock.call('1'),
+                                    mock.call('2'),
+                                    mock.call('3'),
+                                    mock.call('4')])
+
+    def test_iter_all(self):
+        read_mock = mock.Mock()
+        read_mock.return_value = [], []
+        self.gulp_chunk.meta_dict = OrderedDict((('0', {}),
+                                                 ('1', {}),
+                                                 ('2', {}),
+                                                 ('3', {}),
+                                                 ('4', {})))
+        self.gulp_chunk.read_frames = read_mock
+        [_ for _ in self.gulp_chunk.read_all()]
         read_mock.assert_has_calls([mock.call('0'),
                                     mock.call('1'),
                                     mock.call('2'),
