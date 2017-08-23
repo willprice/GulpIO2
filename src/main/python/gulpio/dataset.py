@@ -3,8 +3,6 @@ import sys
 import glob
 import cv2
 import numpy as np
-import torch.utils.data as data
-import torch as th
 import time
 import pickle
 import json
