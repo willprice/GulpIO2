@@ -10,8 +10,6 @@ Arguments:
 
 """
 
-import os
-import collections
 from docopt import docopt
 
 from gulpio.fileio import GulpDirectory
@@ -28,11 +26,9 @@ from gulpio.sanity_utils import (check_meta_file_size_larger_zero,
 ###############################################################################
 
 def run_tests(gulp_directory):
-    result = []
     for test in TESTS:
         test["failures"] = test["check"](gulp_directory)
         check_for_failures(test)
-
 
 
 ###############################################################################

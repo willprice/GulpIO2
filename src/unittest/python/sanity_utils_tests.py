@@ -18,6 +18,7 @@ from gulpio.sanity_utils import (check_meta_file_size_larger_zero,
                                  check_for_failures,
                                  )
 
+
 class FSBase(unittest.TestCase):
 
     def setUp(self):
@@ -105,6 +106,7 @@ class TestCheckDataaFileSizeLargerZero(FSBase):
         result = check_data_file_size_larger_zero(gulp_directory)
         self.assertEqual([], result)
 
+
 class TestCheckDataFileSize(FSBase):
 
     def test_correct_data_file_size(self):
@@ -113,9 +115,9 @@ class TestCheckDataFileSize(FSBase):
         gulp_directory.chunks.return_value = [chunk]
         chunk.meta_dict = OrderedDict(
             [("0", {"meta_data": [{"ANY0": "META0"}],
-                   "frame_info": [[0, 1, 2], [2, 1, 2]]}),
-            ("1", {"meta_data": [{"ANY1": "META1"}],
-                   "frame_info": [[4, 2, 2], [8, 1, 2]]})])
+                    "frame_info": [[0, 1, 2], [2, 1, 2]]}),
+             ("1", {"meta_data": [{"ANY1": "META1"}],
+                    "frame_info": [[4, 2, 2], [8, 1, 2]]})])
         data_file_path = os.path.join(self.temp_dir, "10BYTES")
         with open(data_file_path, 'wb') as f:
             f.write(b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09')
@@ -123,14 +125,13 @@ class TestCheckDataFileSize(FSBase):
         result = check_data_file_size(gulp_directory)
         self.assertEqual([], result)
 
-
     def test_incorrect_data_file_size(self):
         gulp_directory = mock.Mock()
         chunk = mock.Mock()
         gulp_directory.chunks.return_value = [chunk]
         chunk.meta_dict = OrderedDict(
             [("0", {"meta_data": [{"ANY0": "META0"}],
-                   "frame_info": [[0, 1, 2], [2, 1, 2]]})])
+                    "frame_info": [[0, 1, 2], [2, 1, 2]]})])
         data_file_path = os.path.join(self.temp_dir, "10BYTES")
         with open(data_file_path, 'wb') as f:
             f.write(b'\x00')
@@ -200,7 +201,6 @@ class TestGetDuplicateEntries(unittest.TestCase):
         result = get_duplicate_entries(list_)
         self.assertEqual([], result)
 
-
     def test_one_duplicates(self):
         list_ = [0, 1, 1]
         result = get_duplicate_entries(list_)
@@ -231,23 +231,3 @@ class TestCheckForFailures(unittest.TestCase):
         output = out.getvalue().strip()
         expected = "Sanity Check: ANY\nTest failed for: ['FAILURE']"
         self.assertEqual(expected, output)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
