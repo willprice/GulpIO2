@@ -49,7 +49,7 @@ def extract_all_ids(gulp_directory):
 
 def get_duplicate_entries(list_):
     c = collections.Counter(list_)
-    return [i for i in c if c[i]>1]
+    return [i for i in c if c[i] > 1]
 
 
 ###############################################################################
