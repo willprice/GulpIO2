@@ -300,7 +300,7 @@ class TestGulpChunk(GulpChunkElement):
         npt.assert_array_equal(image, np.array(frames[0]))
         self.assertEqual({}, meta)
 
-    def test_read_all(self):
+    def test_iter_all(self):
         read_mock = mock.Mock()
         read_mock.return_value = [], []
         self.gulp_chunk.meta_dict = OrderedDict((('0', {}),
@@ -317,7 +317,7 @@ class TestGulpChunk(GulpChunkElement):
                                     mock.call('4')])
 
         # test with filtering
-        [_ for _ in self.gulp_chunk.read_all(accepted_ids=['0', '1', '2'])]
+        [_ for _ in self.gulp_chunk.iter_all(accepted_ids=['0', '1', '2'])]
         read_mock.assert_has_calls([mock.call('0'),
                                     mock.call('1'),
                                     mock.call('2')])
@@ -325,7 +325,7 @@ class TestGulpChunk(GulpChunkElement):
         # test with shuffling
         with mock.patch('numpy.random.shuffle') as shuffle_mock:
             np.random.seed(123)
-            [_ for _ in self.gulp_chunk.read_all(shuffle=True)]
+            [_ for _ in self.gulp_chunk.iter_all(shuffle=True)]
             # check numpy.random.shuffle has been called
             ids = ['{}'.format(i) for i in range(5)]
             shuffle_mock.assert_called_once_with(ids)
@@ -337,7 +337,7 @@ class TestGulpChunk(GulpChunkElement):
         # test with shuffling and filtering
         with mock.patch('numpy.random.shuffle') as shuffle_mock:
             np.random.seed(123)
-            [_ for _ in self.gulp_chunk.read_all(accepted_ids=['0', '1', '2'],
+            [_ for _ in self.gulp_chunk.iter_all(accepted_ids=['0', '1', '2'],
                                                  shuffle=True)]
             # check numpy.random.shuffle has been called
             ids = ['{}'.format(i) for i in range(3)]
