@@ -1,12 +1,9 @@
 from __future__ import division
-import math
 import random
 import numbers
-import types
 import collections
 import numpy as np
 import cv2
-from PIL import Image, ImageOps
 
 
 class Compose(object):
