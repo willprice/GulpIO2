@@ -177,10 +177,11 @@ class GulpChunk(object):
         return self.iter_all()
 
     def _get_frame_infos(self, id_):
-        if str(id_) in self.meta_dict:
+        id_ = str(id_)
+        if id_ in self.meta_dict:
             return ([ImgInfo(*info)
-                     for info in self.meta_dict[str(id_)]['frame_info']],
-                    dict(self.meta_dict[str(id_)]['meta_data'][0]))
+                     for info in self.meta_dict[id_]['frame_info']],
+                    dict(self.meta_dict[id_]['meta_data'][0]))
 
     def _get_or_create_dict(self):
         if os.path.exists(self.meta_file_path):
@@ -197,9 +198,10 @@ class GulpChunk(object):
         return (4 - (number % 4)) % 4
 
     def append_meta(self, id_, meta_data):
-        if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
-            self.meta_dict[str(id_)] = self._default_factory()
-        self.meta_dict[str(id_)]['meta_data'].append(meta_data)
+        id_ = str(id_)
+        if id_ not in self.meta_dict:  # implements an OrderedDefaultDict
+            self.meta_dict[id_] = self._default_factory()
+        self.meta_dict[id_]['meta_data'].append(meta_data)
 
     def write_frame(self, id_, image):
         loc = self.fp.tell()
@@ -209,9 +211,10 @@ class GulpChunk(object):
         img_info = ImgInfo(loc=loc,
                            length=len(record),
                            pad=pad)
-        if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
-            self.meta_dict[str(id_)] = self._default_factory()
-        self.meta_dict[str(id_)]['frame_info'].append(img_info)
+        id_ = str(id_)
+        if id_ not in self.meta_dict:  # implements an OrderedDefaultDict
+            self.meta_dict[id_] = self._default_factory()
+        self.meta_dict[id_]['frame_info'].append(img_info)
         self.fp.write(record)
 
     def write_frames(self, id_, frames):
