@@ -176,7 +176,8 @@ class ImageListAdapter(AbstractDatasetAdapter):
 
     def __init__(self, input_file, output_folder, root_folder='',
                  shuffle=False, img_size=-1):
-        item_list = [item.strip().split(',') for item in open(input_file, 'r')]
+        item_list = [item.strip().split(',')
+                     for item in open(input_file, 'r')]
         self.output_folder = output_folder
         self.root_folder = root_folder
         self.folder = root_folder
@@ -192,7 +193,9 @@ class ImageListAdapter(AbstractDatasetAdapter):
         data = []
         for img_path, label_name in item_list:
             img_name = os.path.basename(img_path)
-            data.append({'id': img_name, 'label': label_name, 'path': img_path})
+            data.append({'id': img_name,
+                         'label': label_name,
+                         'path': img_path})
         return data
 
     def get_meta(self):
@@ -227,8 +230,8 @@ class ImageListAdapter(AbstractDatasetAdapter):
                 img = resize_by_short_edge(img_path, self.img_size)
             except RuntimeError as e:
                 print(e)
-                continue # skip the item if image is not readable
-            meta.pop('path', None) # don't store path
+                continue  # skip the item if image is not readable
+            meta.pop('path', None)  # don't store path
             result = {'meta': meta,
                       'frames': [img],
                       'id': meta['id']}
