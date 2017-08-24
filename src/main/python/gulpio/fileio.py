@@ -63,9 +63,10 @@ def extract_input_for_getitem(element):
     if isinstance(element, tuple) and len(element) == 2:
         id_, slice_ = element
     elif isinstance(element, (int, str)):
-        id_, slice_ = str(element), None
+        id_, slice_ = element, None
     else:
         raise TypeError("Undefined input type! id or (id, slice) expected")
+    id_ = str(id_)
     return id_, slice_
 
 
@@ -107,7 +108,6 @@ class GulpDirectory(object):
 
     def __getitem__(self, element):
         id_, _ = extract_input_for_getitem(element)
-        id_ = str(id_)
         chunk_id = self.chunk_lookup[id_]
         gulp_chunk = GulpChunk(*self._initialize_filenames(chunk_id))
         with gulp_chunk.open():
@@ -178,10 +178,11 @@ class GulpChunk(object):
         return self.iter_all()
 
     def _get_frame_infos(self, id_):
-        if str(id_) in self.meta_dict:
+        id_ = str(id_)
+        if id_ in self.meta_dict:
             return ([ImgInfo(*info)
-                     for info in self.meta_dict[str(id_)]['frame_info']],
-                    dict(self.meta_dict[str(id_)]['meta_data'][0]))
+                     for info in self.meta_dict[id_]['frame_info']],
+                    dict(self.meta_dict[id_]['meta_data'][0]))
 
     def _get_or_create_dict(self):
         if os.path.exists(self.meta_file_path):
@@ -198,9 +199,10 @@ class GulpChunk(object):
         return (4 - (number % 4)) % 4
 
     def append_meta(self, id_, meta_data):
-        if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
-            self.meta_dict[str(id_)] = self._default_factory()
-        self.meta_dict[str(id_)]['meta_data'].append(meta_data)
+        id_ = str(id_)
+        if id_ not in self.meta_dict:  # implements an OrderedDefaultDict
+            self.meta_dict[id_] = self._default_factory()
+        self.meta_dict[id_]['meta_data'].append(meta_data)
 
     def write_frame(self, id_, image):
         loc = self.fp.tell()
@@ -210,9 +212,10 @@ class GulpChunk(object):
         img_info = ImgInfo(loc=loc,
                            length=len(record),
                            pad=pad)
-        if str(id_) not in self.meta_dict:  # implements an OrderedDefaultDict
-            self.meta_dict[str(id_)] = self._default_factory()
-        self.meta_dict[str(id_)]['frame_info'].append(img_info)
+        id_ = str(id_)
+        if id_ not in self.meta_dict:  # implements an OrderedDefaultDict
+            self.meta_dict[id_] = self._default_factory()
+        self.meta_dict[id_]['frame_info'].append(img_info)
         self.fp.write(record)
 
     def write_frames(self, id_, frames):
