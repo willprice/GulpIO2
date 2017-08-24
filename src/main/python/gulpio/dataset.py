@@ -1,14 +1,8 @@
 import os
-import sys
 import glob
 import cv2
 import numpy as np
-import time
-import pickle
 import json
-from PIL import Image
-from pprint import pprint
-from collections import namedtuple
 
 
 def find_gulp_files(folder):
