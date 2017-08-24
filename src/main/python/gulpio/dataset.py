@@ -9,7 +9,7 @@ def find_gulp_files(folder):
     chunk_paths = sorted(glob.glob(os.path.join(folder, 'data*.gulp')))
     meta_paths = sorted(glob.glob(os.path.join(folder, 'meta*.gmeta')))
     label2idx = json.load(open(os.path.join(folder, 'label2idx.json'), 'rb'))
-    assert len(chunk_paths) ==  len(meta_paths)
+    assert len(chunk_paths) == len(meta_paths)
     return (chunk_paths, meta_paths, label2idx)
 
 
@@ -20,12 +20,11 @@ def merge_meta_files(meta_paths):
         for key in meta_temp.keys():
             chunk = os.path.basename(meta_path).replace('gmeta', 'gulp').replace('meta', 'data')
             meta_temp[key]['chunk_file'] = chunk
-        meta.update(meta_temp) 
+        meta.update(meta_temp)
     return list(meta.items())
 
 
 class GulpVideoDataset(object):
-
 
     def __init__(self, data_path, num_frames, step_size,
                  is_val, transform=None, target_transform=None, stack=True):
@@ -35,7 +34,7 @@ class GulpVideoDataset(object):
                 data_path (str): path to GulpIO dataset folder
                 label_path (str): path to GulpIO label dictionary matching
             label ids to label names
-                num_frames (int): number of frames to be fetched. 
+                num_frames (int): number of frames to be fetched.
                 step_size (int): number of frames skippid while picking sequence
             of frames from each video.
                 is_va (bool): sets the necessary augmention procedure.
@@ -50,7 +49,7 @@ class GulpVideoDataset(object):
         self.num_chunks = len(self.chunk_paths)
 
         if len(self.chunk_paths) == 0:
-            raise(RuntimeError("Found 0 data binaries in subfolders of: " + 
+            raise(RuntimeError("Found 0 data binaries in subfolders of: " +
                                data_paths))
 
         if len(self.chunk_paths) != len(self.meta_paths):
@@ -68,11 +67,10 @@ class GulpVideoDataset(object):
         self.is_val = is_val
         self.stack = stack
 
-
     def __getitem__(self, index):
         """
         With the given video index, it fetches frames. This functions is called
-        by Pytorch DataLoader threads. Each Dataloader thread loads a single 
+        by Pytorch DataLoader threads. Each Dataloader thread loads a single
         batch by calling this function per instance.
         """
         item_idx, item_info = self.meta_dict[index]
