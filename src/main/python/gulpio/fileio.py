@@ -107,7 +107,6 @@ class GulpDirectory(object):
 
     def __getitem__(self, element):
         id_, _ = extract_input_for_getitem(element)
-        id_ = str(id_)
         chunk_id = self.chunk_lookup[id_]
         gulp_chunk = GulpChunk(*self._initialize_filenames(chunk_id))
         with gulp_chunk.open():
