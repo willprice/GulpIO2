@@ -63,9 +63,10 @@ def extract_input_for_getitem(element):
     if isinstance(element, tuple) and len(element) == 2:
         id_, slice_ = element
     elif isinstance(element, (int, str)):
-        id_, slice_ = str(element), None
+        id_, slice_ = element, None
     else:
         raise TypeError("Undefined input type! id or (id, slice) expected")
+    id_ = str(id_)
     return id_, slice_
 
 

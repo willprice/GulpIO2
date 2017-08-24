@@ -76,13 +76,13 @@ class TestExtractInputForGetitem(unittest.TestCase):
     def test_input_int(self):
         id_ = 1
         res_id, res_slice = extract_input_for_getitem(id_)
-        self.assertEqual(res_id, str(id_))
+        self.assertEqual(res_id, "1")
         self.assertEqual(res_slice, None)
 
     def test_input_tuple(self):
         element = (1, slice(1, 2))
         res_id, res_slice = extract_input_for_getitem(element)
-        self.assertEqual(res_id, 1)
+        self.assertEqual(res_id, "1")
         self.assertEqual(res_slice, slice(1, 2))
 
     def test_input_too_large_tuple(self):
