@@ -28,6 +28,7 @@ requires_python = ">=3.4"
 
 @init
 def set_properties(project):
+    project.depends_on('jinja2')
     project.depends_on('tqdm')
     project.depends_on('opencv-python')
     project.depends_on('docopt')
