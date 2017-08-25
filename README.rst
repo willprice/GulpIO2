@@ -68,6 +68,27 @@ for the new adapter, simply call:
 
 The new adapter will be available from the command line as ``new_adapter_class_name``.
 
+
+Sanity check the 'Gulped' Files
+-------------------------------
+
+A very basic test to check the correctness of the gulped files is provided by the ``gulp_sanity_check`` script.
+For execution run:
+
+.. code::
+
+    $ gulp_sanity_check <folder containing the gulped files> 
+
+It tests:
+
+* The presence of any content in the ``.gulp`` and ``.gmeta``-files
+* The file size of the ``.gulp`` file corresponds to the required file size that is given in the ``.gmeta`` file
+* Duplicate appearances of any video-ids
+
+The file names of the files where any test fails will be printed. Currently no script to fix possible errors is
+provided, 'regulping' is the only solution. 
+
+
 Read a 'Gulped' Dataset
 -----------------------
 
