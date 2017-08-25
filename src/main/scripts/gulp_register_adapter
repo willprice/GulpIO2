@@ -16,6 +16,8 @@ import importlib
 from docopt import docopt
 import jinja2
 
+import gulpio
+
 TEMPLATE_FILE = "template.jinja"
 
 
@@ -40,7 +42,9 @@ def extract_parameters_from_adapter(init_args):
 
 
 def generate_script(parameters, defaults, adapter_file, class_name):
-    templateLoader = jinja2.FileSystemLoader(searchpath="./")
+
+    pkg_path = os.path.dirname(gulpio.__file__)
+    templateLoader = jinja2.FileSystemLoader(searchpath=pkg_path)
     templateEnv = jinja2.Environment(loader=templateLoader)
     templateEnv.globals.update(zip=zip, reversed=reversed)
 
