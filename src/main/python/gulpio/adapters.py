@@ -41,11 +41,24 @@ class AbstractDatasetAdapter(ABC):  # pragma: no cover
 
 class Custom20BNAdapterMixin(object):
 
+    def check_if_label2idx_exists(self):
+        return os.path.exists(os.path.join(self.output_folder, 'label2idx.json'))
+
+    def read_label2idx(self):
+        with open(os.path.join(self.output_folder, 'label2idx.json'), 'r') as f:
+            content = json.load(f)
+        return content
+
     def create_label2idx_dict(self, label_name):
         labels = sorted(set([item[label_name] for item in self.data]))
         labels2idx = {}
-        for label_counter, label in enumerate(labels):
-            labels2idx[label] = label_counter
+        if self.check_if_label2idx_exists():
+            labels2idx = self.read_label2idx()
+        label_counter = len(labels2idx)
+        for label in labels:
+            if not label in labels2idx.keys():
+                labels2idx[label] = label_counter
+                label_counter += 1
         return labels2idx
 
     def write_label2idx_dict(self):
