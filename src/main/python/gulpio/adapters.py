@@ -56,7 +56,7 @@ class Custom20BNAdapterMixin(object):
             labels2idx = self.read_label2idx()
         label_counter = len(labels2idx)
         for label in labels:
-            if not label in labels2idx.keys():
+            if label not in labels2idx.keys():
                 labels2idx[label] = label_counter
                 label_counter += 1
         return labels2idx
