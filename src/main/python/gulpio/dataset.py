@@ -37,13 +37,13 @@ class GulpVideoDataset(object):
                  is_val, transform=None, target_transform=None, stack=True):
         r"""Simple data loader for GulpIO format.
 
-        Args:
+            Args:
                 data_path (str): path to GulpIO dataset folder
                 label_path (str): path to GulpIO label dictionary matching
             label ids to label names
-                num_frames (int): number of frames to be fetched. 
-                step_size (int): number of frames skippid while picking sequence
-            of frames from each video.
+                num_frames (int): number of frames to be fetched.
+                step_size (int): number of frames skippid while picking 
+            sequence of frames from each video.
                 is_va (bool): sets the necessary augmention procedure.
                 transform (object): set of augmentation steps defined by
             Compose(). Default is None.
