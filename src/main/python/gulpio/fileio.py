@@ -59,6 +59,16 @@ pickle_serializer = PickleSerializer()
 json_serializer = JSONSerializer()
 
 
+def extract_input_for_getitem(element):
+    if isinstance(element, tuple) and len(element) == 2:
+        id_, slice_ = element
+    elif isinstance(element, (int, str)):
+        id_, slice_ = str(element), None
+    else:
+        raise TypeError("Undefined input type! id or (id, slice) expected")
+    return id_, slice_
+
+
 class GulpDirectory(object):
     """ Represents a directory containing *.gulp and *.gmeta files.
 
@@ -68,6 +78,17 @@ class GulpDirectory(object):
 
     def __init__(self, output_dir):
         self.output_dir = output_dir
+        self.all_meta_dicts = [c.meta_dict for c in self.chunks()]
+        self.chunk_lookup = {}
+        for chunk_id, meta_dict in zip(self._chunk_ids(), self.all_meta_dicts):
+            for id_ in meta_dict:
+                self.chunk_lookup[id_] = chunk_id
+        self.merged_meta_dict = {}
+        for d in self.all_meta_dicts:
+            for k in d.keys():
+                assert k not in self.merged_meta_dict, "Duplicate id detected {}".format(k)
+            else:
+                self.merged_meta_dict.update(d)
 
     def chunks(self):
         """ Return a generator over existing GulpChunk objects which are ready
@@ -83,6 +104,14 @@ class GulpDirectory(object):
         """
         return ((GulpChunk(*paths) for paths in
                  self._allocate_new_file_paths(total_new_chunks)))
+
+    def __getitem__(self, element):
+        id_, _ = extract_input_for_getitem(element)
+        id_ = str(id_)
+        chunk_id = self.chunk_lookup[id_]
+        gulp_chunk = GulpChunk(*self._initialize_filenames(chunk_id))
+        with gulp_chunk.open():
+            return gulp_chunk[element]
 
     def _find_existing_data_paths(self):
         return sorted(glob.glob(os.path.join(self.output_dir, 'data*.gulp')))
@@ -135,7 +164,7 @@ class GulpChunk(object):
         self.serializer = serializer
         self.data_file_path = data_file_path
         self.meta_file_path = meta_file_path
-        self.meta_dict = None
+        self.meta_dict = self.get_or_create_dict()
         self.fp = None
 
     def get_or_create_dict(self):
@@ -146,18 +175,18 @@ class GulpChunk(object):
 
     @staticmethod
     def default_factory():
-        return {'meta_data': [], 'frame_info': []}
+        return OrderedDict([('frame_info', []), ('meta_data', [])])
 
     @contextmanager
     def open(self, flag='rb'):
-        self.meta_dict = self.get_or_create_dict()
         if flag in ['wb', 'rb', 'ab']:
             self.fp = open(self.data_file_path, flag)
         else:
             m = "This file does not support the mode: '{}'".format(flag)
             raise NotImplementedError(m)
         yield
-        self.flush()
+        if flag in ['wb', 'ab']:
+            self.flush()
         self.fp.close()
 
     def flush(self):
@@ -196,26 +225,43 @@ class GulpChunk(object):
 
     def retrieve_meta_infos(self, id_):
         if str(id_) in self.meta_dict:
-            return ([ImgInfo(*self.meta_dict[str(id_)]['frame_info'][i])
-                     for i in range(len(self.meta_dict[str(id_)]
-                                                      ['frame_info']))],
+            return ([ImgInfo(*info)
+                     for info in self.meta_dict[str(id_)]['frame_info']],
                     dict(self.meta_dict[str(id_)]['meta_data'][0]))
 
-    def read_frames(self, id_):
+    def __getitem__(self, element):
+        id_, slice_ = extract_input_for_getitem(element)
+        return self.read_frames(id_, slice_)
+
+    def read_frames(self, id_, slice_=None):
         frame_infos, meta_data = self.retrieve_meta_infos(id_)
         frames = []
-        for frame_info in frame_infos:
+        slice_element = slice_ or slice(0, len(frame_infos))
+
+        def extract_frame(frame_info):
             self.fp.seek(frame_info.loc)
             record = self.fp.read(frame_info.length)
-            img_str = record[:-frame_info.pad]
+            img_str = record[:len(record)-frame_info.pad]
             nparr = np.fromstring(img_str, np.uint8)
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            frames.append(Image.fromarray(img))
+            return img
+        frames = [Image.fromarray(extract_frame(frame_info))
+                  for frame_info in frame_infos[slice_element]]
         return frames, meta_data
 
-    def read_all(self):
-        for id_ in self.meta_dict.keys():
+    def read_all(self, accepted_ids=None, shuffle=False):
+        ids = self.meta_dict.keys()
+
+        if accepted_ids is not None:
+            intersection = list(set(ids) & set(accepted_ids))
+            ids = [id_ for id_ in ids if id_ in intersection]
+
+        if shuffle:
+            ids = list(ids)
+            np.random.shuffle(ids)
+
+        for id_ in ids:
             frames, meta = self.read_frames(id_)
             yield frames, meta
 
