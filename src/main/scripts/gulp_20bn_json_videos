@@ -11,6 +11,7 @@ Usage:
                           [--frame_size <frame_size>]
                           [--frame_rate <frame_rate>]
                           [--shuffle]
+                          [--extend]
                           [--shm_dir <shm_dir>]
                           <input_json> <videos_directory> <output_directory>
     gulp_20bn_json_videos (-h | --help)
@@ -29,6 +30,7 @@ Options:
     --frame_size=<frame_size>               Size of smaller edge of resized frames [default: -1]
     --frame_rate=<frame_rate>               Frame rate when bursting videos [default: 8]
     --shuffle                               Shuffle the dataset before ingestion
+    --extend                                Extend Gulps by further files
     --shm_dir=<shm_dir>                     Temporary directory for bursting frames [default: /dev/shm]
 """
 
