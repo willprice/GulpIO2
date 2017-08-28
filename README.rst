@@ -60,13 +60,14 @@ And an example invocation would be:
 
 Additionally, if you would like to ingest your dataset from the command line,
 the ``register_adapter`` script can be used to generate the command line interface
-for the new adapter, simply call:
+for the new adapter. Write your adapter that inherits from the ``AbstractDatasetAdapter``
+in the ``adapter.py`` file, then simply call:
 
 .. code::
 
-    $ register_adapter gulpio.adapters <NewAdapterClassName>
+    $ gulp_register_adapter gulpio.adapters <NewAdapterClassName>
 
-The new adapter will be available from the command line as ``new_adapter_class_name``.
+The script that provides the command line interface will be in the main directory of the repository. To use it, execute ``./new_adapter_class_name``.
 
 
 Sanity check the 'Gulped' Files
