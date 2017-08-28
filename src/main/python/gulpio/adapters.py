@@ -176,12 +176,11 @@ class ImageListAdapter(AbstractDatasetAdapter):
 
     def __init__(self, input_file, output_folder, root_folder='',
                  shuffle=False, img_size=-1):
-        item_list = [item.strip().split(',')
-                     for item in open(input_file, 'r')]
+        self.input_file = input_file
         self.output_folder = output_folder
         self.root_folder = root_folder
         self.folder = root_folder
-        self.data = self.parse_paths(item_list)
+        self.data = ImageListAdapter.parse_paths(self.input_file)
         self.label2idx = self.create_label2idx_dict()
         self.shuffle = shuffle
         self.img_size = img_size
@@ -189,7 +188,10 @@ class ImageListAdapter(AbstractDatasetAdapter):
         if self.shuffle:
             random.shuffle(self.all_meta)
 
-    def parse_paths(self, item_list):
+    @staticmethod
+    def parse_paths(input_file):
+        item_list = [item.strip().split(',')
+                     for item in open(input_file, 'r')]
         data = []
         for img_path, label_name in item_list:
             img_name = os.path.basename(img_path)
