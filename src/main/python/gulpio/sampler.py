@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 
-class AbstractBaseSampler(ABC): # pragma: no cover
+class AbstractBaseSampler(ABC):  # pragma: no cover
     """Base class for all Samplers.
     Every Sampler subclass has to provide an __iter__ method, providing a way
     to iterate over indices of dataset elements, and a __len__ method that
@@ -100,4 +100,3 @@ class BatchSampler(object):
             return len(self.sampler) // self.batch_size
         else:
             return (len(self.sampler) + self.batch_size - 1) // self.batch_size
-

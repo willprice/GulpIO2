@@ -1,12 +1,9 @@
 from __future__ import division
-import math
 import random
 import numbers
-import types
 import collections
 import numpy as np
 import cv2
-from PIL import Image, ImageOps
 
 
 class Compose(object):
@@ -27,6 +24,7 @@ class Compose(object):
         for t in self.transforms:
             img = t(img)
         return img
+
 
 class ComposeVideo(object):
     r"""Composes several transforms together. It takes two lists of
@@ -107,14 +105,14 @@ class Normalize(object):
 
 
 class UnitNorm(object):
-     r"""Instance wise unit norm"""
+    r"""Instance wise unit norm"""
 
-     def __init__(self):
-         return
+    def __init__(self):
+        return
 
-     def __call__(self, tensor):
-         tensor = (tensor - tensor.mean()) / (tensor.std() + 1e-8)
-         return tensor
+    def __call__(self, tensor):
+        tensor = (tensor - tensor.mean()) / (tensor.std() + 1e-8)
+        return tensor
 
 
 class CenterCrop(object):
@@ -147,7 +145,7 @@ class CenterCrop(object):
         th, tw = self.size
         x1 = int(round((w - tw) / 2.))
         y1 = int(round((h - th) / 2.))
-        return img[y1 : y1 + th, x1 : x1 + tw]
+        return img[y1: y1 + th, x1: x1 + tw]
 
 
 class RandomCrop(object):
@@ -234,9 +232,9 @@ class RandomCropVideo(object):
 
 
 class JitterCrop(object):
-    """Random cropping with pre-defined set of w and h. 
+    """Random cropping with pre-defined set of w and h.
     Args:
-        sample_sizes (sequence, optional): possible crop sizes. 
+        sample_sizes (sequence, optional): possible crop sizes.
         padding (int or sequence, optional): Optional padding on each border
             of the image. Default is 0, i.e no padding. If a sequence of length
             4 is provided, it is used to pad left, top, right, bottom borders
@@ -256,7 +254,7 @@ class JitterCrop(object):
         """
         sample_w = random.choice(self.sample_sizes)
         sample_h = random.choice(self.sample_sizes)
-        h, w = imgs[0].shape[:2]
+        h, w = img.shape[:2]
         x1 = random.randint(0, w - sample_w)
         y1 = random.randint(0, h - sample_h)
         if self.padding > 0:
@@ -270,9 +268,9 @@ class JitterCrop(object):
 
 
 class JitterCropVideo(object):
-    """Random cropping with pre-defined set of w and h. 
+    """Random cropping with pre-defined set of w and h.
     Args:
-        sample_sizes (sequence, optional): possible crop sizes. 
+        sample_sizes (sequence, optional): possible crop sizes.
         padding (int or sequence, optional): Optional padding on each border
             of the image. Default is 0, i.e no padding. If a sequence of length
             4 is provided, it is used to pad left, top, right, bottom borders

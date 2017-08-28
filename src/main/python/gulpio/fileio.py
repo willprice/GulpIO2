@@ -120,7 +120,8 @@ class GulpDirectory(object):
         return sorted(glob.glob(os.path.join(self.output_dir, 'meta*.gmeta')))
 
     def _load_label_dict(self):
-        return json.load(open(os.path.join(folder, 'label2idx.json'), 'rb'))
+        return json.load(open(os.path.join(self.output_dir, 'label2idx.json'),
+                              'rb'))
 
     def _existing_file_paths(self):
         data_paths = self._find_existing_data_paths()

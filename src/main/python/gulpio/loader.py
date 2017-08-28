@@ -5,7 +5,7 @@ import traceback
 import threading
 from multiprocessing import SimpleQueue, Process
 from gulpio.sampler import SequentialSampler, RandomSampler, BatchSampler
-import queue
+# import queue
 string_classes = (str, bytes)
 
 

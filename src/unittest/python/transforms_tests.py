@@ -1,5 +1,4 @@
 import numpy as np
-import cv2
 import unittest
 from gulpio.transforms import Scale
 from gulpio.transforms import RandHorFlipVideo
@@ -11,17 +10,13 @@ from gulpio.transforms import JitterCropVideo, JitterCrop
 from gulpio.transforms import ComposeVideo, Compose
 
 
-
 class TestTransforms(unittest.TestCase):
-
 
     def _img(self):
         return np.random.randint(0, 255, [120, 60, 3]).astype('uint8')
 
-
     def _img_gray(self):
         return np.random.randint(0, 255, [120, 60]).astype('uint8')
-
 
     def _video(self, length):
         imgs = []
@@ -30,12 +25,10 @@ class TestTransforms(unittest.TestCase):
             imgs.append(img)
         return imgs
 
-
     def _check_video_size(self, video):
         ref_size = video[0].shape
         for img in video:
             assert ref_size[0] == img.shape[0] and ref_size[1] == img.shape[1]
-
 
     def test_scale(self):
         img = self._img()
@@ -45,7 +38,7 @@ class TestTransforms(unittest.TestCase):
         assert img_out.shape[2] == 3
 
         img = self._img()
-        scale = Scale((30,30))
+        scale = Scale((30, 30))
         img_out = scale(img)
         assert img_out.shape[0] == 30 and img_out.shape[1] == 30
         assert img_out.shape[2] == 3
@@ -63,14 +56,12 @@ class TestTransforms(unittest.TestCase):
             assert img_out.shape[0] == 30 and img_out.shape[1] == 60
             assert img_out.shape[2] == 3
 
-
     def test_randhorflipvideo(self):
         video = self._video(10)
         flip = RandHorFlipVideo()
         video = flip(video)
         assert video[0].ndim == 3
         assert len(video) == 10
-
 
     def test_normalize(self):
         img = np.ones([120, 120, 3])
@@ -79,14 +70,12 @@ class TestTransforms(unittest.TestCase):
         print(img.mean())
         assert img.mean() > 1 - 1e-3 and img.mean() < 1 + 1e-3
 
-
     def test_unitnorm(self):
         img = np.ones([120, 120, 3])
         norm = UnitNorm()
         img = norm(img)
         print(img.mean())
         assert img.mean() > -1e-3 and img.mean() < 1e-3
-
 
     def test_randomcrop(self):
         img = self._img()
@@ -95,17 +84,15 @@ class TestTransforms(unittest.TestCase):
         assert img.shape[0] == 30 and img.shape[1] == 30
         assert img.ndim == 3
 
-
-    def test_jittercropvideo(self):
-        img = self._img()
+    def test_jittercrop(self):
+        imgo = self._img()
         crop = JitterCrop([30, 20])
-        video = crop(img)
+        img = crop(imgo)
         print(img.shape)
         assert (img.shape[0] + img.shape[1] == 60) or \
-        (img.shape[0] + img.shape[1] == 50) or \
-        (img.shape[0] + img.shape[1] == 40)
-        assert img[0].ndim == 3
-
+               (img.shape[0] + img.shape[1] == 50) or \
+               (img.shape[0] + img.shape[1] == 40)
+        assert img.ndim == 3
 
     def test_randomcropvideo(self):
         video = self._video(10)
@@ -115,18 +102,16 @@ class TestTransforms(unittest.TestCase):
         assert video[0].ndim == 3
         self._check_video_size(video)
 
-
     def test_jittercropvideo(self):
         video = self._video(10)
         crop = JitterCropVideo([30, 20])
         video = crop(video)
         print(video[0].shape)
         assert (video[0].shape[0] + video[1].shape[1] == 60) or \
-        (video[0].shape[0] + video[1].shape[1] == 50) or \
-        (video[0].shape[0] + video[1].shape[1] == 40)
+               (video[0].shape[0] + video[1].shape[1] == 50) or \
+               (video[0].shape[0] + video[1].shape[1] == 40)
         assert video[0].ndim == 3
         self._check_video_size(video)
-
 
     def test_centercrop(self):
         img = self._img()
@@ -149,10 +134,9 @@ class TestTransforms(unittest.TestCase):
 
     def test_compose(self):
         transforms = [CenterCrop(30)]
-        compose = Compose(transforms) 
+        compose = Compose(transforms)
         img = self._img()
         img = compose(img)
         compose = ComposeVideo()
         img = self._img()
         img = compose(img)
-

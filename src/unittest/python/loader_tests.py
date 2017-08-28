@@ -5,25 +5,19 @@ from gulpio.loader import DataLoader
 from gulpio.dataset import GulpVideoDataset
 
 
-
 class SimpleDataset(object):
-
 
     def __getitem__(self, index):
         return np.random.rand(3, 4, 32, 32), np.random.randint(0, high=4, size=4)
-
 
     def __len__(self):
         return 12
 
 
-
 class TestDataLoader(unittest.TestCase):
-
 
     def setup(self):
         self.dataset = SimpleDataset()
-
 
     def test_loader(self):
         self.setup()
@@ -42,15 +36,14 @@ class TestDataLoader(unittest.TestCase):
         loader = DataLoader(self.dataset, num_workers=1, drop_last=True)
         for data, label in loader:
             print(data.shape)
-        loader = DataLoader(self.dataset, num_workers=1, shuffle=True, 
+        loader = DataLoader(self.dataset, num_workers=1, shuffle=True,
                             drop_last=True)
         for data, label in loader:
             print(data.shape)
 
 
-class TestDataset(unittest.TestCase):
+class TestGulpVideoDataset(unittest.TestCase):
     # TODO: add sample gulpio files for testing
-
 
     def iterate(self, loader):
         for idx, data in enumerate(loader):
@@ -59,9 +52,9 @@ class TestDataset(unittest.TestCase):
                 break
 
     def test_dataset(self):
-        if os.path.exist('/data/20bn-gestures/gulpio'):
+        if os.path.exists('/data/20bn-gestures/gulpio'):
             dataset = GulpVideoDataset('/data/20bn-gestures/gulpio', 2, 2,
-                                   False)
+                                       False)
             loader = DataLoader(dataset, num_workers=0)
             self.iterate(loader)
 
