@@ -5,12 +5,8 @@ import traceback
 import threading
 from multiprocessing import SimpleQueue, Process
 from gulpio.sampler import SequentialSampler, RandomSampler, BatchSampler
-if sys.version_info[0] == 2:
-    import Queue as queue
-    string_classes = basestring
-else:
-    import queue
-    string_classes = (str, bytes)
+import queue
+string_classes = (str, bytes)
 
 
 _use_shared_memory = False
