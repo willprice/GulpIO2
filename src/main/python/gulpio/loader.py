@@ -46,8 +46,7 @@ def default_collate(batch):
         if type(elem).__name__ == 'ndarray':
             return np.stack(batch, 0)
         if elem.shape == ():  # scalars
-            py_type = float if elem.dtype.name.startswith('float') else int
-            return numpy_type_map[elem.dtype.name](list(map(py_type, batch)))
+            return batch
     elif isinstance(batch[0], int) or isinstance(batch[0], float):
         return batch
     elif isinstance(batch[0], collections.Sequence):
@@ -142,11 +141,6 @@ class DataLoaderIter(object):
         return batch
 
     def __getstate__(self):
-        # TODO: add limited pickling support for sharing an iterator
-        # across multiple threads for HOGWILD.
-        # Probably the best way to do this is by moving the sample pushing
-        # to a separate thread and then just sharing the data queue
-        # but signalling the end is tricky without a non-blocking API
         raise NotImplementedError("DataLoaderIterator cannot be pickled")
 
     def _shutdown_workers(self):
