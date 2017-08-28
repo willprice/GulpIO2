@@ -95,7 +95,6 @@ class GulpVideoDataset(object):
         chunk_file = open(chunk_path, "rb")
         target_name = item_info['meta_data'][0]['label']
         target_idx = self.label_to_idx[target_name]
-        print(target_idx)
         frames = item_info['frame_info']
         num_frames = len(frames)
         # set number of necessary frames
@@ -117,7 +116,6 @@ class GulpVideoDataset(object):
         frames = frames[offset: num_frames_necessary + offset: self.step_size]
         # read images
         imgs = []
-        crop_locs = None
         for frame in frames:
             img = self.__read_frame(frame, chunk_file)
             imgs.append(img)
