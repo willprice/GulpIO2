@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+""" register an adapter to create a command line interface
+
+Usage:
+    register_adapter.py <adapter_file> <class_name>
+
+Arguments:
+    adapter_file:       Name of the adapter to register
+    class_name:         Name of the new adapter class
+
+"""
+import os
+import stat
+import inspect
+import importlib
+from docopt import docopt
+import jinja2
+
+import gulpio
+
+TEMPLATE_FILE = "template.jinja"
+
+
+def make_file_name(class_name):
+    result = ''
+    for letter in class_name:
+        if letter.isupper():
+            result += ("_" + letter.lower())
+        else:
+            result += letter
+    if result[0] == '_':
+        result = result[1:]
+    return result
+
+
+def extract_parameters_from_adapter(init_args):
+    parameters = init_args[0][1:]
+    # define default values that are set in the adapter
+    defaults = ['' for i in range(len(parameters))]
+    defaults[-len(init_args[-1]):] = init_args[-1]
+    return parameters, defaults
+
+
+def generate_script(parameters, defaults, adapter_file, class_name):
+
+    pkg_path = os.path.dirname(gulpio.__file__)
+    templateLoader = jinja2.FileSystemLoader(searchpath=pkg_path)
+    templateEnv = jinja2.Environment(loader=templateLoader)
+    templateEnv.globals.update(zip=zip, reversed=reversed)
+
+    template = templateEnv.get_template(TEMPLATE_FILE)
+
+    templateVars = {"filename": filename,
+                    "adapter_file": adapter_file,
+                    "class_name": class_name,
+                    "parameters": parameters,
+                    "defaults": defaults}
+
+    return template.render(templateVars)
+
+
+def write_command_line_script(filename, script_string):
+    print(script_string)
+    with open(filename, 'w') as fp:
+        fp.write(script_string)
+    # set mode to executable
+    st = os.stat(filename)
+    os.chmod(filename, st.st_mode | stat.S_IEXEC)
+
+
+if __name__ == '__main__':
+    arguments = docopt(__doc__)
+    filename = make_file_name(arguments['<class_name>'])
+    i = importlib.import_module(arguments['<adapter_file>'])
+    init_args = inspect.getargspec(
+        getattr(i, arguments['<class_name>']).__init__)
+
+    parameters, defaults = extract_parameters_from_adapter(init_args)
+    script_string = generate_script(parameters,
+                                    defaults,
+                                    arguments['<adapter_file>'],
+                                    arguments['<class_name>'])
+    write_command_line_script(filename, script_string)
