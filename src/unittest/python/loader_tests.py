@@ -1,3 +1,4 @@
+import os
 import unittest
 import numpy as np
 from gulpio.loader import DataLoader
@@ -58,14 +59,17 @@ class TestDataset(unittest.TestCase):
                 break
 
     def test_dataset(self):
-        dataset = GulpVideoDataset('/data/20bn-gestures/gulpio', 2, 2,
+        if os.path.exist('/data/20bn-gestures/gulpio'):
+            dataset = GulpVideoDataset('/data/20bn-gestures/gulpio', 2, 2,
                                    False)
-        loader = DataLoader(dataset, num_workers=0)
-        self.iterate(loader)
+            loader = DataLoader(dataset, num_workers=0)
+            self.iterate(loader)
 
-        loader = DataLoader(dataset, num_workers=2)
-        self.iterate(loader)
+            loader = DataLoader(dataset, num_workers=2)
+            self.iterate(loader)
 
-        dataset = GulpVideoDataset('/data/20bn-gestures/gulpio', 2, 2,
-                                   False, stack=False)
-        self.iterate(loader)
+            dataset = GulpVideoDataset('/data/20bn-gestures/gulpio', 2, 2,
+                                       False, stack=False)
+            self.iterate(loader)
+        else:
+            pass
