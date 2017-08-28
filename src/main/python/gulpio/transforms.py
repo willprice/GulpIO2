@@ -247,7 +247,7 @@ class JitterCrop(object):
         self.padding = padding
         self.sample_sizes = sample_sizes
 
-    def __call__(self, imgs):
+    def __call__(self, img):
         """
         Args:
             img (numpy.array): Image to be cropped.

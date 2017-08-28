@@ -1,24 +1,24 @@
 import numpy as np
+from abc import ABC, abstractmethod
 
 
-class Sampler(object):
+class AbstractBaseSampler(ABC): # pragma: no cover
     """Base class for all Samplers.
     Every Sampler subclass has to provide an __iter__ method, providing a way
     to iterate over indices of dataset elements, and a __len__ method that
     returns the length of the returned iterators.
     """
 
-    def __init__(self, data_source):
-        pass
-
+    @abstractmethod
     def __iter__(self):
         raise NotImplementedError
 
+    @abstractmethod
     def __len__(self):
         raise NotImplementedError
 
 
-class SequentialSampler(Sampler):
+class SequentialSampler(AbstractBaseSampler):
     """Samples elements sequentially, always in the same order.
     Arguments:
         data_source (Dataset): dataset to sample from
@@ -34,7 +34,7 @@ class SequentialSampler(Sampler):
         return len(self.data_source)
 
 
-class RandomSampler(Sampler):
+class RandomSampler(AbstractBaseSampler):
     """Samples elements randomly, without replacement.
     Arguments:
         data_source (Dataset): dataset to sample from
@@ -50,7 +50,7 @@ class RandomSampler(Sampler):
         return len(self.data_source)
 
 
-class SubsetRandomSampler(Sampler):
+class SubsetRandomSampler(AbstractBaseSampler):
     """Samples elements randomly from a given list of indices, without replacement.
     Arguments:
         indices (list): a list of indices
@@ -69,7 +69,7 @@ class SubsetRandomSampler(Sampler):
 class BatchSampler(object):
     """Wraps another sampler to yield a mini-batch of indices.
     Args:
-        sampler (Sampler): Base sampler.
+        sampler (AbstractBaseSampler): Base sampler.
         batch_size (int): Size of mini-batch.
         drop_last (bool): If ``True``, the sampler will drop the last batch if
             its size would be less than ``batch_size``
