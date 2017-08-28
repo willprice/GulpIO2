@@ -44,3 +44,4 @@ def set_properties(project):
     project.set_property('flake8_include_scripts', True)
     project.set_property('flake8_include_test_sources', True)
     project.set_property('flake8_break_build', True)
+    project.include_file("gulpio", "template.jinja")
