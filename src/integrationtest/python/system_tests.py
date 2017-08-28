@@ -40,7 +40,7 @@ def check_generated_files():
     gulp_directory = GulpDirectory(output_dir)
     for chunk in gulp_directory.chunks():
         with chunk.open('rb'):
-            for frames, meta in chunk.read_all():
+            for frames, meta in chunk:
                 check_frames(frames)
 
     # check random access for a few videos

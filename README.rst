@@ -36,13 +36,14 @@ Then, install the package using:
 Usage
 =====
 
+'Gulp' a Dataset
+----------------
+
 The ``gulpio`` package has been designed to be infinitely hackable and to support
 arbitrary datasets. To this end, we are providing a so-called *adapter
 pattern*. Specifically there exists an abstract class in ``gulpio.adapters``:
 the ``AbstractDatasetAdapter``.  In order to ingest your dataset, you basically
 need to implement your own custom adapter that inherits from this.
-Additionally, if you would like to ingest your dataset from the command line,
-you need to implement a short command line interface.
 
 You should be able to get going quickly by looking at the following examples,
 that we use internally to gulp our video datasets.
@@ -57,6 +58,40 @@ And an example invocation would be:
    $ gulp_20bn_json_videos videos.json input_dir output_dir
    ...
 
+Additionally, if you would like to ingest your dataset from the command line,
+the ``register_adapter`` script can be used to generate the command line interface
+for the new adapter, simply call:
+
+.. code::
+
+    $ register_adapter gulpio.adapters <NewAdapterClassName>
+
+The new adapter will be available from the command line as ``new_adapter_class_name``.
+
+
+Sanity check the 'Gulped' Files
+-------------------------------
+
+A very basic test to check the correctness of the gulped files is provided by the ``gulp_sanity_check`` script.
+For execution run:
+
+.. code::
+
+    $ gulp_sanity_check <folder containing the gulped files> 
+
+It tests:
+
+* The presence of any content in the ``.gulp`` and ``.gmeta``-files
+* The file size of the ``.gulp`` file corresponds to the required file size that is given in the ``.gmeta`` file
+* Duplicate appearances of any video-ids
+
+The file names of the files where any test fails will be printed. Currently no script to fix possible errors is
+provided, 'regulping' is the only solution. 
+
+
+Read a 'Gulped' Dataset
+-----------------------
+
 In order to read from the gulps, you can let yourself be inspired by the
 following snippet:
 
@@ -70,7 +105,7 @@ following snippet:
     for chunk in gulp_directory.chunks():
         with chunk.open('rb'):
             # for each 'video' get the metadata and all frames
-            for frames, meta in chunk.read_all():
+            for frames, meta in chunk:
                 # do something with the metadata
                 for i, f in enumerate(frames):
                     # do something with the frames
