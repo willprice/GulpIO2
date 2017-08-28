@@ -30,6 +30,14 @@ def merge_meta_files(meta_paths):
     return list(meta.items())
 
 
+class GulpIOEmptyFolder(Exception):
+        pass
+
+
+class GulpIOMismatch(Exception):
+        pass
+
+
 class GulpVideoDataset(object):
 
 
