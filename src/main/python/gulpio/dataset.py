@@ -64,12 +64,13 @@ class GulpVideoDataset(object):
         self.num_chunks = len(self.chunk_paths)
 
         if len(self.chunk_paths) == 0:
-            raise(RuntimeError("Found 0 data binaries in subfolders of: " + 
-                               data_paths))
+            raise(GulpIOEmptyFolder(r"Found 0 data binaries in subfolders \
+                                    of: ".format(data+paths))
 
         if len(self.chunk_paths) != len(self.meta_paths):
-            raise(RuntimeError("Number of binary files are not matching with \
-                              number of meta files. Check GulpIO dataset."))
+            raise(GulpIOMismatch(r"Number of binary files are not matching \
+                                 with number of meta files. Check GulpIO \
+                                 dataset."))
 
         print(" > Found {} chunks".format(self.num_chunks))
         self.data_path = data_path
