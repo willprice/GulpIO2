@@ -30,7 +30,7 @@ class ComposeVideo(object):
     r"""Composes several transforms together. It takes two lists of
     transformations. One list is for image transformations, and the other one
     is for videos. Image transforms are called per frame and video
-    transformes applied to the whole video with the same parameters.
+    transforms applied to the whole video with the same parameters.
 
     Args:
         img_transforms (List[Transform]): list of transforms to compose.
