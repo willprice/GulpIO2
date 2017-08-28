@@ -205,8 +205,8 @@ class ImageListAdapter(AbstractDatasetAdapter):
 
     def create_label2idx_dict(self):
         labels = sorted(set([item['label'] for item in self.data]))
-        label2idx = { label: label_counter
-                      for label_counter, label in enumerate(labels)}
+        label2idx = {label: label_counter
+                     for label_counter, label in enumerate(labels)}
         return label2idx
 
     def __len__(self):
@@ -280,8 +280,8 @@ class ImageFolderAdapter(AbstractDatasetAdapter):
 
     def create_label2idx_dict(self):
         labels = sorted(set([item['label'] for item in self.data]))
-        label2idx = { label: label_counter
-                      for label_counter, label in enumerate(labels)}
+        label2idx = {label: label_counter
+                     for label_counter, label in enumerate(labels)}
         return label2idx
 
     def __len__(self):
