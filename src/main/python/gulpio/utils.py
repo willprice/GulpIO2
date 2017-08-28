@@ -66,7 +66,7 @@ def resize_images(imgs, img_size=-1):
         img_path = img
         img = cv2.imread(img_path)
         if img is None:
-            raise RuntimeError("Image read None from path", img_path)
+            raise RuntimeError("Image is  None from path: {}".format(img_path))
         if img_size > 0:
             img = resize_by_short_edge(img, img_size)
         yield img
