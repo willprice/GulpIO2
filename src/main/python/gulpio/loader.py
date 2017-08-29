@@ -51,7 +51,7 @@ def default_collate(batch):
         return batch
     elif isinstance(batch[0], collections.Sequence):
         transposed = zip(*batch)
-        return [default_collate(samples) for samples in transposed]
+        return [default_collate(list(samples)) for samples in transposed]
     raise TypeError(("batch must contain tensors or lists; found {}"
                      .format(type(batch[0]))))
 
