@@ -140,3 +140,84 @@ class GulpVideoDataset(object):
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         return img
+
+
+class GulpImageDataset(object):
+
+    def __init__(self, data_path, is_val=False, transform=None,
+                 target_transform=None):
+        r"""Simple image data loader for GulpIO format.
+
+            Args:
+                data_path (str): path to GulpIO dataset folder
+                label_path (str): path to GulpIO label dictionary matching
+            label ids to label names
+                is_va (bool): sets the necessary augmention procedure.
+                transform (object): set of augmentation steps defined by
+            Compose(). Default is None.
+                target_transform (func): performs preprocessing on labels if
+            defined. Default is None.
+        """
+
+        self.chunk_paths, self.meta_paths, self.label_to_idx = find_gulp_files(data_path)
+        self.num_chunks = len(self.chunk_paths)
+
+        if len(self.chunk_paths) == 0:
+            raise(GulpIOEmptyFolder(r"Found 0 data binaries in subfolders \
+                                    of: ".format(data_path)))
+
+        if len(self.chunk_paths) != len(self.meta_paths):
+            raise(GulpIOMismatch(r"Number of binary files are not matching \
+                                 with number of meta files. Check GulpIO \
+                                 dataset."))
+
+        print(" > Found {} chunks".format(self.num_chunks))
+        self.data_path = data_path
+        self.meta_dict = merge_meta_files(self.meta_paths)
+        self.classes = self.label_to_idx.keys()
+        self.transform = transform
+        self.target_transform = target_transform
+        self.is_val = is_val
+
+    def __getitem__(self, index):
+        """
+        With the given video index, it fetches frames. This functions is called
+        by Pytorch DataLoader threads. Each Dataloader thread loads a single
+        batch by calling this function per instance.
+        """
+        item_idx, item_info = self.meta_dict[index]
+        chunk_path = os.path.join(self.data_path, item_info['chunk_file'])
+        chunk_file = open(chunk_path, "rb")
+        target_name = item_info['meta_data'][0]['label']
+        target_idx = self.label_to_idx[target_name]
+        image = item_info['frame_info']
+        assert len(image) > 0 
+        # read image
+        img = self.__read_image(image[0], chunk_file)
+        # augmentation
+        img = self.transform(img)
+        chunk_file.close()
+        return (img, target_idx)
+
+    def __len__(self):
+        """
+        This is called by PyTorch dataloader to decide the size of the dataset.
+        """
+        return len(self.meta_dict)
+
+    def __read_image(self, meta_info, f):
+        """
+        Reads single frames from a video
+        """
+        # TODO: read item by gulpio api
+        loc, pad, length = meta_info
+        f.seek(loc)
+        record = f.read(length)
+        img_str = record[:-pad]
+        nparr = np.fromstring(img_str, np.uint8)
+        try:
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        except:
+            img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        return img
