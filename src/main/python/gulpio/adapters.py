@@ -242,7 +242,7 @@ class ImageFolderAdapter(AbstractDatasetAdapter):
     """
 
     def __init__(self, folder, output_folder,
-                 file_extensions=['.jpg'], shuffle=False,
+                 file_extensions=['.jpg', '.png'], shuffle=False,
                  img_size=-1):
         self.file_extensions = file_extensions
         self.data = self.parse_folder(folder)
