@@ -58,13 +58,13 @@ class GulpVideoDataset(object):
         self.num_chunks = len(self.chunk_paths)
 
         if len(self.chunk_paths) == 0:
-            raise(GulpIOEmptyFolder(r"Found 0 data binaries in subfolders \
-                                    of: ".format(data_path)))
+            raise(GulpIOEmptyFolder("""Found 0 data binaries in subfolders 
+                                    of: """.format(data_path)))
 
         if len(self.chunk_paths) != len(self.meta_paths):
-            raise(GulpIOMismatch(r"Number of binary files are not matching \
-                                 with number of meta files. Check GulpIO \
-                                 dataset."))
+            raise(GulpIOMismatch("""Number of binary files are not matching 
+                                 with number of meta files. Check GulpIO 
+                                 dataset."""))
 
         print(" > Found {} chunks".format(self.num_chunks))
         self.data_path = data_path
@@ -135,10 +135,14 @@ class GulpVideoDataset(object):
         loc, pad, length = meta_info
         f.seek(loc)
         record = f.read(length)
-        img_str = record[:-pad]
+        if pad == 0:
+            img_str = record
+        else:
+            img_str = record[:-pad]
         nparr = np.fromstring(img_str, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.imdecode(nparr, cv2.IMREAD_ANYCOLOR)
+        if img.ndim > 2:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         return img
 
 
@@ -163,13 +167,13 @@ class GulpImageDataset(object):
         self.num_chunks = len(self.chunk_paths)
 
         if len(self.chunk_paths) == 0:
-            raise(GulpIOEmptyFolder(r"Found 0 data binaries in subfolders \
-                                    of: ".format(data_path)))
+            raise(GulpIOEmptyFolder("""Found 0 data binaries in subfolders 
+                                    of: """.format(data_path)))
 
         if len(self.chunk_paths) != len(self.meta_paths):
-            raise(GulpIOMismatch(r"Number of binary files are not matching \
-                                 with number of meta files. Check GulpIO \
-                                 dataset."))
+            raise(GulpIOMismatch("""Number of binary files are not matching 
+                                 with number of meta files. Check GulpIO 
+                                 dataset."""))
 
         print(" > Found {} chunks".format(self.num_chunks))
         self.data_path = data_path
@@ -213,11 +217,12 @@ class GulpImageDataset(object):
         loc, pad, length = meta_info
         f.seek(loc)
         record = f.read(length)
-        img_str = record[:-pad]
+        if pad == 0:
+            img_str = record
+        else:
+            img_str = record[:-pad]
         nparr = np.fromstring(img_str, np.uint8)
-        try:
-            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        except:
-            img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.imdecode(nparr, cv2.IMREAD_ANYCOLOR)
+        if img.ndim > 2:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         return img
