@@ -210,6 +210,7 @@ class GulpChunk(object):
         assert len(img_str) > 0
         pad = self._pad_image(len(img_str))
         record = img_str.ljust(len(img_str) + pad, b'\0')
+        assert len(record) > 0
         img_info = ImgInfo(loc=loc,
                            length=len(record),
                            pad=pad)
