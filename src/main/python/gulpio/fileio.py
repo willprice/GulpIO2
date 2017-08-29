@@ -207,6 +207,7 @@ class GulpChunk(object):
     def write_frame(self, id_, image):
         loc = self.fp.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
+        assert len(img_str) > 0
         pad = self._pad_image(len(img_str))
         record = img_str.ljust(len(img_str) + pad, b'\0')
         img_info = ImgInfo(loc=loc,
