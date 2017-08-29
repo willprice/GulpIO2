@@ -119,8 +119,6 @@ class DataLoaderIter(object):
                 continue
             return self._process_next_batch(batch)
 
-    next = __next__  # Python 2 compatibility
-
     def __iter__(self):
         return self
 
