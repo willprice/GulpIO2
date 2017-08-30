@@ -379,14 +379,14 @@ class ChunkWriter(object):
     def __init__(self, adapter):
         self.adapter = adapter
 
-    def write_chunk(self, input_chunk, input_slice):
-        with input_chunk.open('wb'):
+    def write_chunk(self, output_chunk, input_slice):
+        with output_chunk.open('wb'):
             for video in self.adapter.iter_data(input_slice):
                 id_ = video['id']
                 meta_data = video['meta']
                 frames = video['frames']
                 if len(frames) > 0:
-                    input_chunk.append(id_, meta_data, frames)
+                    output_chunk.append(id_, meta_data, frames)
                 else:
                     print("Failed to write video with id: {}; no frames"
                           .format(id_))
