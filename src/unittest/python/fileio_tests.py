@@ -595,7 +595,7 @@ class TestGulpDirectory(FSBase):
 
         # then, read it again, using __iter__
         gulp_directory = GulpDirectory(output_directory)
-        gulp_chunk = next(gulp_directory)
+        gulp_chunk = next(iter(gulp_directory))
         expected_output_shapes = [(4, 1, 3),
                                   (3, 1, 3),
                                   (2, 1, 3),
