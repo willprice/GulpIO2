@@ -8,7 +8,7 @@ import json
 def find_gulp_files(folder):
     chunk_paths = sorted(glob.glob(os.path.join(folder, 'data*.gulp')))
     meta_paths = sorted(glob.glob(os.path.join(folder, 'meta*.gmeta')))
-    label2idx = json.load(open(os.path.join(folder, 'label2idx.json'), 'rb'))
+    label2idx = json.load(open(os.path.join(folder, 'label2idx.json'), 'r'))
     assert len(chunk_paths) == len(meta_paths)
     return (chunk_paths, meta_paths, label2idx)
 
