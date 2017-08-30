@@ -147,7 +147,7 @@ expected_files = [
 assert expected_files == files
 
 sizes = [os.path.getsize(os.path.join(output_dir, f)) for f in files]
-expected_sizes = [659200, 659200, 197760, 131840, 26, 15059, 15083, 4430, 2905]
+expected_sizes = [659200, 659200, 197760, 131840, 330, 15059, 15083, 4430, 2907]
 print(expected_sizes, sizes)
 assert expected_sizes == sizes
 
