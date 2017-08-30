@@ -432,7 +432,20 @@ def calculate_chunk_slices(items_per_chunk, num_items):
 
 
 class GulpIngestor(object):
+    """Ingest items from an adapter into an gulp chunks.
 
+    Parameters
+    ----------
+    adapter: (subclass of AbstractDatasetAdapter)
+        The adapter to ingest from.
+    output_folder: (str)
+        The folder/directory to write to.
+    videos_per_chunk: (int)
+        The total number of items per chunk.
+    num_workers: (int)
+        The level of parallelism.
+
+    """
     def __init__(self, adapter, output_folder, videos_per_chunk, num_workers):
         assert int(num_workers) > 0
         self.adapter = adapter
