@@ -195,11 +195,12 @@ class GulpImageDataset(object):
         target_name = item_info['meta_data'][0]['label']
         target_idx = self.label_to_idx[target_name]
         image = item_info['frame_info']
-        assert len(image) > 0 
+        assert len(image) > 0
         # read image
         img = self.__read_image(image[0], chunk_file)
         # augmentation
-        img = self.transform(img)
+        if self.transform:
+            img = self.transform(img)
         chunk_file.close()
         return (img, target_idx)
 
