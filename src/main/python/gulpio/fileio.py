@@ -375,11 +375,29 @@ class GulpChunk(object):
 
 
 class ChunkWriter(object):
+    """Can write from an adapter to a gulp chunk.
+
+    Parameters
+    ----------
+    adapter: (subclass of AbstractDatasetAdapter)
+       The adapter to get items from.
+
+    """
 
     def __init__(self, adapter):
         self.adapter = adapter
 
     def write_chunk(self, output_chunk, input_slice):
+        """Write from an input slice in the adapter to an output chunk.
+
+        Parameters
+        ----------
+        output_chunk: (GulpChunk)
+           The chunk to write to
+        input_slice: (slice)
+           The slice to use from the adapter.
+
+        """
         with output_chunk.open('wb'):
             for video in self.adapter.iter_data(input_slice):
                 id_ = video['id']
