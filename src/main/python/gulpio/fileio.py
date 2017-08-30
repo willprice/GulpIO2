@@ -181,6 +181,18 @@ class GulpDirectory(object):
 
 
 class GulpChunk(object):
+    """ Represents a gulp chunk on disk.
+
+    Parameters
+    ----------
+    data_file_path: (str)
+        Path to the *.gulp file.
+    meta_file_path: (str)
+        Path to the *.gmeta file.
+    serializer: (subclass of AbstractSerializer)
+        The type of serializer to use.
+
+    """
 
     def __init__(self, data_file_path, meta_file_path,
                  serializer=json_serializer):
@@ -222,12 +234,14 @@ class GulpChunk(object):
         return (4 - (number % 4)) % 4
 
     def append_meta(self, id_, meta_data):
+        """ Should be privatized. """
         id_ = str(id_)
         if id_ not in self.meta_dict:  # implements an OrderedDefaultDict
             self.meta_dict[id_] = self._default_factory()
         self.meta_dict[id_]['meta_data'].append(meta_data)
 
     def write_frame(self, id_, image):
+        """ Should be privatized. """
         loc = self.fp.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
         assert len(img_str) > 0
@@ -244,11 +258,26 @@ class GulpChunk(object):
         self.fp.write(record)
 
     def write_frames(self, id_, frames):
+        """ Should be privatized. """
         for frame in frames:
             self.write_frame(id_, frame)
 
     @contextmanager
     def open(self, flag='rb'):
+        """Open the gulp chunk for reading.
+
+        Parameters
+        ----------
+        flag: (str)
+            'rb': Read binary
+            'wb': Write binary
+            'ab': Append to binary
+
+        Notes
+        -----
+        Works as a context manager but returns None.
+
+        """
         if flag in ['wb', 'rb', 'ab']:
             self.fp = open(self.data_file_path, flag)
         else:
@@ -260,14 +289,43 @@ class GulpChunk(object):
         self.fp.close()
 
     def flush(self):
+        """Flush all buffers and write the meta file."""
         self.fp.flush()
         self.serializer.dump(self.meta_dict, self.meta_file_path)
 
     def append(self, id_, meta_data, frames):
+        """ Append an item to the gulp.
+
+        Parameters
+        ----------
+        id_ : (str)
+            The ID of the item
+        meta_data: (dict)
+            The meta-data associated with the item.
+        frames: (list of numpy arrays)
+            The frames of the item as a list of numpy dictionaries consisting
+            of image pixel values.
+
+        """
         self.append_meta(id_, meta_data)
         self.write_frames(id_, frames)
 
     def read_frames(self, id_, slice_=None):
+        """ Read frames for a single item.
+
+        Parameters
+        ----------
+        id_ : (str)
+            The ID of the item
+        slice: (slice:
+            A slice with which to select frames.
+        Returns
+        -------
+        frames (int), meta(dict)
+            The frames of the item as a list of numpy arrays consisting of
+            image pixel values. And the metadata.
+
+        """
         frame_infos, meta_data = self._get_frame_infos(id_)
         frames = []
         slice_element = slice_ or slice(0, len(frame_infos))
@@ -285,6 +343,22 @@ class GulpChunk(object):
         return frames, meta_data
 
     def iter_all(self, accepted_ids=None, shuffle=False):
+        """ Iterate over all frames in the gulp.
+
+        Parameters
+        ----------
+        accepted_ids: (list of str)
+            A filter for accepted ids.
+        shuffle: Boolean
+            Shuffle the items or not.
+
+        Returns
+        -------
+        iterator
+            An iterator that yield a series of frames,meta tuples. See
+            `read_frames` for details.
+        """
+
         ids = self.meta_dict.keys()
 
         if accepted_ids is not None:
