@@ -87,7 +87,7 @@ It tests:
 * Duplicate appearances of any video-ids
 
 The file names of the files where any test fails will be printed. Currently no script to fix possible errors is
-provided, 'regulping' is the only solution. 
+provided, 'regulping' is the only solution.
 
 
 Read a 'Gulped' Dataset
