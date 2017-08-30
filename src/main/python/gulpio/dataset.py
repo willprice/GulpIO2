@@ -16,7 +16,7 @@ def find_gulp_files(folder):
 def merge_meta_files(meta_paths):
     meta = {}
     for meta_path in meta_paths:
-        meta_temp = json.load(open(meta_path, 'rb'))
+        meta_temp = json.load(open(meta_path, 'r'))
         for key in meta_temp.keys():
             chunk = os.path.basename(meta_path).replace('gmeta', 'gulp')\
                     .replace('meta', 'data')
