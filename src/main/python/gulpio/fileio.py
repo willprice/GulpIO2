@@ -410,11 +410,25 @@ class ChunkWriter(object):
                           .format(id_))
 
 
-def calculate_chunk_slices(videos_per_chunk, num_videos):
-    assert videos_per_chunk > 0
-    assert num_videos > 0
-    return [slice(i, min(i + videos_per_chunk, num_videos))
-            for i in range(0, num_videos, videos_per_chunk)]
+def calculate_chunk_slices(items_per_chunk, num_items):
+    """Calculate slices for indexing an adapter.
+
+    Parameters
+    ----------
+    items_per_chunk: (int)
+        Approximate number of items per chunk.
+    num_items: (int)
+        Total number of items.
+
+    Returns
+    -------
+    list of slices
+
+    """
+    assert items_per_chunk > 0
+    assert num_items > 0
+    return [slice(i, min(i + items_per_chunk, num_items))
+            for i in range(0, num_items, items_per_chunk)]
 
 
 class GulpIngestor(object):
