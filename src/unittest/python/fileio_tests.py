@@ -593,9 +593,9 @@ class TestGulpDirectory(FSBase):
         GulpIngestor(RoundTripAdapter(ids=[3, 4, 5]),
                      output_directory, 2, 1)()
 
-        # then, read it again
+        # then, read it again, using __iter__
         gulp_directory = GulpDirectory(output_directory)
-        gulp_chunk = next(gulp_directory.chunks())
+        gulp_chunk = next(gulp_directory)
         expected_output_shapes = [(4, 1, 3),
                                   (3, 1, 3),
                                   (2, 1, 3),
