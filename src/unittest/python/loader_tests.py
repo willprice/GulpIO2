@@ -58,8 +58,8 @@ class TestGulpVideoDataset(unittest.TestCase):
 
     def create_chunk(self):
         self.temp_dir = tempfile.mkdtemp(prefix='gulpio-loader-test-')
-        self.chunk_path = os.path.join(self.temp_dir, 'data0.gulp')
-        self.meta_path = os.path.join(self.temp_dir, 'meta0.gmeta')
+        self.chunk_path = os.path.join(self.temp_dir, 'data_0.gulp')
+        self.meta_path = os.path.join(self.temp_dir, 'meta_0.gmeta')
         self.json_path = os.path.join(self.temp_dir, 'label2idx.json')
         label2dict = {"0": 1, "1": 2, "2": 2}
         json.dump(label2dict, open(self.json_path, 'w'))
@@ -70,7 +70,7 @@ class TestGulpVideoDataset(unittest.TestCase):
             for i in range(128):  # 128 videos
                 for j in range(32):  # 32 frames
                     chunk.write_frame(i, frame)
-                    chunk.append_meta(i, meta_info)
+                chunk.append_meta(i, meta_info)
 
     def test_dataset(self):
         self.create_chunk()
@@ -100,8 +100,8 @@ class TestGulpImageDataset(unittest.TestCase):
 
     def create_chunk(self):
         self.temp_dir = tempfile.mkdtemp(prefix='gulpio-loader-test-')
-        self.chunk_path = os.path.join(self.temp_dir, 'data0.gulp')
-        self.meta_path = os.path.join(self.temp_dir, 'meta0.gmeta')
+        self.chunk_path = os.path.join(self.temp_dir, 'data_0.gulp')
+        self.meta_path = os.path.join(self.temp_dir, 'meta_0.gmeta')
         self.json_path = os.path.join(self.temp_dir, 'label2idx.json')
         label2dict = {"0": 1, "1": 2, "2": 2}
         json.dump(label2dict, open(self.json_path, 'w'))
