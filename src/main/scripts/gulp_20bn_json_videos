@@ -33,7 +33,7 @@ Options:
     --shuffle                               Shuffle the dataset before ingestion
     --extend                                Extend Gulps by further files
     --shm_dir=<shm_dir>                     Temporary directory for bursting frames [default: /dev/shm]
-    --label_name=<label_name>               Key of the label in the json meta data                            
+    --label_name=<label_name>               Key of the label in the json meta data [default: template]                           
 """
 
 from docopt import docopt
