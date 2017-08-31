@@ -103,7 +103,7 @@ following snippet:
     # instantiate the GulpDirectory
     gulp_directory = GulpDirectory('/tmp/something_something_gulps')
     # iterate over all chunks
-    for chunk in gulp_directory.chunks():
+    for chunk in gulp_directory:
         with chunk.open('rb'):
             # for each 'video' get the metadata and all frames
             for frames, meta in chunk:

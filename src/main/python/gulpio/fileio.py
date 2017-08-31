@@ -91,6 +91,9 @@ class GulpDirectory(object):
             else:
                 self.merged_meta_dict.update(d)
 
+    def __iter__(self):
+        return self.chunks()
+
     def chunks(self):
         """ Return a generator over existing GulpChunk objects which are ready
         to be opened and read from. """
