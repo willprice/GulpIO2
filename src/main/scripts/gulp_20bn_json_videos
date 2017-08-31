@@ -13,6 +13,7 @@ Usage:
                           [--shuffle]
                           [--extend]
                           [--shm_dir <shm_dir>]
+                          [--label_name <label_name>]
                           <input_json> <videos_directory> <output_directory>
     gulp_20bn_json_videos (-h | --help)
     gulp_20bn_json_videos --version
@@ -32,6 +33,7 @@ Options:
     --shuffle                               Shuffle the dataset before ingestion
     --extend                                Extend Gulps by further files
     --shm_dir=<shm_dir>                     Temporary directory for bursting frames [default: /dev/shm]
+    --label_name=<label_name>               Key of the label in the json meta data                            
 """
 
 from docopt import docopt
@@ -52,6 +54,8 @@ if __name__ == '__main__':
     frame_rate = int(arguments['--frame_rate'])
     shuffle = arguments['--shuffle']
     shm_dir = arguments['--shm_dir']
+    label_name = arguments['--label_name']
+
 
     adapter = Custom20BNJsonVideoAdapter(input_json,
                                          videos_path,
@@ -60,6 +64,7 @@ if __name__ == '__main__':
                                          frame_size=frame_size,
                                          frame_rate=frame_rate,
                                          shm_dir_path=shm_dir,
+                                         label_name=label_name,
                                          )
     ingestor = GulpIngestor(adapter,
                             output_folder,
