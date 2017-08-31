@@ -132,7 +132,7 @@ class GulpDirectory(object):
         return zip(data_paths, meta_paths)
 
     def _find_ids_from_paths(self, paths):
-        return [int(p.split('_')[-1].split('.')[0]) for p in paths]
+        return [int(re.findall(r'\d+', os.path.basename(p))[0]) for p in paths]
 
     def _chunk_ids(self):
         data_paths = self._find_existing_data_paths()
@@ -262,7 +262,7 @@ class GulpChunk(object):
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             return img
-        frames = [Image.fromarray(extract_frame(frame_info))
+        frames = [extract_frame(frame_info)
                   for frame_info in frame_infos[slice_element]]
         return frames, meta_data
 
