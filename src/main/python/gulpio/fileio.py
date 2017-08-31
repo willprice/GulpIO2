@@ -11,7 +11,6 @@ import numpy as np
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
-from PIL import Image
 from collections import namedtuple, OrderedDict
 from tqdm import tqdm
 
@@ -81,6 +80,7 @@ class GulpDirectory(object):
     def __init__(self, output_dir):
         self.output_dir = output_dir
         self.all_meta_dicts = [c.meta_dict for c in self.chunks()]
+        self.num_chunks = len(self.all_meta_dicts)
         self.chunk_lookup = {}
         for chunk_id, meta_dict in zip(self._chunk_ids(), self.all_meta_dicts):
             for id_ in meta_dict:
@@ -88,7 +88,8 @@ class GulpDirectory(object):
         self.merged_meta_dict = {}
         for d in self.all_meta_dicts:
             for k in d.keys():
-                assert k not in self.merged_meta_dict, "Duplicate id detected {}".format(k)
+                assert k not in self.merged_meta_dict,\
+                    "Duplicate id detected {}".format(k)
             else:
                 self.merged_meta_dict.update(d)
 
