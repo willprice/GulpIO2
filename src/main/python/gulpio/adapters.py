@@ -50,7 +50,7 @@ class Custom20BNAdapterMixin(object):
         return content
 
     def create_label2idx_dict(self, label_name):
-        labels = sorted(set([item[label_name] for item in self.data]))
+        labels = sorted(set([item[label_name] for item in self.data]))             
         labels2idx = {}
         if self.check_if_label2idx_exists():
             labels2idx = self.read_label2idx()
@@ -106,7 +106,7 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
     def get_meta(self):
         return [{'id': entry['id'],
                  'label': entry[self.label_name],
-                 'idx': self.labels2idx[entry['template']]}
+                 'idx': self.labels2idx[entry[self.label_name]]}
                 for entry in self.data]
 
     def __len__(self):
