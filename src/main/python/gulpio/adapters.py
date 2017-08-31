@@ -73,7 +73,7 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
 
     def __init__(self, json_file, folder, output_folder,
                  shuffle=False, frame_size=-1, frame_rate=8,
-                 shm_dir_path='/dev/shm'):
+                 shm_dir_path='/dev/shm', label_name='template'):
         self.json_file = json_file
         if json_file.endswith('.json.gz'):
             self.data = self.read_gz_json(json_file)
@@ -81,8 +81,9 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
             self.data = self.read_json(json_file)
         else:
             raise RuntimeError('Wrong data file format (.json.gz or .json)')
+        self.label_name = label_name
         self.output_folder = output_folder
-        self.labels2idx = self.create_label2idx_dict('template')
+        self.labels2idx = self.create_label2idx_dict(self.label_name)
         self.folder = folder
         self.shuffle = bool(shuffle)
         self.frame_size = int(frame_size)
@@ -104,8 +105,8 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
 
     def get_meta(self):
         return [{'id': entry['id'],
-                 'label': entry['template'],
-                 'idx': self.labels2idx[entry['template']]}
+                 'label': entry[self.label_name],
+                 'idx': self.labels2idx[entry[self.label_name]]}
                 for entry in self.data]
 
     def __len__(self):
