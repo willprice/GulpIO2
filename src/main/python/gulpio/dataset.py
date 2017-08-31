@@ -117,22 +117,19 @@ class GulpImageDataset(object):
             defined. Default is None.
         """
 
-        self.chunk_paths, self.meta_paths, self.label_to_idx = find_gulp_files(data_path)
-        self.num_chunks = len(self.chunk_paths)
+        self.gd = GulpDirectory(data_path)
+        self.items = list(self.gd.merged_meta_dict.items())
+        self.label2idx = json.load(open(os.path.join(data_path,
+                                                     'label2idx.json')))
+        self.num_chunks = self.gd.num_chunks
 
-        if len(self.chunk_paths) == 0:
+        if self.num_chunks == 0:
             raise(GulpIOEmptyFolder("Found 0 data binaries in subfolders " +
                                     "of: ".format(data_path)))
 
-        if len(self.chunk_paths) != len(self.meta_paths):
-            raise(GulpIOMismatch("Number of binary files are not matching " +
-                                 "with number of meta files. Check GulpIO " +
-                                 "dataset."))
-
         print(" > Found {} chunks".format(self.num_chunks))
         self.data_path = data_path
-        self.meta_dict = merge_meta_files(self.meta_paths)
-        self.classes = self.label_to_idx.keys()
+        self.classes = self.label2idx.keys()
         self.transform = transform
         self.target_transform = target_transform
         self.is_val = is_val
@@ -143,41 +140,22 @@ class GulpImageDataset(object):
         by Pytorch DataLoader threads. Each Dataloader thread loads a single
         batch by calling this function per instance.
         """
-        item_idx, item_info = self.meta_dict[index]
-        chunk_path = os.path.join(self.data_path, item_info['chunk_file'])
-        chunk_file = open(chunk_path, "rb")
+        item_id, item_info = self.items[index]
+
         target_name = item_info['meta_data'][0]['label']
-        target_idx = self.label_to_idx[target_name]
-        image = item_info['frame_info']
-        assert len(image) > 0
-        # read image
-        img = self.__read_image(image[0], chunk_file)
+        target_idx = self.label2idx[target_name]
+        img_rec = item_info['frame_info']
+        assert len(img_rec) == 1
+        # set number of necessary frames
+        img, meta = self.gd[item_id]
+        img = img[0]
         # augmentation
         if self.transform:
             img = self.transform(img)
-        chunk_file.close()
         return (img, target_idx)
 
     def __len__(self):
         """
         This is called by PyTorch dataloader to decide the size of the dataset.
         """
-        return len(self.meta_dict)
-
-    def __read_image(self, meta_info, f):
-        """
-        Reads single frames from a video
-        """
-        # TODO: read item by gulpio api
-        loc, pad, length = meta_info
-        f.seek(loc)
-        record = f.read(length)
-        if pad == 0:
-            img_str = record
-        else:
-            img_str = record[:-pad]
-        nparr = np.fromstring(img_str, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_ANYCOLOR)
-        if img.ndim > 2:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        return img
+        return self.num_chunks
