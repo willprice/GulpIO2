@@ -1,42 +1,18 @@
 import os
-import glob
-import cv2
 import numpy as np
 import json
-
-
-def find_gulp_files(folder):
-    chunk_paths = sorted(glob.glob(os.path.join(folder, 'data*.gulp')))
-    meta_paths = sorted(glob.glob(os.path.join(folder, 'meta*.gmeta')))
-    label2idx = json.load(open(os.path.join(folder, 'label2idx.json'), 'r'))
-    assert len(chunk_paths) == len(meta_paths)
-    return (chunk_paths, meta_paths, label2idx)
-
-
-def merge_meta_files(meta_paths):
-    meta = {}
-    for meta_path in meta_paths:
-        meta_temp = json.load(open(meta_path, 'r'))
-        for key in meta_temp.keys():
-            chunk = os.path.basename(meta_path).replace('gmeta', 'gulp')\
-                    .replace('meta', 'data')
-            meta_temp[key]['chunk_file'] = chunk
-        meta.update(meta_temp)
-    return list(meta.items())
+from .fileio import GulpDirectory
 
 
 class GulpIOEmptyFolder(Exception):  # pragma: no cover
         pass
 
 
-class GulpIOMismatch(Exception):
-        pass
-
-
 class GulpVideoDataset(object):
 
     def __init__(self, data_path, num_frames, step_size,
-                 is_val, transform=None, target_transform=None, stack=True):
+                 is_val, transform=None, target_transform=None, stack=True,
+                 random_offset=True):
         r"""Simple data loader for GulpIO format.
 
             Args:
@@ -52,30 +28,30 @@ class GulpVideoDataset(object):
                 target_transform (func): performs preprocessing on labels if
             defined. Default is None.
                 stack (bool): stack frames into a numpy.array. Default is True.
+                random_offset (bool): random offsetting to pick frames, if
+            number of frames are more than what is necessary.
         """
 
-        self.chunk_paths, self.meta_paths, self.label_to_idx = find_gulp_files(data_path)
-        self.num_chunks = len(self.chunk_paths)
+        self.gd = GulpDirectory(data_path)
+        self.items = list(self.gd.merged_meta_dict.items())
+        self.label2idx = json.load(open(os.path.join(data_path,
+                                                     'label2idx.json')))
+        self.num_chunks = self.gd.num_chunks
 
-        if len(self.chunk_paths) == 0:
+        if self.num_chunks == 0:
             raise(GulpIOEmptyFolder("Found 0 data binaries in subfolders " +
                                     "of: ".format(data_path)))
 
-        if len(self.chunk_paths) != len(self.meta_paths):
-            raise(GulpIOMismatch("Number of binary files are not matching " +
-                                 "with number of meta files. Check GulpIO " +
-                                 "dataset."))
-
         print(" > Found {} chunks".format(self.num_chunks))
         self.data_path = data_path
-        self.meta_dict = merge_meta_files(self.meta_paths)
-        self.classes = self.label_to_idx.keys()
+        self.classes = self.label2idx.keys()
         self.transform_video = transform
         self.target_transform = target_transform
         self.num_frames = num_frames
         self.step_size = step_size
         self.is_val = is_val
         self.stack = stack
+        self.random_offset = random_offset
 
     def __getitem__(self, index):
         """
@@ -83,11 +59,10 @@ class GulpVideoDataset(object):
         by Pytorch DataLoader threads. Each Dataloader thread loads a single
         batch by calling this function per instance.
         """
-        item_idx, item_info = self.meta_dict[index]
-        chunk_path = os.path.join(self.data_path, item_info['chunk_file'])
-        chunk_file = open(chunk_path, "rb")
+        item_id, item_info = self.items[index]
+
         target_name = item_info['meta_data'][0]['label']
-        target_idx = self.label_to_idx[target_name]
+        target_idx = self.label2idx[target_name]
         frames = item_info['frame_info']
         num_frames = len(frames)
         # set number of necessary frames
@@ -96,54 +71,33 @@ class GulpVideoDataset(object):
         else:
             num_frames_necessary = num_frames
         offset = 0
-        if num_frames_necessary > num_frames:
-            # Pad last frame if video is shorter than necessary
-            frames.extend([frames[-1]] * (num_frames_necessary - num_frames))
-        elif num_frames_necessary < num_frames:
+        if num_frames_necessary < num_frames and self.random_offset:
             # If there are more frames, then sample starting offset.
             diff = (num_frames - num_frames_necessary)
             # temporal augmentation
             if not self.is_val:
                 offset = np.random.randint(0, diff)
         # set target frames to be loaded
-        frames = frames[offset: num_frames_necessary + offset: self.step_size]
-        # read images
-        imgs = []
-        for frame in frames:
-            img = self.__read_frame(frame, chunk_file)
-            imgs.append(img)
+        frames_slice = slice(offset, num_frames_necessary + offset,
+                             self.step_size)
+        frames, meta = self.gd[item_id, frames_slice]
+        # padding last frame
+        if num_frames_necessary > num_frames:
+            # Pad last frame if video is shorter than necessary
+            frames.extend([frames[-1]] * (num_frames_necessary - num_frames))
         # augmentation
         if self.transform_video:
-            imgs = self.transform_video(imgs)
+            frames = self.transform_video(frames)
         # format data to torch tensor
-        chunk_file.close()
         if self.stack:
-            imgs = np.stack(imgs)
+            imgs = np.stack(frames)
         return (imgs, target_idx)
 
     def __len__(self):
         """
         This is called by PyTorch dataloader to decide the size of the dataset.
         """
-        return len(self.meta_dict)
-
-    def __read_frame(self, meta_info, f):
-        """
-        Reads single frames from a video
-        """
-        # TODO: read item by gulpio api
-        loc, pad, length = meta_info
-        f.seek(loc)
-        record = f.read(length)
-        if pad == 0:
-            img_str = record
-        else:
-            img_str = record[:-pad]
-        nparr = np.fromstring(img_str, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_ANYCOLOR)
-        if img.ndim > 2:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        return img
+        return self.num_chunks
 
 
 class GulpImageDataset(object):
