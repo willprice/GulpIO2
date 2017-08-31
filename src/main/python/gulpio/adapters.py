@@ -50,7 +50,7 @@ class Custom20BNAdapterMixin(object):
         return content
 
     def create_label2idx_dict(self, label_name):
-        labels = sorted(set([item[label_name] for item in self.data]))             
+        labels = sorted(set([item[label_name] for item in self.data]))
         labels2idx = {}
         if self.check_if_label2idx_exists():
             labels2idx = self.read_label2idx()
