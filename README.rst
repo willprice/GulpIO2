@@ -25,7 +25,7 @@ The following will setup a virtualenvironment and activate it:
 .. code::
 
     $ python -m venv gulpio
-    $ source gulio/bin/activate
+    $ source gulpio/bin/activate
 
 Then, install the package using:
 
