@@ -103,25 +103,25 @@ class TestCalculateChunks(unittest.TestCase):
         result = calculate_chunk_slices(1, 2)
         self.assertEqual(expected, result)
 
-    def test_two_videos_in_chunk_last_chunk_not_full(self):
+    def test_two_items_in_chunk_last_chunk_not_full(self):
         expected = [slice(0, 2), slice(2, 3)]
         result = calculate_chunk_slices(2, 3)
         self.assertEqual(expected, result)
 
-    def test_two_videos_in_chunk_last_chunk_full(self):
+    def test_two_items_in_chunk_last_chunk_full(self):
         expected = [slice(0, 2), slice(2, 4)]
         result = calculate_chunk_slices(2, 4)
         self.assertEqual(expected, result)
 
-    def test_videos_per_chunk_larger_num_videos(self):
+    def test_items_per_chunk_larger_num_items(self):
         expected = [slice(0, 2)]
         result = calculate_chunk_slices(100, 2)
         self.assertEqual(expected, result)
 
-    def test_no_videos_in_chunk(self):
+    def test_no_items_in_chunk(self):
         self.assertRaises(AssertionError, calculate_chunk_slices, 0, 1)
 
-    def test_num_videos_is_zero(self):
+    def test_num_items_is_zero(self):
         self.assertRaises(AssertionError, calculate_chunk_slices, 1, 0)
 
 
