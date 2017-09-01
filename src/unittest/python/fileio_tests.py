@@ -371,7 +371,6 @@ class ChunkWriterElement(FSBase):
         self.adapter = mock.MagicMock()
         self.adapter.__len__.return_value = 1
         self.output_folder = os.path.join(self.temp_dir, 'ANY_OUTPUT_FOLDER')
-        self.videos_per_chunk = 1
         self.chunk_writer = ChunkWriter(self.adapter)
 
 
