@@ -255,8 +255,7 @@ class GulpChunk(object):
         self.meta_dict[id_]['frame_info'].append(img_info)
         self.fp.write(record)
 
-    def write_frames(self, id_, frames):
-        """ Should be privatized. """
+    def _write_frames(self, id_, frames):
         for frame in frames:
             self._write_frame(id_, frame)
 
@@ -306,7 +305,7 @@ class GulpChunk(object):
 
         """
         self._append_meta(id_, meta_data)
-        self.write_frames(id_, frames)
+        self._write_frames(id_, frames)
 
     def read_frames(self, id_, slice_=None):
         """ Read frames for a single item.
