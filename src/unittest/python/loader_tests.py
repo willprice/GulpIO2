@@ -46,7 +46,6 @@ class TestDataLoader(unittest.TestCase):
 
 
 class TestGulpVideoDataset(unittest.TestCase):
-    # TODO: add sample gulpio files for testing
 
     def iterate(self, loader):
         for idx, data in enumerate(loader):
