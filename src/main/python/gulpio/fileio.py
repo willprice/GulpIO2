@@ -315,9 +315,9 @@ class GulpChunk(object):
 
         Parameters
         ----------
-        id_ : (str)
+        id_: (str)
             The ID of the item
-        slice: (slice:
+        slice_: (slice:
             A slice with which to select frames.
         Returns
         -------
