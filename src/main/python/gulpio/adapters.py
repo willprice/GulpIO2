@@ -14,6 +14,7 @@ from .utils import (get_single_video_path,
                     resize_by_short_edge,
                     burst_video_into_frames,
                     temp_dir_for_bursting,
+                    ImageNotFound,
                     )
 
 
@@ -166,7 +167,7 @@ class Custom20BNCsvJpegAdapter(AbstractDatasetAdapter,
 
 
 class ImageListAdapter(AbstractDatasetAdapter):
-    r"""Give a list.txt in format:
+    """Give a list.txt in format:
 
         img_path,label_name
         ...
@@ -224,7 +225,7 @@ class ImageListAdapter(AbstractDatasetAdapter):
             img_path = os.path.join(self.root_folder, str(meta['path']))
             try:
                 img = resize_by_short_edge(img_path, self.img_size)
-            except RuntimeError as e:
+            except ImageNotFound as e:
                 print(e)
                 continue  # skip the item if image is not readable
             meta.pop('path', None)  # don't store path

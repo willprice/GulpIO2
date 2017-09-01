@@ -61,12 +61,16 @@ def burst_video_into_frames(vid_path, temp_burst_dir, frame_rate=None):
     return find_images_in_folder(temp_burst_dir, formats=['jpg'])
 
 
+class ImageNotFound(Exception):
+    pass
+
+
 def resize_images(imgs, img_size=-1):
     for img in imgs:
         img_path = img
         img = cv2.imread(img_path, cv2.IMREAD_ANYCOLOR)
         if img is None:
-            raise RuntimeError("Image is  None from path: {}".format(img_path))
+            raise ImageNotFound("Image is  None from path:{}".format(img_path))
         if img_size > 0:
             img = resize_by_short_edge(img, img_size)
         yield img
@@ -77,7 +81,7 @@ def resize_by_short_edge(img, size):
         img_path = img
         img = cv2.imread(img_path, cv2.IMREAD_ANYCOLOR)
         if img is None:
-            raise RuntimeError("Image read None from path ", img_path)
+            raise ImageNotFound("Image read None from path ", img_path)
     if size < 1:
         return img
     h, w = img.shape[0], img.shape[1]
