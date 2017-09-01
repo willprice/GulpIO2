@@ -233,8 +233,7 @@ class GulpChunk(object):
     def _pad_image(number):
         return (4 - (number % 4)) % 4
 
-    def append_meta(self, id_, meta_data):
-        """ Should be privatized. """
+    def _append_meta(self, id_, meta_data):
         id_ = str(id_)
         if id_ not in self.meta_dict:  # implements an OrderedDefaultDict
             self.meta_dict[id_] = self._default_factory()
@@ -307,7 +306,7 @@ class GulpChunk(object):
             of image pixel values.
 
         """
-        self.append_meta(id_, meta_data)
+        self._append_meta(id_, meta_data)
         self.write_frames(id_, frames)
 
     def read_frames(self, id_, slice_=None):

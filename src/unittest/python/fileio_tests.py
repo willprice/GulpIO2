@@ -205,13 +205,13 @@ class TestGulpChunk(GulpChunkElement):
 
     def test_append_meta(self):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': []}}
-        self.gulp_chunk.append_meta(0, {'meta': 'ANY_META'})
+        self.gulp_chunk._append_meta(0, {'meta': 'ANY_META'})
         expected = {'0': {'meta_data': [{'meta': 'ANY_META'}]}}
         self.assertEqual(expected, self.gulp_chunk.meta_dict)
 
     def test_append_meta_initializes_correctly(self):
         self.gulp_chunk.meta_dict = {}
-        self.gulp_chunk.append_meta(0, {'meta': 'ANY_META'})
+        self.gulp_chunk._append_meta(0, {'meta': 'ANY_META'})
         expected = {'0': {'meta_data': [{'meta': 'ANY_META'}],
                           'frame_info': []}}
         self.assertEqual(expected, self.gulp_chunk.meta_dict)
