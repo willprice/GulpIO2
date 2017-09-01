@@ -239,8 +239,7 @@ class GulpChunk(object):
             self.meta_dict[id_] = self._default_factory()
         self.meta_dict[id_]['meta_data'].append(meta_data)
 
-    def write_frame(self, id_, image):
-        """ Should be privatized. """
+    def _write_frame(self, id_, image):
         loc = self.fp.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
         assert len(img_str) > 0
@@ -259,7 +258,7 @@ class GulpChunk(object):
     def write_frames(self, id_, frames):
         """ Should be privatized. """
         for frame in frames:
-            self.write_frame(id_, frame)
+            self._write_frame(id_, frame)
 
     @contextmanager
     def open(self, flag='rb'):

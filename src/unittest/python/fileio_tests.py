@@ -230,7 +230,7 @@ class TestGulpChunk(GulpChunkElement):
         self.gulp_chunk.fp = bio
         with mock.patch('cv2.imencode') as imencode_mock:
             imencode_mock.return_value = '', np.ones((1,), dtype='uint8')
-            self.gulp_chunk.write_frame(0, None)
+            self.gulp_chunk._write_frame(0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {'0': {'meta_data': [{'test': 'ANY'}],
                               'frame_info': [[1, 2, 3], ImgInfo(0, 3, 4)]}}
@@ -242,7 +242,7 @@ class TestGulpChunk(GulpChunkElement):
         self.gulp_chunk.fp = bio
         with mock.patch('cv2.imencode') as imencode_mock:
             imencode_mock.return_value = '', np.ones((1,), dtype='uint8')
-            self.gulp_chunk.write_frame(0, None)
+            self.gulp_chunk._write_frame(0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {'0': {'meta_data': [],
                               'frame_info': [ImgInfo(0, 3, 4)]}}
@@ -275,7 +275,7 @@ class TestGulpChunk(GulpChunkElement):
         self.gulp_chunk.meta_dict = OrderedDict()
         self.gulp_chunk.fp = BytesIO()
         image = np.ones((3, 3, 3), dtype='uint8')
-        self.gulp_chunk.write_frame(0, image)
+        self.gulp_chunk._write_frame(0, image)
         self.gulp_chunk.meta_dict['0']['meta_data'].append({})
 
         # recover the single frame using 'read'
@@ -290,7 +290,7 @@ class TestGulpChunk(GulpChunkElement):
         image = np.ones((1, 4), dtype='uint8')
         with mock.patch('cv2.imencode') as imencode_mock:
             imencode_mock.return_value = '', np.ones((1, 4), dtype='uint8')
-            self.gulp_chunk.write_frame(0, image)
+            self.gulp_chunk._write_frame(0, image)
         self.gulp_chunk.meta_dict['0']['meta_data'].append({})
         with mock.patch('cv2.imdecode', lambda x, y:
                         np.array(x).reshape((1, 4))):
