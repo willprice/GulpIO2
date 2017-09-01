@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import re
 import cv2
 import pickle
 import json
@@ -10,7 +11,6 @@ import numpy as np
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
-from PIL import Image
 from collections import namedtuple, OrderedDict
 from tqdm import tqdm
 
@@ -80,6 +80,7 @@ class GulpDirectory(object):
     def __init__(self, output_dir):
         self.output_dir = output_dir
         self.all_meta_dicts = [c.meta_dict for c in self.chunks()]
+        self.num_chunks = len(self.all_meta_dicts)
         self.chunk_lookup = {}
         for chunk_id, meta_dict in zip(self._chunk_ids(), self.all_meta_dicts):
             for id_ in meta_dict:
@@ -87,7 +88,8 @@ class GulpDirectory(object):
         self.merged_meta_dict = {}
         for d in self.all_meta_dicts:
             for k in d.keys():
-                assert k not in self.merged_meta_dict, "Duplicate id detected {}".format(k)
+                assert k not in self.merged_meta_dict,\
+                    "Duplicate id detected {}".format(k)
             else:
                 self.merged_meta_dict.update(d)
 
@@ -122,6 +124,10 @@ class GulpDirectory(object):
     def _find_existing_meta_paths(self):
         return sorted(glob.glob(os.path.join(self.output_dir, 'meta*.gmeta')))
 
+    def _load_label_dict(self):
+        return json.load(open(os.path.join(self.output_dir, 'label2idx.json'),
+                              'rb'))
+
     def _existing_file_paths(self):
         data_paths = self._find_existing_data_paths()
         meta_paths = self._find_existing_meta_paths()
@@ -129,7 +135,7 @@ class GulpDirectory(object):
         return zip(data_paths, meta_paths)
 
     def _find_ids_from_paths(self, paths):
-        return [int(p.split('_')[-1].split('.')[0]) for p in paths]
+        return [int(re.findall(r'\d+', os.path.basename(p))[0]) for p in paths]
 
     def _chunk_ids(self):
         data_paths = self._find_existing_data_paths()
@@ -210,6 +216,7 @@ class GulpChunk(object):
     def write_frame(self, id_, image):
         loc = self.fp.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
+        assert len(img_str) > 0
         pad = self._pad_image(len(img_str))
         record = img_str.ljust(len(img_str) + pad, b'\0')
         img_info = ImgInfo(loc=loc,
@@ -258,7 +265,7 @@ class GulpChunk(object):
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             return img
-        frames = [Image.fromarray(extract_frame(frame_info))
+        frames = [extract_frame(frame_info)
                   for frame_info in frame_infos[slice_element]]
         return frames, meta_data
 
