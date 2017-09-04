@@ -67,9 +67,8 @@ class TestGulpVideoDataset(unittest.TestCase):
         chunk = GulpChunk(self.chunk_path, self.meta_path)
         with chunk.open('wb'):
             for i in range(128):  # 128 videos
-                for j in range(32):  # 32 frames
-                    chunk._write_frame(i, frame)
-                chunk._append_meta(i, meta_info)
+                frames = [frame for j in range(32)]  # 32 frames
+                chunk.append(i, meta_info, frames)
 
     def test_dataset(self):
         self.create_chunk()
@@ -108,8 +107,7 @@ class TestGulpImageDataset(unittest.TestCase):
         chunk = GulpChunk(self.chunk_path, self.meta_path)
         with chunk.open('wb'):
             for i in range(128):  # 128 videos
-                chunk._write_frame(i, frame)
-                chunk._append_meta(i, meta_info)
+                chunk.append(i, meta_info, [frame])
 
     def test_dataset(self):
         self.create_chunk()
