@@ -103,25 +103,25 @@ class TestCalculateChunks(unittest.TestCase):
         result = calculate_chunk_slices(1, 2)
         self.assertEqual(expected, result)
 
-    def test_two_videos_in_chunk_last_chunk_not_full(self):
+    def test_two_items_in_chunk_last_chunk_not_full(self):
         expected = [slice(0, 2), slice(2, 3)]
         result = calculate_chunk_slices(2, 3)
         self.assertEqual(expected, result)
 
-    def test_two_videos_in_chunk_last_chunk_full(self):
+    def test_two_items_in_chunk_last_chunk_full(self):
         expected = [slice(0, 2), slice(2, 4)]
         result = calculate_chunk_slices(2, 4)
         self.assertEqual(expected, result)
 
-    def test_videos_per_chunk_larger_num_videos(self):
+    def test_items_per_chunk_larger_num_items(self):
         expected = [slice(0, 2)]
         result = calculate_chunk_slices(100, 2)
         self.assertEqual(expected, result)
 
-    def test_no_videos_in_chunk(self):
+    def test_no_items_in_chunk(self):
         self.assertRaises(AssertionError, calculate_chunk_slices, 0, 1)
 
-    def test_num_videos_is_zero(self):
+    def test_num_items_is_zero(self):
         self.assertRaises(AssertionError, calculate_chunk_slices, 1, 0)
 
 
@@ -205,13 +205,13 @@ class TestGulpChunk(GulpChunkElement):
 
     def test_append_meta(self):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': []}}
-        self.gulp_chunk.append_meta(0, {'meta': 'ANY_META'})
+        self.gulp_chunk._append_meta(0, {'meta': 'ANY_META'})
         expected = {'0': {'meta_data': [{'meta': 'ANY_META'}]}}
         self.assertEqual(expected, self.gulp_chunk.meta_dict)
 
     def test_append_meta_initializes_correctly(self):
         self.gulp_chunk.meta_dict = {}
-        self.gulp_chunk.append_meta(0, {'meta': 'ANY_META'})
+        self.gulp_chunk._append_meta(0, {'meta': 'ANY_META'})
         expected = {'0': {'meta_data': [{'meta': 'ANY_META'}],
                           'frame_info': []}}
         self.assertEqual(expected, self.gulp_chunk.meta_dict)
@@ -230,7 +230,7 @@ class TestGulpChunk(GulpChunkElement):
         self.gulp_chunk.fp = bio
         with mock.patch('cv2.imencode') as imencode_mock:
             imencode_mock.return_value = '', np.ones((1,), dtype='uint8')
-            self.gulp_chunk.write_frame(0, None)
+            self.gulp_chunk._write_frame(0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {'0': {'meta_data': [{'test': 'ANY'}],
                               'frame_info': [[1, 2, 3], ImgInfo(0, 3, 4)]}}
@@ -242,7 +242,7 @@ class TestGulpChunk(GulpChunkElement):
         self.gulp_chunk.fp = bio
         with mock.patch('cv2.imencode') as imencode_mock:
             imencode_mock.return_value = '', np.ones((1,), dtype='uint8')
-            self.gulp_chunk.write_frame(0, None)
+            self.gulp_chunk._write_frame(0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {'0': {'meta_data': [],
                               'frame_info': [ImgInfo(0, 3, 4)]}}
@@ -275,7 +275,7 @@ class TestGulpChunk(GulpChunkElement):
         self.gulp_chunk.meta_dict = OrderedDict()
         self.gulp_chunk.fp = BytesIO()
         image = np.ones((3, 3, 3), dtype='uint8')
-        self.gulp_chunk.write_frame(0, image)
+        self.gulp_chunk._write_frame(0, image)
         self.gulp_chunk.meta_dict['0']['meta_data'].append({})
 
         # recover the single frame using 'read'
@@ -290,7 +290,7 @@ class TestGulpChunk(GulpChunkElement):
         image = np.ones((1, 4), dtype='uint8')
         with mock.patch('cv2.imencode') as imencode_mock:
             imencode_mock.return_value = '', np.ones((1, 4), dtype='uint8')
-            self.gulp_chunk.write_frame(0, image)
+            self.gulp_chunk._write_frame(0, image)
         self.gulp_chunk.meta_dict['0']['meta_data'].append({})
         with mock.patch('cv2.imdecode', lambda x, y:
                         np.array(x).reshape((1, 4))):
@@ -371,7 +371,6 @@ class ChunkWriterElement(FSBase):
         self.adapter = mock.MagicMock()
         self.adapter.__len__.return_value = 1
         self.output_folder = os.path.join(self.temp_dir, 'ANY_OUTPUT_FOLDER')
-        self.videos_per_chunk = 1
         self.chunk_writer = ChunkWriter(self.adapter)
 
 

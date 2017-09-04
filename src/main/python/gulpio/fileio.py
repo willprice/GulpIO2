@@ -73,8 +73,20 @@ def extract_input_for_getitem(element):
 class GulpDirectory(object):
     """ Represents a directory containing *.gulp and *.gmeta files.
 
-    Args:
-        output_dir: (str) path to the directory containing the files.
+    Parameters
+    ----------
+    output_dir: (str)
+        Path to the directory containing the files.
+
+    Attributes
+    ----------
+    all_meta_dicts: (list of dicts)
+        All meta dicts from all chunks as a list.
+    chunk_lookup: (dict: int -> str)
+        Mapping element id to chunk index.
+    merged_meta_dict: (dict: id -> meta dict)
+        all meta dicts merged
+
     """
 
     def __init__(self, output_dir):
@@ -105,8 +117,10 @@ class GulpDirectory(object):
         """ Return a generator over freshly setup GulpChunk objects which are ready
         to be opened and written to.
 
-        Args:
-            total_new_chunks: (int) the total number of new chunks to setup
+        Parameters
+        ----------
+        total_new_chunks: (int)
+            The total number of new chunks to initialize.
         """
         return ((GulpChunk(*paths) for paths in
                  self._allocate_new_file_paths(total_new_chunks)))
@@ -167,6 +181,18 @@ class GulpDirectory(object):
 
 
 class GulpChunk(object):
+    """ Represents a gulp chunk on disk.
+
+    Parameters
+    ----------
+    data_file_path: (str)
+        Path to the *.gulp file.
+    meta_file_path: (str)
+        Path to the *.gmeta file.
+    serializer: (subclass of AbstractSerializer)
+        The type of serializer to use.
+
+    """
 
     def __init__(self, data_file_path, meta_file_path,
                  serializer=json_serializer):
@@ -207,13 +233,13 @@ class GulpChunk(object):
     def _pad_image(number):
         return (4 - (number % 4)) % 4
 
-    def append_meta(self, id_, meta_data):
+    def _append_meta(self, id_, meta_data):
         id_ = str(id_)
         if id_ not in self.meta_dict:  # implements an OrderedDefaultDict
             self.meta_dict[id_] = self._default_factory()
         self.meta_dict[id_]['meta_data'].append(meta_data)
 
-    def write_frame(self, id_, image):
+    def _write_frame(self, id_, image):
         loc = self.fp.tell()
         img_str = cv2.imencode('.jpg', image)[1].tostring()
         assert len(img_str) > 0
@@ -229,12 +255,26 @@ class GulpChunk(object):
         self.meta_dict[id_]['frame_info'].append(img_info)
         self.fp.write(record)
 
-    def write_frames(self, id_, frames):
+    def _write_frames(self, id_, frames):
         for frame in frames:
-            self.write_frame(id_, frame)
+            self._write_frame(id_, frame)
 
     @contextmanager
     def open(self, flag='rb'):
+        """Open the gulp chunk for reading.
+
+        Parameters
+        ----------
+        flag: (str)
+            'rb': Read binary
+            'wb': Write binary
+            'ab': Append to binary
+
+        Notes
+        -----
+        Works as a context manager but returns None.
+
+        """
         if flag in ['wb', 'rb', 'ab']:
             self.fp = open(self.data_file_path, flag)
         else:
@@ -246,14 +286,43 @@ class GulpChunk(object):
         self.fp.close()
 
     def flush(self):
+        """Flush all buffers and write the meta file."""
         self.fp.flush()
         self.serializer.dump(self.meta_dict, self.meta_file_path)
 
     def append(self, id_, meta_data, frames):
-        self.append_meta(id_, meta_data)
-        self.write_frames(id_, frames)
+        """ Append an item to the gulp.
+
+        Parameters
+        ----------
+        id_ : (str)
+            The ID of the item
+        meta_data: (dict)
+            The meta-data associated with the item.
+        frames: (list of numpy arrays)
+            The frames of the item as a list of numpy dictionaries consisting
+            of image pixel values.
+
+        """
+        self._append_meta(id_, meta_data)
+        self._write_frames(id_, frames)
 
     def read_frames(self, id_, slice_=None):
+        """ Read frames for a single item.
+
+        Parameters
+        ----------
+        id_: (str)
+            The ID of the item
+        slice_: (slice:
+            A slice with which to select frames.
+        Returns
+        -------
+        frames (int), meta(dict)
+            The frames of the item as a list of numpy arrays consisting of
+            image pixel values. And the metadata.
+
+        """
         frame_infos, meta_data = self._get_frame_infos(id_)
         frames = []
         slice_element = slice_ or slice(0, len(frame_infos))
@@ -271,6 +340,22 @@ class GulpChunk(object):
         return frames, meta_data
 
     def iter_all(self, accepted_ids=None, shuffle=False):
+        """ Iterate over all frames in the gulp.
+
+        Parameters
+        ----------
+        accepted_ids: (list of str)
+            A filter for accepted ids.
+        shuffle: Boolean
+            Shuffle the items or not.
+
+        Returns
+        -------
+        iterator
+            An iterator that yield a series of frames,meta tuples. See
+            `read_frames` for details.
+        """
+
         ids = self.meta_dict.keys()
 
         if accepted_ids is not None:
@@ -287,32 +372,77 @@ class GulpChunk(object):
 
 
 class ChunkWriter(object):
+    """Can write from an adapter to a gulp chunk.
+
+    Parameters
+    ----------
+    adapter: (subclass of AbstractDatasetAdapter)
+       The adapter to get items from.
+
+    """
 
     def __init__(self, adapter):
         self.adapter = adapter
 
-    def write_chunk(self, input_chunk, input_slice):
-        with input_chunk.open('wb'):
+    def write_chunk(self, output_chunk, input_slice):
+        """Write from an input slice in the adapter to an output chunk.
+
+        Parameters
+        ----------
+        output_chunk: (GulpChunk)
+           The chunk to write to
+        input_slice: (slice)
+           The slice to use from the adapter.
+
+        """
+        with output_chunk.open('wb'):
             for video in self.adapter.iter_data(input_slice):
                 id_ = video['id']
                 meta_data = video['meta']
                 frames = video['frames']
                 if len(frames) > 0:
-                    input_chunk.append(id_, meta_data, frames)
+                    output_chunk.append(id_, meta_data, frames)
                 else:
                     print("Failed to write video with id: {}; no frames"
                           .format(id_))
 
 
-def calculate_chunk_slices(videos_per_chunk, num_videos):
-    assert videos_per_chunk > 0
-    assert num_videos > 0
-    return [slice(i, min(i + videos_per_chunk, num_videos))
-            for i in range(0, num_videos, videos_per_chunk)]
+def calculate_chunk_slices(items_per_chunk, num_items):
+    """Calculate slices for indexing an adapter.
+
+    Parameters
+    ----------
+    items_per_chunk: (int)
+        Approximate number of items per chunk.
+    num_items: (int)
+        Total number of items.
+
+    Returns
+    -------
+    list of slices
+
+    """
+    assert items_per_chunk > 0
+    assert num_items > 0
+    return [slice(i, min(i + items_per_chunk, num_items))
+            for i in range(0, num_items, items_per_chunk)]
 
 
 class GulpIngestor(object):
+    """Ingest items from an adapter into an gulp chunks.
 
+    Parameters
+    ----------
+    adapter: (subclass of AbstractDatasetAdapter)
+        The adapter to ingest from.
+    output_folder: (str)
+        The folder/directory to write to.
+    videos_per_chunk: (int)
+        The total number of items per chunk.
+    num_workers: (int)
+        The level of parallelism.
+
+    """
     def __init__(self, adapter, output_folder, videos_per_chunk, num_workers):
         assert int(num_workers) > 0
         self.adapter = adapter
