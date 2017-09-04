@@ -136,8 +136,8 @@ or:
     frames, meta = gulp_directory[<id>, 1:10:2]
 
 
-Data Iterator
--------------
+Loading Data
+------------
 
 You can use GulpIO data iterator and augmentation functions to load GulpIO dataset into memory.
 For a working example given on different deep learning libraries please refer to  ``examples/GulpIOTrainingExample.ipynb``. 
@@ -177,6 +177,8 @@ deep learning library.
     for data, label in loader:
         # train your model here
         # ...
+
+GulpIO data loader is branched from great [PyTorch](http://pytorch.org/) implementation.
 
 
 Format Description
