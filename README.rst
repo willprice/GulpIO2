@@ -139,14 +139,14 @@ or:
 Data Iterator
 -------------
 
-You can use GulpIO data iterator and augmentation tools to train your own model, independent from the choice of your deep learning library.
-For a working example on different deep learning libraries please refer to  `examples/GulpIOTrainingExample.ipynb`. 
+You can use GulpIO data iterator and augmentation functions to load GulpIO dataset into memory.
+For a working example given on different deep learning libraries please refer to  ```examples/GulpIOTrainingExample.ipynb```. 
 
-We provide archetypical `dataset` wrappers that work for general supervised cases of image and videos datasets. If you need a particular use,
-you might need to create your own dataset by inheriting `dataset.py` and overwriting `__getitem__` and `__len__`. 
+We provide archetypical ```dataset``` wrappers that work for general supervised cases of image and video datasets. If you need a particular use,
+you might need to create your own dataset by inheriting ```dataset.py``` and overwriting ```__getitem__``` and ```__len__```. 
 
-Below is an example loading dataset with GulpIO data loader interface and defining transformation functions augmenting your dataset. 
-Transformations are applied to each instance on the fly. Some transformations have video and image versions since some of the augmentations
+Below is an example loading an image dataset with GulpIO loader and defining augmentation pipeline. 
+Transformations are applied to each instance on the fly. Some transformations have separate video and image versions since some of the augmentations
 need to be aligned video-wise. 
 
 .. code:: python 
@@ -157,9 +157,9 @@ need to be aligned video-wise.
 
     # define data augmentations. Notice that there are different functions for videos and images
     transforms = Compose([
-                          Scale(28), 
+                          Scale(28),  # resize image by the shortest edge
                           CenterCrop(28),
-                          UnitNorm(),
+                          UnitNorm(),  # instance wise mean and std norm
                         ])
 
     # define dataset wrapper and pick this up by the data loader interface.
@@ -177,6 +177,7 @@ deep learning library.
     for data, label in loader:
         # train your model here
         # ...
+
 
 Format Description
 ==================
