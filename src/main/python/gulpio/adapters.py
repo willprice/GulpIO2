@@ -367,3 +367,48 @@ class ActivitynetAdapter(AbstractDatasetAdapter):
                       'frames': frames,
                       'id': vid_id}
             yield result
+
+
+class KineticsAdapter(AbstractDatasetAdapter):
+
+    def __init__(self, json_file, folder,
+                 shuffle=False, frame_size=-1,
+                 shm_dir_path='/dev/shm'):
+        self.json_file = json_file
+        self.json_storage = self.read_json(json_file)
+        self.folder = folder
+        self.set_video_storage()
+        self.frame_size = frame_size
+        self.shm_dir_path = shm_dir_path
+
+    def set_video_storage(self):
+        self.vid_storage = []
+        self.vid_storage.extend(glob.glob(op.join(self.folder, '*/*.mp4')))
+
+    def read_json(self, json_file):
+        with open(json_file, 'r') as f:
+            content = json.load(f)
+        return content
+
+    def __len__(self):
+        return len(self.vid_storage)
+
+    def get_bursted_frames(self, vid_file):
+        vid_file = os.path.join(self.folder, vid_file)
+        with temp_dir_for_bursting(self.shm_dir_path) as temp_burst_dir:
+            frame_paths = burst_video_into_frames(vid_file,
+                                                  temp_burst_dir)
+            frames = list(resize_images(frame_paths, self.frame_size))
+        return frames
+
+    def iter_data(self, slice_element=None):
+        slice_element = slice_element or slice(0, len(self))
+        for vid_file in self.vid_storage[slice_element]:
+            frames = self.get_bursted_frames(vid_file)
+            # this is due to current file names of trimmed videos
+            vid_id = vid_file.split('/')[-1].split('_00')[0]
+            meta = self.json_storage[vid_id]
+            result = {'meta': meta,
+                      'frames': frames,
+                      'id': vid_id}
+            yield result
