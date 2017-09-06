@@ -104,13 +104,12 @@ following snippet:
     gulp_directory = GulpDirectory('/tmp/something_something_gulps')
     # iterate over all chunks
     for chunk in gulp_directory:
-        with chunk.open('rb'):
-            # for each 'video' get the metadata and all frames
-            for frames, meta in chunk:
-                # do something with the metadata
-                for i, f in enumerate(frames):
-                    # do something with the frames
-                    pass
+        # for each 'video' get the metadata and all frames
+        for frames, meta in chunk:
+            # do something with the metadata
+            for i, f in enumerate(frames):
+                # do something with the frames
+                pass
 
 Alternatively, a video with a specific ``id`` can be directly accessed via:
 

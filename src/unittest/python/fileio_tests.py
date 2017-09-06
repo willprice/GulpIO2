@@ -570,11 +570,10 @@ class TestGulpDirectory(FSBase):
                                    (1, 1, 3)]
                                   ]
         expected_meta = [{'name': 'bunch of numpy arrays'}]
-        with gulp_chunk.open('rb'):
-            for i, (frames, meta) in enumerate(gulp_chunk):
-                self.assertEqual(expected_meta[i], meta)
-                self.assertEqual(expected_output_shapes[i],
-                                 [np.array(f).shape for f in frames])
+        for i, (frames, meta) in enumerate(gulp_chunk):
+            self.assertEqual(expected_meta[i], meta)
+            self.assertEqual(expected_output_shapes[i],
+                             [np.array(f).shape for f in frames])
 
         # check that random_access works
         expected_frames = [
@@ -601,11 +600,10 @@ class TestGulpDirectory(FSBase):
                                   (1, 1, 3)]
         expected_meta = {'name': 'bunch of numpy arrays'}
 
-        with gulp_chunk.open('rb'):
-            for frames, meta in gulp_chunk:
-                self.assertEqual(expected_meta, meta)
-                self.assertEqual(expected_output_shapes,
-                                 [np.array(f).shape for f in frames])
+        for frames, meta in gulp_chunk:
+            self.assertEqual(expected_meta, meta)
+            self.assertEqual(expected_output_shapes,
+                             [np.array(f).shape for f in frames])
 
     def test_random_access(self):
         # ingest dummy videos
