@@ -32,7 +32,7 @@ Options:
 
 from docopt import docopt
 
-from adaptor import ActivitynetAdaptor
+from gulpio.adapters import ActivitynetAdaptor
 from gulpio.fileio import GulpIngestor
 
 if __name__ == '__main__':

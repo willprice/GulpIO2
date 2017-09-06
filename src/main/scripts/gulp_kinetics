@@ -30,7 +30,7 @@ Options:
 
 from docopt import docopt
 
-from adaptor_kinetics import KineticsAdaptor
+from gulpio.adapters import KineticsAdaptor
 from gulpio.fileio import GulpIngestor
 
 if __name__ == '__main__':

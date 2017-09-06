@@ -383,7 +383,7 @@ class KineticsAdapter(AbstractDatasetAdapter):
 
     def set_video_storage(self):
         self.vid_storage = []
-        self.vid_storage.extend(glob.glob(op.join(self.folder, '*/*.mp4')))
+        self.vid_storage.extend(glob.glob(os.path.join(self.folder, '*/*.mp4')))
 
     def read_json(self, json_file):
         with open(json_file, 'r') as f:
