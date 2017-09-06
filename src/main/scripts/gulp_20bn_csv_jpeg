@@ -40,7 +40,7 @@ if __name__ == '__main__':
     print(arguments)
 
     input_csv = arguments['<input_csv>']
-    videos_path = arguments['<videos_directory>']
+    jpeg_path = arguments['<jpeg_directory>']
     output_folder = arguments['<output_directory>']
     videos_per_chunk = int(arguments['--videos_per_chunk'])
     num_workers = int(arguments['--num_workers'])
