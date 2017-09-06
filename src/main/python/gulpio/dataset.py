@@ -97,7 +97,7 @@ class GulpVideoDataset(object):
         """
         This is called by PyTorch dataloader to decide the size of the dataset.
         """
-        return self.num_chunks
+        return len(self.items)
 
 
 class GulpImageDataset(object):
@@ -158,4 +158,4 @@ class GulpImageDataset(object):
         """
         This is called by PyTorch dataloader to decide the size of the dataset.
         """
-        return self.num_chunks
+        return len(self.items)
