@@ -319,3 +319,51 @@ class ImageFolderAdapter(AbstractDatasetAdapter):
             yield result
         else:
             self.write_label2idx_dict()
+
+
+class ActivitynetAdapter(AbstractDatasetAdapter):
+
+    def __init__(self, json_file, folder,
+                 shuffle=False, frame_size=-1,
+                 shm_dir_path='/dev/shm', phase='training'):
+        self.json_file = json_file
+        self.json_storage = self.read_json(json_file)
+        self.folder = folder
+        self.set_video_storage(phase)
+        self.frame_size = frame_size
+        self.shm_dir_path = shm_dir_path
+
+    def set_video_storage(self, phase='training'):
+        self.vid_storage = [f for f in os.listdir(self.folder)
+                            if (os.path.isfile(os.path.join(self.folder, f))
+                            and (not f.endswith('part'))
+                            and (f.split('.')[0] is in self.json_storage.keys())
+                            and (self.json_storage[f.split('.')[0]]['subset']
+                                 == phase))]
+
+    def read_json(self, json_file):
+        with open(json_file, 'r') as f:
+            content = json.load(f)['database']
+        return content
+
+    def __len__(self):
+        return len(self.vid_storage)
+
+    def get_bursted_frames(self, vid_file):
+        vid_file = os.path.join(self.folder, vid_file)
+        with temp_dir_for_bursting(self.shm_dir_path) as temp_burst_dir:
+            frame_paths = burst_video_into_frames(vid_file,
+                                                  temp_burst_dir)
+            frames = list(resize_images(frame_paths, self.frame_size))
+        return frames
+
+    def iter_data(self, slice_element=None):
+        slice_element = slice_element or slice(0, len(self))
+        for vid_file in self.vid_storage[slice_element]:
+            frames = self.get_bursted_frames(vid_file)
+            vid_id = vid_file.split('.')[0]
+            meta = self.json_storage[vid_id]
+            result = {'meta': meta,
+                      'frames': frames,
+                      'id': vid_id}
+            yield result
