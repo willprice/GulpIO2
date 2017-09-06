@@ -337,7 +337,7 @@ class ActivitynetAdapter(AbstractDatasetAdapter):
         self.vid_storage = [f for f in os.listdir(self.folder)
                             if (os.path.isfile(os.path.join(self.folder, f))
                             and (not f.endswith('part'))
-                            and (f.split('.')[0] is in self.json_storage.keys())
+                            and (f.split('.')[0] in self.json_storage.keys())
                             and (self.json_storage[f.split('.')[0]]['subset']
                                  == phase))]
 
