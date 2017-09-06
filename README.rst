@@ -136,6 +136,51 @@ or:
     frames, meta = gulp_directory[<id>, 1:10:2]
 
 
+Loading Data
+------------
+
+You can use GulpIO data iterator and augmentation functions to load GulpIO dataset into memory.
+For a working example given on different deep learning libraries please refer to  ``examples/GulpIOTrainingExample.ipynb``. 
+
+We provide archetypical ``dataset`` wrappers that work for general supervised cases of image and video datasets. If you need a particular use,
+you might need to create your own dataset by inheriting ``dataset.py`` and overwriting ``__getitem__`` and ``__len__``. 
+
+Below is an example loading an image dataset with GulpIO loader and defining augmentation pipeline. 
+Transformations are applied to each instance on the fly. Some transformations have separate video and image versions since some of the augmentations
+need to be aligned video-wise. 
+
+.. code:: python 
+
+    from gulpio.dataset import GulpImageDataset
+    from gulpio.loader import DataLoader
+    from gulpio.transforms import Scale, CenterCrop, Compose, UnitNorm
+
+    # define data augmentations. Notice that there are different functions for videos and images
+    transforms = Compose([
+                          Scale(28),  # resize image by the shortest edge
+                          CenterCrop(28),
+                          UnitNorm(),  # instance wise mean and std norm
+                        ])
+
+    # define dataset wrapper and pick this up by the data loader interface.
+    dataset = GulpImageDataset('/path/to/train_data', transform=transforms)
+    loader = DataLoader(dataset, batch_size=256, shuffle=True, num_workers=0, drop_last=True)
+
+    dataset_val = GulpImageDataset('/path/to/validation_data/', transform=transforms)
+    loader_val = DataLoader(dataset_val, batch_size=256, shuffle=True, num_workers=0, drop_last=True)
+
+Here we iterate through the dataset we loaded. Iterator returns data and label as numpy arrays. You might need to cast these into the format of you
+deep learning library.
+
+.. code:: python
+
+    for data, label in loader:
+        # train your model here
+        # ...
+
+GulpIO data loader is branched from great [PyTorch](http://pytorch.org/) implementation.
+
+
 Format Description
 ==================
 
