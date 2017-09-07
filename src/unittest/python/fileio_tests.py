@@ -309,6 +309,9 @@ class TestGulpChunk(GulpChunkElement):
                                                  ('3', {}),
                                                  ('4', {})))
         self.gulp_chunk.read_frames = read_mock
+        open_mock = mock.MagicMock()
+        self.gulp_chunk.open = open_mock
+
         [_ for _ in self.gulp_chunk]
         read_mock.assert_has_calls([mock.call('0'),
                                     mock.call('1'),
@@ -325,6 +328,10 @@ class TestGulpChunk(GulpChunkElement):
                                                  ('3', {}),
                                                  ('4', {})))
         self.gulp_chunk.read_frames = read_mock
+        self.gulp_chunk.read_frames = read_mock
+        open_mock = mock.MagicMock()
+        self.gulp_chunk.open = open_mock
+
         [_ for _ in self.gulp_chunk.iter_all()]
         read_mock.assert_has_calls([mock.call('0'),
                                     mock.call('1'),
