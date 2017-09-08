@@ -24,14 +24,14 @@ The following will setup a virtualenvironment and activate it:
 
 .. code::
 
-    $ python -m venv gulpio
-    $ source gulpio/bin/activate
+    python -m venv gulpio
+    source gulpio/bin/activate
 
 Then, install the package using:
 
 .. code::
 
-    $ pip install gulpio
+    pip install gulpio
 
 Usage
 =====
@@ -55,8 +55,8 @@ And an example invocation would be:
 
 .. code::
 
-   $ gulp_20bn_json_videos videos.json input_dir output_dir
-   ...
+   gulp_20bn_json_videos videos.json input_dir output_dir
+   # ...
 
 Additionally, if you would like to ingest your dataset from the command line,
 the ``register_adapter`` script can be used to generate the command line interface
@@ -65,7 +65,7 @@ in the ``adapter.py`` file, then simply call:
 
 .. code::
 
-    $ gulp_register_adapter gulpio.adapters <NewAdapterClassName>
+    gulp_register_adapter gulpio.adapters <NewAdapterClassName>
 
 The script that provides the command line interface will be in the main directory of the repository. To use it, execute ``./new_adapter_class_name``.
 
@@ -78,7 +78,7 @@ For execution run:
 
 .. code::
 
-    $ gulp_sanity_check <folder containing the gulped files> 
+    gulp_sanity_check <folder containing the gulped files> 
 
 It tests:
 
