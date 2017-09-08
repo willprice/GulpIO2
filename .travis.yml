@@ -27,3 +27,16 @@ install:
 
 script:
   - pyb -X
+
+deploy:
+  provider: pypi
+  user: esc
+  server: https://upload.pypi.org/legacy/
+  distributions: sdist
+  skip_cleanup: true
+  password:
+    secure: "txcn4F3LDARHHnRjN1X9XtlykbNOehvUy/TYNh2mOV+whYL6NPoJ6mACSmHjDeSziSAooF0YVdogG/j+Tw/leicaps0/WJMdDSTKC5O11ppz4gN8FQ+TZ4smmn4wCLxAnRDJRyz8T4LcadxWFNjPyyhzTllaeetYEFq6oMoUPjc3x6Hkj8G/cYSgwA9mM5DvMGF8/bVAePrvIsJHYq9koRxN+kaFu9hwD8ID+tfF9wOgZtLvXa+MCRKRjaMiKyr5n+dcbZVcDXzSIl8sC4ELuIf8HYyU41ZgRkNRAu25qs+bBbpYAi+W8Z2QUhX/hz1k5kWDnZ06J8V/aaPtPdPh2hZobqFZuS4Y3cWg+BKggKfb1eSB5tBHd5GVowrb0TnSkVtE0VpPRtiKWbhV3+JVqheEF1V0NRXyy5lMUeruOsAen1ZxEc08fdHiZRhMVbRwk6LnAMyorqwyqen9p1H2W/V5+u8BphNLTVdEefBzZQI38SYGA9T9mEfzN0Z0X3D/QcZKEHklSaxYOvlhLIjTwKolW7n+9eKQE+xaJmARLq8jR91VGYf8ZLUEoCA/28QvOAxI/2ZB6RglqPEqIiiHksHMPkjBXVgqOh86afUqdwaXAsUUf99lEAJoZH7IrOr9GCXpBrnaoB1uniPxakzh9BERSo/nIRLzhhfAbngbnsg="
+  on:
+    repo: TwentyBN/GulpIO
+    python: '3.6'
+    branch: master
