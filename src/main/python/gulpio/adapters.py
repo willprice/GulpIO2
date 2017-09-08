@@ -322,6 +322,15 @@ class ImageFolderAdapter(AbstractDatasetAdapter):
 
 
 class ActivitynetAdapter(AbstractDatasetAdapter):
+    """
+    An Adapter for the Activitynet dataset.
+    This adapter assumes that the file name of each video has the
+    following patterns:
+        (vid).(ext)
+    where
+      vid: video id that was assigned by youtube
+      ext: file extensions
+    """
 
     def __init__(self, json_file, folder,
                  shuffle=False, frame_size=-1,
