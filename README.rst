@@ -379,6 +379,11 @@ For example, here is a meta file snippet:
                                 "id":    803963}]}
     }
 
+Benchmarks
+==========
+
+* Benchmarks are available in a seperate repo: https://github.com/TwentyBN/GulpIO-benchmarks
+
 Other Formats
 =============
 
