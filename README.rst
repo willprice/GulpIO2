@@ -177,7 +177,7 @@ deep learning library.
         # train your model here
         # ...
 
-GulpIO data loader is branched from great [PyTorch](http://pytorch.org/) implementation.
+GulpIO data loader is branched from great `PyTorch <http://pytorch.org>`_ implementation.
 
 
 Format Description
