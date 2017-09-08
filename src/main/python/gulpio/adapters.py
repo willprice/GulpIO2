@@ -332,6 +332,8 @@ class ActivitynetAdapter(AbstractDatasetAdapter):
         self.set_video_storage(phase)
         self.frame_size = frame_size
         self.shm_dir_path = shm_dir_path
+        if shuffle:
+            random.shuffle(self.vid_storage)
 
     def set_video_storage(self, phase='training'):
         self.vid_storage = [f for f in os.listdir(self.folder)
@@ -380,6 +382,8 @@ class KineticsAdapter(AbstractDatasetAdapter):
         self.set_video_storage()
         self.frame_size = frame_size
         self.shm_dir_path = shm_dir_path
+        if shuffle:
+            random.shuffle(self.vid_storage)
 
     def set_video_storage(self):
         self.vid_storage = []
