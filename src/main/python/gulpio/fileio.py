@@ -367,9 +367,10 @@ class GulpChunk(object):
             ids = list(ids)
             np.random.shuffle(ids)
 
-        for id_ in ids:
-            frames, meta = self.read_frames(id_)
-            yield frames, meta
+        with self.open('rb'):
+            for id_ in ids:
+                frames, meta = self.read_frames(id_)
+                yield frames, meta
 
 
 class ChunkWriter(object):

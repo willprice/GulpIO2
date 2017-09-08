@@ -309,6 +309,9 @@ class TestGulpChunk(GulpChunkElement):
                                                  ('3', {}),
                                                  ('4', {})))
         self.gulp_chunk.read_frames = read_mock
+        open_mock = mock.MagicMock()
+        self.gulp_chunk.open = open_mock
+
         [_ for _ in self.gulp_chunk]
         read_mock.assert_has_calls([mock.call('0'),
                                     mock.call('1'),
@@ -325,6 +328,10 @@ class TestGulpChunk(GulpChunkElement):
                                                  ('3', {}),
                                                  ('4', {})))
         self.gulp_chunk.read_frames = read_mock
+        self.gulp_chunk.read_frames = read_mock
+        open_mock = mock.MagicMock()
+        self.gulp_chunk.open = open_mock
+
         [_ for _ in self.gulp_chunk.iter_all()]
         read_mock.assert_has_calls([mock.call('0'),
                                     mock.call('1'),
@@ -570,11 +577,10 @@ class TestGulpDirectory(FSBase):
                                    (1, 1, 3)]
                                   ]
         expected_meta = [{'name': 'bunch of numpy arrays'}]
-        with gulp_chunk.open('rb'):
-            for i, (frames, meta) in enumerate(gulp_chunk):
-                self.assertEqual(expected_meta[i], meta)
-                self.assertEqual(expected_output_shapes[i],
-                                 [np.array(f).shape for f in frames])
+        for i, (frames, meta) in enumerate(gulp_chunk):
+            self.assertEqual(expected_meta[i], meta)
+            self.assertEqual(expected_output_shapes[i],
+                             [np.array(f).shape for f in frames])
 
         # check that random_access works
         expected_frames = [
@@ -601,11 +607,10 @@ class TestGulpDirectory(FSBase):
                                   (1, 1, 3)]
         expected_meta = {'name': 'bunch of numpy arrays'}
 
-        with gulp_chunk.open('rb'):
-            for frames, meta in gulp_chunk:
-                self.assertEqual(expected_meta, meta)
-                self.assertEqual(expected_output_shapes,
-                                 [np.array(f).shape for f in frames])
+        for frames, meta in gulp_chunk:
+            self.assertEqual(expected_meta, meta)
+            self.assertEqual(expected_output_shapes,
+                             [np.array(f).shape for f in frames])
 
     def test_random_access(self):
         # ingest dummy videos
