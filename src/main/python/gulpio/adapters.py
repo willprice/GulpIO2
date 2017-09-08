@@ -372,7 +372,18 @@ class ActivitynetAdapter(AbstractDatasetAdapter):
 
 
 class KineticsAdapter(AbstractDatasetAdapter):
-
+    """
+    An Adapter for the Kinetics dataset (trimmed).
+    This adapter assumes that the file name of each video has the
+    following patterns:
+        (vid)_(start)_(end).mp4
+    where
+      vid: video id that was assigned by youtube
+      start: the beginning of trimming in the original youtube video
+             in 6 digit-second
+      end: the end of trimming in the original youtube video
+             in 6 digit-second
+    """
     def __init__(self, json_file, folder,
                  shuffle=False, frame_size=-1,
                  shm_dir_path='/dev/shm'):
