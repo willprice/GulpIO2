@@ -310,8 +310,7 @@ class ImageFolderAdapter(AbstractDatasetAdapter):
     def iter_data(self, slice_element=None):
         slice_element = slice_element or slice(0, len(self))
         for meta in self.all_meta[slice_element]:
-            img_path = os.path.join(self.folder, str(meta['path']),
-                                    str(meta['id']))
+            img_path = os.path.join(str(meta['path']), str(meta['id']))
             img = resize_by_short_edge(img_path, self.img_size)
             result = {'meta': meta,
                       'frames': [img],
