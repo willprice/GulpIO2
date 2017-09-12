@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import random
+import sys
 import os
 import json
 import csv
@@ -82,6 +83,9 @@ def remove_entries_with_duplicate_ids(output_directory, meta_dict):
                   .format(meta_info['id']))
         else:
             new_meta.append(meta_info)
+    if len(new_meta) == 0:
+        print("no items to add... Abort")
+        sys.exit(1)
     return new_meta
 
 
@@ -149,7 +153,7 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
                 for entry in self.data]
 
     def __len__(self):
-        return len(self.data)
+        return len(self.all_meta)
 
     def iter_data(self, slice_element=None):
         slice_element = slice_element or slice(0, len(self))
