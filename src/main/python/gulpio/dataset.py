@@ -90,8 +90,8 @@ class GulpVideoDataset(object):
             frames = self.transform_video(frames)
         # format data to torch tensor
         if self.stack:
-            imgs = np.stack(frames)
-        return (imgs, target_idx)
+            frames = np.stack(frames)
+        return (frames, target_idx)
 
     def __len__(self):
         """
