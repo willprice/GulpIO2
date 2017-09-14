@@ -283,7 +283,7 @@ class ImageFolderAdapter(AbstractDatasetAdapter):
             category_name = path.split('/')[-1]
             img_name = os.path.basename(img_path)
             category_name = category_name
-            data.append({'id': category_name + '+' + img_name, 'label': category_name, 'path': path})
+            data.append({'id': category_name + '-' + img_name, 'label': category_name, 'path': path})
         return data
 
     def get_meta(self):
