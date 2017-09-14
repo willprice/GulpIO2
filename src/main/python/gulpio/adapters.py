@@ -207,7 +207,7 @@ class ImageListAdapter(AbstractDatasetAdapter):
     def parse_paths(input_file):
         item_list = [item.strip().split(',')
                      for item in open(input_file, 'r')]
-        data = [{'id': os.path.basename(img_path), 'label': label_name,
+        data = [{'id': os.path.basename(label_name + '-' + img_path), 'label': label_name,
                  'path': img_path} for img_path, label_name in item_list]
         return data
 
@@ -283,7 +283,7 @@ class ImageFolderAdapter(AbstractDatasetAdapter):
             category_name = path.split('/')[-1]
             img_name = os.path.basename(img_path)
             category_name = category_name
-            data.append({'id': img_name, 'label': category_name, 'path': path})
+            data.append({'id': category_name + '-' + img_name, 'label': category_name, 'path': path})
         return data
 
     def get_meta(self):
