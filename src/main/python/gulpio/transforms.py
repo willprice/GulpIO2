@@ -158,14 +158,16 @@ class RandomCrop(object):
             of the image. Default is 0, i.e no padding. If a sequence of length
             4 is provided, it is used to pad left, top, right, bottom borders
             respectively.
+        pad_method (cv2 constant): Method to be used for padding.
     """
 
-    def __init__(self, size, padding=0):
+    def __init__(self, size, padding=0, pad_method=cv2.BORDER_CONSTANT):
         if isinstance(size, numbers.Number):
             self.size = (int(size), int(size))
         else:
             self.size = size
         self.padding = padding
+        self.pad_method = pad_method
 
     def __call__(self, img):
         """
@@ -181,7 +183,7 @@ class RandomCrop(object):
         if self.padding > 0:
             img = cv2.copyMakeBorder(img, self.padding, self.padding,
                                      self.padding, self.padding,
-                                     cv2.BORDER_CONSTANT, value=0)
+                                     self.pad_method, value=0)
         # sample crop locations if not given
         # it is necessary to keep cropping same in a video
         img_crop = img[y1:y1+th, x1:x1+tw]
@@ -199,14 +201,16 @@ class RandomCropVideo(object):
             of the image. Default is 0, i.e no padding. If a sequence of length
             4 is provided, it is used to pad left, top, right, bottom borders
             respectively.
+        pad_method (cv2 constant): Method to be used for padding.
     """
 
-    def __init__(self, size, padding=0):
+    def __init__(self, size, padding=0, pad_method=cv2.BORDER_CONSTANT):
         if isinstance(size, numbers.Number):
             self.size = (int(size), int(size))
         else:
             self.size = size
         self.padding = padding
+        self.pad_method = pad_method
 
     def __call__(self, imgs):
         """
@@ -223,7 +227,7 @@ class RandomCropVideo(object):
             if self.padding > 0:
                 img = cv2.copyMakeBorder(img, self.padding, self.padding,
                                          self.padding, self.padding,
-                                         cv2.BORDER_CONSTANT, value=0)
+                                         self.pad_method, value=0)
             # sample crop locations if not given
             # it is necessary to keep cropping same in a video
             img_crop = img[y1:y1+th, x1:x1+tw]
