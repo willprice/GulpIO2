@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import random
-import sys
 import os
 import json
 import csv
@@ -8,13 +7,13 @@ import gzip
 import glob
 from abc import ABC, abstractmethod
 
-from .fileio import GulpDirectory
 from .utils import (get_single_video_path,
                     find_images_in_folder,
                     resize_images,
                     resize_by_short_edge,
                     burst_video_into_frames,
                     temp_dir_for_bursting,
+                    remove_entries_with_duplicate_ids,
                     ImageNotFound,
                     )
 
@@ -46,10 +45,12 @@ class AbstractDatasetAdapter(ABC):  # pragma: no cover
 class Custom20BNAdapterMixin(object):
 
     def check_if_label2idx_exists(self):
-        return os.path.exists(os.path.join(self.output_folder, 'label2idx.json'))
+        return os.path.exists(os.path.join(self.output_folder,
+                                           'label2idx.json'))
 
     def read_label2idx(self):
-        with open(os.path.join(self.output_folder, 'label2idx.json'), 'r') as f:
+        with open(os.path.join(self.output_folder,
+                               'label2idx.json'), 'r') as f:
             content = json.load(f)
         return content
 
@@ -69,41 +70,6 @@ class Custom20BNAdapterMixin(object):
         json.dump(self.labels2idx,
                   open(os.path.join(self.output_folder, 'label2idx.json'),
                        'w'))
-
-
-def remove_entries_with_duplicate_ids(output_directory, meta_dict):
-    meta_dict = remove_duplicates_in_metadict(meta_dict)
-    gulp_directory = GulpDirectory(output_directory)
-    existing_ids = list(gulp_directory.merged_meta_dict.keys())
-    # this assumes no duplicates in existing_ids
-    new_meta = []
-    for meta_info in meta_dict:
-        if str(meta_info['id']) in existing_ids:
-            print('Id {} already in GulpDirectory, I skip it!'
-                  .format(meta_info['id']))
-        else:
-            new_meta.append(meta_info)
-    if len(new_meta) == 0:
-        print("no items to add... Abort")
-        sys.exit(1)
-    return new_meta
-
-
-def remove_duplicates_in_metadict(meta_dict):
-    ids = list(enumerate(map(lambda d: d['id'], meta_dict)))
-    if len(set(map(lambda d: d[1], ids))) == len(ids):
-        return meta_dict
-    else:
-        new_meta = []
-        seen_id = []
-        for index, id_ in ids:
-            if id_ not in seen_id:
-                new_meta.append(meta_dict[index])
-                seen_id.append(id_)
-            else:
-                print('Id {} more than once in json file, I skip it!'
-                      .format(id_))
-        return new_meta
 
 
 class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
@@ -446,7 +412,8 @@ class KineticsAdapter(AbstractDatasetAdapter):
 
     def set_video_storage(self):
         self.vid_storage = []
-        self.vid_storage.extend(glob.glob(os.path.join(self.folder, '*/*.mp4')))
+        self.vid_storage.extend(glob.glob(os.path.join(self.folder,
+                                                       '*/*.mp4')))
 
     def read_json(self, json_file):
         with open(json_file, 'r') as f:

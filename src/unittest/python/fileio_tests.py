@@ -424,13 +424,12 @@ class TestGulpIngestor(GulpIngestorElement):
                          self.gulp_ingestor.videos_per_chunk)
         self.assertEqual(self.num_workers, self.gulp_ingestor.num_workers)
 
-    @mock.patch('gulpio.utils.ensure_output_dir_exists')
     @mock.patch('gulpio.fileio.ChunkWriter')
     @mock.patch('gulpio.fileio.ProcessPoolExecutor')
     def test_ingest(self,
                     mock_process_pool,
                     mock_chunk_writer,
-                    mock_ensure_output_dir):
+                    ):
 
         # The next three lines mock the ProcessPoolExecutor and it's map
         # function.

@@ -14,8 +14,6 @@ from contextlib import contextmanager
 from collections import namedtuple, OrderedDict
 from tqdm import tqdm
 
-from .utils import ensure_output_dir_exists
-
 
 ImgInfo = namedtuple('ImgInfo', ['loc',
                                  'pad',
@@ -453,7 +451,7 @@ class GulpIngestor(object):
         self.num_workers = int(num_workers)
 
     def __call__(self):
-        ensure_output_dir_exists(self.output_folder)
+        os.makedirs(self.output_folder, exist_ok=True)
         chunk_slices = calculate_chunk_slices(self.videos_per_chunk,
                                               len(self.adapter))
         gulp_directory = GulpDirectory(self.output_folder)

@@ -7,7 +7,7 @@ import cv2
 import shutil
 import glob
 from contextlib import contextmanager
-
+from gulpio.fileio import GulpDirectory
 
 ###############################################################################
 #                                Helper Functions                             #
@@ -65,6 +65,10 @@ class ImageNotFound(Exception):
     pass
 
 
+class DuplicateIdException(Exception):
+    pass
+
+
 def resize_images(imgs, img_size=-1):
     for img in imgs:
         img_path = img
@@ -96,12 +100,40 @@ def resize_by_short_edge(img, size):
     return img
 
 
-###############################################################################
-#                                 File management                             #
-###############################################################################
+def remove_entries_with_duplicate_ids(output_directory, meta_dict):
+    meta_dict = _remove_duplicates_in_metadict(meta_dict)
+    gulp_directory = GulpDirectory(output_directory)
+    existing_ids = list(gulp_directory.merged_meta_dict.keys())
+    # this assumes no duplicates in existing_ids
+    new_meta = []
+    for meta_info in meta_dict:
+        if str(meta_info['id']) in existing_ids:
+            print('Id {} already in GulpDirectory, I skip it!'
+                  .format(meta_info['id']))
+        else:
+            new_meta.append(meta_info)
+    if len(new_meta) == 0:
+        print("no items to add... Abort")
+        raise DuplicateIdException
+    return new_meta
 
-def ensure_output_dir_exists(output_dir):
-    os.makedirs(output_dir, exist_ok=True)
+
+def _remove_duplicates_in_metadict(meta_dict):
+    ids = list(enumerate(map(lambda d: d['id'], meta_dict)))
+    if len(set(map(lambda d: d[1], ids))) == len(ids):
+        return meta_dict
+    else:
+        new_meta = []
+        seen_id = []
+        for index, id_ in ids:
+            if id_ not in seen_id:
+                new_meta.append(meta_dict[index])
+                seen_id.append(id_)
+            else:
+                print('Id {} more than once in json file, I skip it!'
+                      .format(id_))
+        return new_meta
+
 
 
 ###############################################################################
