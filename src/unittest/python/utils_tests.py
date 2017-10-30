@@ -13,7 +13,12 @@ from gulpio.utils import (check_ffmpeg_exists,
                           resize_images,
                           get_single_video_path,
                           temp_dir_for_bursting,
+                          DuplicateIdException,
+                          remove_entries_with_duplicate_ids,
+                          _remove_duplicates_in_metadict,
                           )
+from gulpio.fileio import GulpIngestor
+from fileio_tests import DummyVideosAdapter
 
 
 class FSBase(unittest.TestCase):
@@ -115,3 +120,73 @@ class TestGetSingleVideoPath(FSBase):
 
     def test_video_doesnt_exists(self):
         self.assertRaises(AssertionError, get_single_video_path, 'ANY_PATH')
+
+
+class TestRemoveEntriesWithDuplicateIds(FSBase):
+
+    def test_no_duplicates(self):
+        adapter = DummyVideosAdapter(3)
+        output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
+        ingestor = GulpIngestor(adapter, output_directory, 2, 1)
+        ingestor()
+        meta_dict = [{'meta': {'name': 'new_video'},
+                      'frames': [np.ones((4, 1, 3), dtype='uint8')],
+                      'id': 3
+                      }]
+        new_meta = remove_entries_with_duplicate_ids(
+            output_directory, meta_dict)
+        self.assertEqual(meta_dict, new_meta)
+
+    def test_one_out_of_one_duplicate(self):
+        adapter = DummyVideosAdapter(3)
+        output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
+        ingestor = GulpIngestor(adapter, output_directory, 2, 1)
+        ingestor()
+        meta_dict = [{'meta': {'name': 'new_video'},
+                      'frames': [np.ones((4, 1, 3),
+                                         dtype='uint8')],
+                      'id': 1
+                      }]
+        with self.assertRaises(DuplicateIdException):
+            remove_entries_with_duplicate_ids(output_directory, meta_dict)
+
+    def test_one_out_of_two_duplicate(self):
+        adapter = DummyVideosAdapter(3)
+        output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
+        ingestor = GulpIngestor(adapter, output_directory, 2, 1)
+        ingestor()
+        input1 = {'meta': {'name': 'new_video'},
+                  'frames': [np.ones((4, 1, 3), dtype='uint8')],
+                  'id': 1}
+        input2 = {'meta': {'name': 'new_videoi_2'},
+                  'frames': [np.ones((4, 1, 3), dtype='uint8')],
+                  'id': 3}
+        meta_dict = [input1, input2]
+        new_meta = remove_entries_with_duplicate_ids(
+            output_directory, meta_dict)
+        self.assertEqual(new_meta, [input2])
+
+
+class TestRemoveDuplicatesInMetadict(unittest.TestCase):
+
+    def test_no_duplicates_in_metadict(self):
+        input1 = {'meta': {'name': 'new_video'},
+                  'frames': [np.ones((4, 1, 3), dtype='uint8')],
+                  'id': 1}
+        input2 = {'meta': {'name': 'new_video2'},
+                  'frames': [np.ones((4, 1, 3), dtype='uint8')],
+                  'id': 2}
+        meta = [input1, input2]
+        new_meta = _remove_duplicates_in_metadict(meta)
+        self.assertEqual(meta, new_meta)
+
+    def test_duplicates_in_metadict(self):
+        input1 = {'meta': {'name': 'new_video'},
+                  'frames': [np.ones((4, 1, 3), dtype='uint8')],
+                  'id': 1}
+        input2 = {'meta': {'name': 'new_video2'},
+                  'frames': [np.ones((4, 1, 3), dtype='uint8')],
+                  'id': 2}
+        meta = [input1, input1, input2]
+        new_meta = _remove_duplicates_in_metadict(meta)
+        self.assertEqual([input1, input2], new_meta)

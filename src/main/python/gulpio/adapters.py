@@ -7,13 +7,13 @@ import gzip
 import glob
 from abc import ABC, abstractmethod
 
-
 from .utils import (get_single_video_path,
                     find_images_in_folder,
                     resize_images,
                     resize_by_short_edge,
                     burst_video_into_frames,
                     temp_dir_for_bursting,
+                    remove_entries_with_duplicate_ids,
                     ImageNotFound,
                     )
 
@@ -45,10 +45,12 @@ class AbstractDatasetAdapter(ABC):  # pragma: no cover
 class Custom20BNAdapterMixin(object):
 
     def check_if_label2idx_exists(self):
-        return os.path.exists(os.path.join(self.output_folder, 'label2idx.json'))
+        return os.path.exists(os.path.join(self.output_folder,
+                                           'label2idx.json'))
 
     def read_label2idx(self):
-        with open(os.path.join(self.output_folder, 'label2idx.json'), 'r') as f:
+        with open(os.path.join(self.output_folder,
+                               'label2idx.json'), 'r') as f:
             content = json.load(f)
         return content
 
@@ -76,7 +78,8 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
 
     def __init__(self, json_file, folder, output_folder,
                  shuffle=False, frame_size=-1, frame_rate=8,
-                 shm_dir_path='/dev/shm', label_name='template'):
+                 shm_dir_path='/dev/shm', label_name='template',
+                 remove_duplicate_ids=False):
         self.json_file = json_file
         if json_file.endswith('.json.gz'):
             self.data = self.read_gz_json(json_file)
@@ -93,6 +96,9 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
         self.frame_rate = int(frame_rate)
         self.shm_dir_path = shm_dir_path
         self.all_meta = self.get_meta()
+        if remove_duplicate_ids:
+            self.all_meta = remove_entries_with_duplicate_ids(
+                self.output_folder, self.all_meta)
         if self.shuffle:
             random.shuffle(self.all_meta)
 
@@ -113,7 +119,7 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
                 for entry in self.data]
 
     def __len__(self):
-        return len(self.data)
+        return len(self.all_meta)
 
     def iter_data(self, slice_element=None):
         slice_element = slice_element or slice(0, len(self))
@@ -407,7 +413,8 @@ class KineticsAdapter(AbstractDatasetAdapter):
 
     def set_video_storage(self):
         self.vid_storage = []
-        self.vid_storage.extend(glob.glob(os.path.join(self.folder, '*/*.mp4')))
+        self.vid_storage.extend(glob.glob(os.path.join(self.folder,
+                                                       '*/*.mp4')))
 
     def read_json(self, json_file):
         with open(json_file, 'r') as f:
