@@ -190,4 +190,3 @@ class TestRemoveDuplicatesInMetadict(unittest.TestCase):
         meta = [input1, input1, input2]
         new_meta = _remove_duplicates_in_metadict(meta)
         self.assertEqual([input1, input2], new_meta)
-

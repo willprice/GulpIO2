@@ -135,7 +135,6 @@ def _remove_duplicates_in_metadict(meta_dict):
         return new_meta
 
 
-
 ###############################################################################
 #                       Helper Functions for input iterator                   #
 ###############################################################################
