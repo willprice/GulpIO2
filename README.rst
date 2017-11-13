@@ -177,7 +177,6 @@ deep learning library.
         # train your model here
         # ...
 
-GulpIO data loader is branched from great `PyTorch <http://pytorch.org>`_ implementation.
 
 
 Format Description
@@ -384,32 +383,17 @@ Benchmarks
 
 * Benchmarks are available in a seperate repo: https://github.com/TwentyBN/GulpIO-benchmarks
 
-Other Formats
-=============
+Prior Art
+=========
 
 * Inspired by: MXNet based RecordIO: http://mxnet.io/architecture/note_data_loading.html
+* GulpIO data loader is branched from great `PyTorch <http://pytorch.org>`_ implementation.
 
 License
 =======
 
-Copyright (c) 2017 Twenty Billion Neurons GmbH, Berlin, Germany
+All code except ``gulpio.loader`` is Copyright (c) Twenty Billion Neurons and
+licensed under the MIT License, see the file ``LICENSE.txt`` for details.
 
-MIT License
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+The code in ``gulpio.loader`` which came from the PyTorch project is licensed
+under a 3-clause BSD License, see the file ``LICENSE_PYTORCH`` for details.
