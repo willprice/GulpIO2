@@ -138,6 +138,70 @@ class Custom20BNJsonVideoAdapter(AbstractDatasetAdapter,
             self.write_label2idx_dict()
 
 
+class Custom20BNCsvWebmAdapter(AbstractDatasetAdapter,
+                               Custom20BNAdapterMixin):
+    """ Adapter for 20BN datasets specified by CSV file and WEBM videos. """
+
+    def __init__(self, csv_file, folder, output_folder,
+                 shuffle=False, frame_size=-1, frame_rate=12,
+                 shm_dir_path='/dev/shm', label_name='label',
+                 remove_duplicate_ids=False):
+        self.data = self.read_csv(csv_file)
+        self.label_name = label_name
+        self.output_folder = output_folder
+        self.labels2idx = self.create_label2idx_dict(self.label_name)
+        self.folder = folder
+        self.shuffle = bool(shuffle)
+        self.frame_size = int(frame_size)
+        self.frame_rate = int(frame_rate)
+        self.shm_dir_path = shm_dir_path
+        self.all_meta = self.get_meta()
+        if remove_duplicate_ids:
+            self.all_meta = remove_entries_with_duplicate_ids(
+                self.output_folder, self.all_meta)
+        if self.shuffle:
+            random.shuffle(self.all_meta)
+
+    def read_csv(self, csv_file):
+        with open(csv_file, newline='\n') as f:
+            content = csv.reader(f, delimiter=';')
+            data = []
+            for row in content:
+                data.append({'id': row[0], 'label': row[1]})
+        return data
+
+    def get_meta(self):
+        return [{'id': entry['id'],
+                 'label': entry[self.label_name],
+                 'idx': self.labels2idx[entry[self.label_name]]}
+                for entry in self.data]
+
+    def __len__(self):
+        return len(self.all_meta)
+
+    def get_single_video_file_path(self, folder_name, format_='webm'):
+        video_filenames = glob.glob("{}.{}".format(folder_name, format_))
+        assert len(video_filenames) == 1
+        return video_filenames[0]
+
+    def iter_data(self, slice_element=None):
+        slice_element = slice_element or slice(0, len(self))
+        for meta in self.all_meta[slice_element]:
+            video_folder = os.path.join(self.folder, str(meta['id']))
+            video_path = self.get_single_video_file_path(video_folder,
+                                                         format_='webm')
+            with temp_dir_for_bursting(self.shm_dir_path) as temp_burst_dir:
+                frame_paths = burst_video_into_frames(
+                    video_path, temp_burst_dir, frame_rate=self.frame_rate)
+                frames = list(resize_images(frame_paths, self.frame_size))
+            result = {'meta': meta,
+                      'frames': frames,
+                      'id': meta['id']}
+            yield result
+        else:
+            self.write_label2idx_dict()
+
+
 class Custom20BNCsvJpegAdapter(AbstractDatasetAdapter,
                                Custom20BNAdapterMixin):
     """ Adapter for 20BN datasets specified by CSV file and JPEG frames. """
