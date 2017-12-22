@@ -167,7 +167,10 @@ class Custom20BNCsvWebmAdapter(AbstractDatasetAdapter,
             content = csv.reader(f, delimiter=';')
             data = []
             for row in content:
-                data.append({'id': row[0], 'label': row[1]})
+                if len(row) == 1:  # For test case
+                    data.append({'id': row[0], 'label': "dummy"})
+                else:  # For train and validation case
+                    data.append({'id': row[0], 'label': row[1]})
         return data
 
     def get_meta(self):
