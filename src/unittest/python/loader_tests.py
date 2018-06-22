@@ -84,6 +84,13 @@ class TestGulpVideoDataset(unittest.TestCase):
                                    False, stack=False)
         self.iterate(loader)
 
+    def test_target_transform(self):
+        self.create_chunk()
+        target_label = 7
+        dataset = GulpVideoDataset(self.temp_dir, 2, 2,
+                                   False, target_transform=lambda y: target_label)
+        assert dataset[0][1] == target_label
+
 
 class TestGulpImageDataset(unittest.TestCase):
 
