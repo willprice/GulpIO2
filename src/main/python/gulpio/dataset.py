@@ -88,6 +88,8 @@ class GulpVideoDataset(object):
         # augmentation
         if self.transform_video:
             frames = self.transform_video(frames)
+        if self.target_transform:
+            target_idx = self.target_transform(target_idx)
         # format data to torch tensor
         if self.stack:
             frames = np.stack(frames)
