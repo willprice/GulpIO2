@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from collections import namedtuple, OrderedDict
+
 from tqdm import tqdm
 
 
@@ -82,6 +83,8 @@ class GulpDirectory(object):
         All meta dicts from all chunks as a list.
     chunk_lookup: (dict: int -> str)
         Mapping element id to chunk index.
+    chunk_objs_lookup: (dict: int -> GulpChunk)
+        Mapping element id to chunk index.
     merged_meta_dict: (dict: id -> meta dict)
         all meta dicts merged
 
@@ -89,8 +92,10 @@ class GulpDirectory(object):
 
     def __init__(self, output_dir):
         self.output_dir = output_dir
-        self.all_meta_dicts = [c.meta_dict for c in self.chunks()]
-        self.num_chunks = len(self.all_meta_dicts)
+        self.chunk_objs_lookup = OrderedDict({chunk_id: chunk for chunk_id, chunk in
+                                              zip(self._chunk_ids(), self._chunks())})
+        self.all_meta_dicts = [c.meta_dict for c in self.chunk_objs_lookup.values()]
+        self.num_chunks = len(self.chunk_objs_lookup)
         self.chunk_lookup = {}
         for chunk_id, meta_dict in zip(self._chunk_ids(), self.all_meta_dicts):
             for id_ in meta_dict:
@@ -104,12 +109,15 @@ class GulpDirectory(object):
                 self.merged_meta_dict.update(d)
 
     def __iter__(self):
-        return self.chunks()
+        return iter(self.chunk_objs_lookup.values())
 
     def chunks(self):
         """ Return a generator over existing GulpChunk objects which are ready
         to be opened and read from. """
-        return ((GulpChunk(*paths) for paths in self._existing_file_paths()))
+        return self.__iter__()
+
+    def _chunks(self):
+        return (GulpChunk(*paths) for paths in self._existing_file_paths())
 
     def new_chunks(self, total_new_chunks):
         """ Return a generator over freshly setup GulpChunk objects which are ready
@@ -126,7 +134,7 @@ class GulpDirectory(object):
     def __getitem__(self, element):
         id_, _ = extract_input_for_getitem(element)
         chunk_id = self.chunk_lookup[id_]
-        gulp_chunk = GulpChunk(*self._initialize_filenames(chunk_id))
+        gulp_chunk = self.chunk_objs_lookup[chunk_id]
         with gulp_chunk.open():
             return gulp_chunk[element]
 
@@ -198,10 +206,11 @@ class GulpChunk(object):
         self.data_file_path = data_file_path
         self.meta_file_path = meta_file_path
         self.meta_dict = self._get_or_create_dict()
+        self._img_info = {}
         self.fp = None
 
     def __contains__(self, id_):
-        return self._get_frame_infos(id_)
+        return str(id_) in self.meta_dict
 
     def __getitem__(self, element):
         id_, slice_ = extract_input_for_getitem(element)
@@ -213,9 +222,16 @@ class GulpChunk(object):
     def _get_frame_infos(self, id_):
         id_ = str(id_)
         if id_ in self.meta_dict:
-            return ([ImgInfo(*info)
-                     for info in self.meta_dict[id_]['frame_info']],
-                    dict(self.meta_dict[id_]['meta_data'][0]))
+            return (self._get_or_create_img_info(id_),
+                    self._copy_meta_data(id_))
+
+    def _copy_meta_data(self, id_):
+        return dict(self.meta_dict[id_]['meta_data'][0])
+
+    def _get_or_create_img_info(self, id_):
+        if id_ not in self._img_info:
+            self._img_info[id_] = [ImgInfo(*info) for info in self.meta_dict[id_]['frame_info']]
+        return self._img_info[id_]
 
     def _get_or_create_dict(self):
         if os.path.exists(self.meta_file_path):
@@ -322,13 +338,12 @@ class GulpChunk(object):
 
         """
         frame_infos, meta_data = self._get_frame_infos(id_)
-        frames = []
         slice_element = slice_ or slice(0, len(frame_infos))
 
         def extract_frame(frame_info):
             self.fp.seek(frame_info.loc)
             record = self.fp.read(frame_info.length)
-            img_str = record[:len(record)-frame_info.pad]
+            img_str = record[:len(record) - frame_info.pad]
             nparr = np.fromstring(img_str, np.uint8)
             img = cv2.imdecode(nparr, cv2.IMREAD_ANYCOLOR)
             if img.ndim > 2:
