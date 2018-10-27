@@ -92,8 +92,7 @@ class GulpDirectory(object):
 
     def __init__(self, output_dir):
         self.output_dir = output_dir
-        self.chunk_objs_lookup = OrderedDict({chunk_id: chunk for chunk_id, chunk in
-                                              zip(self._chunk_ids(), self._chunks())})
+        self.chunk_objs_lookup = OrderedDict(zip(self._chunk_ids(), self._chunks()))
         self.all_meta_dicts = [c.meta_dict for c in self.chunk_objs_lookup.values()]
         self.num_chunks = len(self.chunk_objs_lookup)
         self.chunk_lookup = {}
