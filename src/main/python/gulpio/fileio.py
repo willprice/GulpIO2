@@ -97,8 +97,8 @@ class GulpDirectory(object):
         self.all_meta_dicts = [c.meta_dict for c in self.chunk_objs_lookup.values()]
         self.num_chunks = len(self.chunk_objs_lookup)
         self.chunk_lookup = {}
-        for chunk_id, meta_dict in zip(self._chunk_ids(), self.all_meta_dicts):
-            for id_ in meta_dict:
+        for chunk_id, chunk in self.chunk_objs_lookup.items():
+            for id_ in chunk.meta_dict:
                 self.chunk_lookup[id_] = chunk_id
         self.merged_meta_dict = {}
         for d in self.all_meta_dicts:
