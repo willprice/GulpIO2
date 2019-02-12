@@ -5,7 +5,7 @@ from .fileio import GulpDirectory
 
 
 class GulpIOEmptyFolder(Exception):  # pragma: no cover
-        pass
+    pass
 
 
 class GulpVideoDataset(object):
