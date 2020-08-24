@@ -327,8 +327,8 @@ class GulpChunk(object):
         ----------
         id_: (str)
             The ID of the item
-        slice_: (slice:
-            A slice with which to select frames.
+        slice_: (slice or list of ints):
+            A slice or list of indices with which to select frames.
         Returns
         -------
         frames (int), meta(dict)
@@ -348,8 +348,12 @@ class GulpChunk(object):
             if img.ndim > 2:
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             return img
+        if isinstance(slice_element, list):
+            selected_frame_infos = [frame_infos[idx] for idx in slice_element]
+        else:
+            selected_frame_infos = frame_infos[slice_element]
         frames = [extract_frame(frame_info)
-                  for frame_info in frame_infos[slice_element]]
+                  for frame_info in selected_frame_infos]
         return frames, meta_data
 
     def iter_all(self, accepted_ids=None, shuffle=False):

@@ -121,12 +121,15 @@ Alternatively, a video with a specific ``id`` can be directly accessed via:
     gulp_directory = GulpDirectory('/tmp/something_something_gulps')
     frames, meta = gulp_directory[<id>]
 
-For down-sampling or loading only a part of a video, a python slice can be
+For down-sampling or loading only a part of a video, a python slice or list of
+indices can be
 passed as well:
 
 .. code:: python
 
     frames, meta = gulp_directory[<id>, slice(1,10,2)]
+
+    frames, meta = gulp_directory[<id>, [1, 5, 6, 8]]
 
 or:
 
