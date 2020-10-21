@@ -394,6 +394,84 @@ class ImageFolderAdapter(AbstractDatasetAdapter):
             self.write_label2idx_dict()
 
 
+class VideoFolderAdapter(AbstractDatasetAdapter):
+    r"""Parse the given folder assuming each subfolder is a category and it
+    includes the category images.
+    """
+
+    def __init__(self, folder, output_folder,
+                 file_extensions=['.mp4', '.webm'], shuffle=False,
+                 frame_size=-1,
+                 shm_dir_path='/dev/shm',
+                 ):
+        self.file_extensions = file_extensions
+        self.data = self.parse_folder(folder)
+        self.output_folder = output_folder
+        self.label2idx = self.create_label2idx_dict()
+        self.folder = folder
+        self.shuffle = shuffle
+        self.frame_size = frame_size
+        self.all_meta = self.get_meta()
+        self.shm_dir_path = shm_dir_path
+        if self.shuffle:
+            random.shuffle(self.all_meta)
+
+    def parse_folder(self, folder):
+        video_paths = []
+        for extension in self.file_extensions:
+            search_pattern = os.path.join(folder+"**/*{}".format(extension))
+            paths = glob.glob(search_pattern, recursive=True)
+        video_paths.extend(paths)
+        video_paths = sorted(video_paths)
+        data = []
+        for video_path in video_paths:
+            path = os.path.dirname(video_path)
+            category_name = path.split('/')[-1]
+            video_name = os.path.basename(video_path)
+            category_name = category_name
+            data.append({'id': category_name + '-' + video_name, 'label': category_name, 'path': path})
+        return data
+
+    def get_meta(self):
+        return [{'id': entry['id'],
+                 'label': entry['label'],
+                 'path': entry['path'],
+                 'idx': self.label2idx[entry['label']]}
+                for entry in self.data]
+
+    def create_label2idx_dict(self):
+        labels = sorted(set([item['label'] for item in self.data]))
+        label2idx = {label: label_counter
+                     for label_counter, label in enumerate(labels)}
+        return label2idx
+
+    def __len__(self):
+        return len(self.data)
+
+    def write_label2idx_dict(self):
+        json.dump(self.label2idx,
+                  open(os.path.join(self.output_folder, 'label2idx.json'),
+                       'w'))
+
+    def iter_data(self, slice_element=None):
+        slice_element = slice_element or slice(0, len(self))
+        for meta in self.all_meta[slice_element]:
+            video_name = str(meta['id'])[len(str(meta['label']))+1:]
+            video_path = os.path.join(str(meta['path']), video_name)
+            result = {'meta': meta,
+                      'frames': self.get_bursted_frames(video_path),
+                      'id': meta['id']}
+            yield result
+        else:
+            self.write_label2idx_dict()
+
+    def get_bursted_frames(self, video_path):
+        with temp_dir_for_bursting(self.shm_dir_path) as temp_burst_dir:
+            frame_paths = burst_video_into_frames(video_path, temp_burst_dir)
+            frames = list(resize_images(frame_paths, self.frame_size))
+        return frames
+
+
 class ActivitynetAdapter(AbstractDatasetAdapter):
     """
     An Adapter for the Activitynet dataset.

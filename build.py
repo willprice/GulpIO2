@@ -25,7 +25,7 @@ authors = [Author("Eren Golge", "eren.golge@twentybn.com"),
            Author("Valentin Haenel", "valentin.haenel@twentybn.com"),
            ]
 
-requires_python = ">=3.4"
+requires_python = ">=3.6"
 
 
 @init

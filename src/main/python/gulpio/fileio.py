@@ -2,7 +2,6 @@
 
 import os
 import re
-import cv2
 import pickle
 import json
 import glob
@@ -12,9 +11,11 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from collections import namedtuple, OrderedDict
+import PIL.Image
 
 from tqdm import tqdm
 
+from .utils import img_to_jpeg_bytes, jpeg_bytes_to_img
 
 ImgInfo = namedtuple('ImgInfo', ['loc',
                                  'pad',
@@ -254,7 +255,7 @@ class GulpChunk(object):
 
     def _write_frame(self, id_, image):
         loc = self.fp.tell()
-        img_str = cv2.imencode('.jpg', image)[1].tostring()
+        img_str = img_to_jpeg_bytes(image)
         assert len(img_str) > 0
         pad = self._pad_image(len(img_str))
         record = img_str.ljust(len(img_str) + pad, b'\0')
@@ -343,10 +344,7 @@ class GulpChunk(object):
             self.fp.seek(frame_info.loc)
             record = self.fp.read(frame_info.length)
             img_str = record[:len(record)-frame_info.pad]
-            nparr = np.frombuffer(img_str, np.uint8)
-            img = cv2.imdecode(nparr, cv2.IMREAD_ANYCOLOR)
-            if img.ndim > 2:
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = jpeg_bytes_to_img(img_str)
             return img
         if isinstance(slice_element, list):
             selected_frame_infos = [frame_infos[idx] for idx in slice_element]

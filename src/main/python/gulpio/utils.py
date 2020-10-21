@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 
 import os
+from io import BytesIO
+
 import sh
 import random
-import cv2
 import shutil
 import glob
+import PIL.Image
 from contextlib import contextmanager
 from gulpio.fileio import GulpDirectory
 
 ###############################################################################
 #                                Helper Functions                             #
 ###############################################################################
+from typing import Iterable, Iterator, Union
 
 
 class FFMPEGNotFound(Exception):
@@ -29,6 +32,16 @@ def temp_dir_for_bursting(shm_dir_path='/dev/shm'):
     os.makedirs(temp_dir)  # creates error if paths conflict (unlikely)
     yield temp_dir
     shutil.rmtree(temp_dir)
+
+
+def img_to_jpeg_bytes(img: PIL.Image.Image) -> bytes:
+    with BytesIO() as f:
+        img.save(f, format='JPEG')
+        return f.getvalue()
+
+
+def jpeg_bytes_to_img(jpeg_bytes: bytes) -> PIL.Image.Image:
+    PIL.Image.open(BytesIO(jpeg_bytes))
 
 
 def burst_frames_to_shm(vid_path, temp_burst_dir, frame_rate=None):
@@ -69,10 +82,10 @@ class DuplicateIdException(Exception):
     pass
 
 
-def resize_images(imgs, img_size=-1):
+def resize_images(imgs: Iterable[str], img_size=-1) -> Iterator[PIL.Image.Image]:
     for img in imgs:
         img_path = img
-        img = cv2.imread(img_path, cv2.IMREAD_ANYCOLOR)
+        img = PIL.Image.open(img_path)
         if img is None:
             raise ImageNotFound("Image is  None from path:{}".format(img_path))
         if img_size > 0:
@@ -80,23 +93,26 @@ def resize_images(imgs, img_size=-1):
         yield img
 
 
-def resize_by_short_edge(img, size):
+def resize_by_short_edge(
+    img: Union[str, PIL.Image.Image],
+    size: int
+) -> PIL.Image.Image:
     if isinstance(img, str):
         img_path = img
-        img = cv2.imread(img_path, cv2.IMREAD_ANYCOLOR)
+        img = PIL.Image.open(img_path)
         if img is None:
             raise ImageNotFound("Image read None from path ", img_path)
     if size < 1:
         return img
-    h, w = img.shape[0], img.shape[1]
+    w, h = img.width, img.height
     if h < w:
         scale = w / float(h)
         new_width = int(size * scale)
-        img = cv2.resize(img, (new_width, size))
+        img = img.resize((new_width, size), PIL.Image.BILINEAR)
     else:
         scale = h / float(w)
         new_height = int(size * scale)
-        img = cv2.resize(img, (size, new_height))
+        img = img.resize((size, new_height), PIL.Image.BILINEAR)
     return img
 
 

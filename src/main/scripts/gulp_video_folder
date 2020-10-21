@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+
+"""gulp_video_folder
+
+Gulp an video dataset that is in the following format;
+
+video_directory
+        |-> label1
+                |-> video1.mp4
+                |-> video2.mp4
+                ...
+        |-> label2
+        ...
+
+Usage:
+    gulp_video_folder [--videos_per_chunk <videos_per_chunk>]
+                      [--num_workers <num_workers>]
+                      [--frame_size <frame_size>]
+                      [--shuffle]
+                      <video_directory> <output_directory>
+    gulp_video_folder (-h | --help)
+    gulp_video_folder --version
+
+Arguments:
+    video_directory:                        Base directory for video files
+    output_directory:                       Output directory for GulpIO files
+
+Options:
+    -h --help                               Show this screen.
+    --version                               Show version.
+    --videos_per_chunk=<videos_per_chunk>   Number of videos in one chunk [default: 100]
+    --num_workers=<num_workers>             Number of parallel processes [default: 4]
+    --frame_size=<frame_size>               Size of smaller edge of resized frames [default: -1]
+    --shuffle                               Shuffle the dataset before ingestion
+    --shm_dir=<shm_dir>                     Temporary directory for bursting frames [default: /dev/shm]
+"""
+
+from docopt import docopt
+
+from gulpio.adapters import VideoFolderAdapter
+from gulpio.fileio import GulpIngestor
+
+if __name__ == '__main__':
+    arguments = docopt(__doc__)
+    print(arguments)
+
+    videos_path = arguments['<videos_directory>']
+    output_folder = arguments['<output_directory>']
+    videos_per_chunk = int(arguments['--videos_per_chunk'])
+    num_workers = int(arguments['--num_workers'])
+    frame_size = int(arguments['--frame_size'])
+    shuffle = arguments['--shuffle']
+    shm_dir = arguments['--shm_dir']
+
+    adapter = VideoFolderAdapter(
+            videos_path,
+            output_folder,
+            shuffle=shuffle,
+            frame_size=frame_size,
+            shm_dir_path=shm_dir
+    )
+
+    ingestor = GulpIngestor(adapter,
+                            output_folder,
+                            videos_per_chunk,
+                            num_workers)
+    ingestor()
