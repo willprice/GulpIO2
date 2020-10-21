@@ -9,7 +9,6 @@ import shutil
 import glob
 import PIL.Image
 from contextlib import contextmanager
-from gulpio.fileio import GulpDirectory
 
 ###############################################################################
 #                                Helper Functions                             #
@@ -41,7 +40,7 @@ def img_to_jpeg_bytes(img: PIL.Image.Image) -> bytes:
 
 
 def jpeg_bytes_to_img(jpeg_bytes: bytes) -> PIL.Image.Image:
-    PIL.Image.open(BytesIO(jpeg_bytes))
+    return PIL.Image.open(BytesIO(jpeg_bytes))
 
 
 def burst_frames_to_shm(vid_path, temp_burst_dir, frame_rate=None):
@@ -118,6 +117,7 @@ def resize_by_short_edge(
 
 def remove_entries_with_duplicate_ids(output_directory, meta_dict):
     meta_dict = _remove_duplicates_in_metadict(meta_dict)
+    from gulpio.fileio import GulpDirectory
     gulp_directory = GulpDirectory(output_directory)
     existing_ids = list(gulp_directory.merged_meta_dict.keys())
     # this assumes no duplicates in existing_ids

@@ -16,6 +16,7 @@ Usage:
     gulp_video_folder [--videos_per_chunk <videos_per_chunk>]
                       [--num_workers <num_workers>]
                       [--frame_size <frame_size>]
+                      [--shm_dir <shm_dir>]
                       [--shuffle]
                       <video_directory> <output_directory>
     gulp_video_folder (-h | --help)
@@ -44,7 +45,7 @@ if __name__ == '__main__':
     arguments = docopt(__doc__)
     print(arguments)
 
-    videos_path = arguments['<videos_directory>']
+    videos_path = arguments['<video_directory>']
     output_folder = arguments['<output_directory>']
     videos_per_chunk = int(arguments['--videos_per_chunk'])
     num_workers = int(arguments['--num_workers'])

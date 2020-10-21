@@ -11,7 +11,6 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from collections import namedtuple, OrderedDict
-import PIL.Image
 
 from tqdm import tqdm
 
@@ -338,7 +337,7 @@ class GulpChunk(object):
 
         """
         frame_infos, meta_data = self._get_frame_infos(id_)
-        slice_element = slice_ or slice(0, len(frame_infos))
+        slice_element = slice_ if slice_ is not None else slice(0, len(frame_infos))
 
         def extract_frame(frame_info):
             self.fp.seek(frame_info.loc)
@@ -346,7 +345,7 @@ class GulpChunk(object):
             img_str = record[:len(record)-frame_info.pad]
             img = jpeg_bytes_to_img(img_str)
             return img
-        if isinstance(slice_element, list):
+        if isinstance(slice_element, (list, np.ndarray)):
             selected_frame_infos = [frame_infos[idx] for idx in slice_element]
         else:
             selected_frame_infos = frame_infos[slice_element]
