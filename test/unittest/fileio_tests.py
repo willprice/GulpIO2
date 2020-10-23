@@ -3,6 +3,7 @@ import tempfile
 import shutil
 import json
 import pickle
+import PIL.Image
 
 from collections import OrderedDict
 from io import BytesIO
@@ -13,7 +14,7 @@ import numpy.testing as npt
 import unittest
 import unittest.mock as mock
 
-from gulpio.fileio import (GulpChunk,
+from gulpio2.fileio import (GulpChunk,
                            ChunkWriter,
                            GulpIngestor,
                            GulpDirectory,
@@ -23,7 +24,11 @@ from gulpio.fileio import (GulpChunk,
                            extract_input_for_getitem,
                            ImgInfo,
                            )
-from gulpio.adapters import AbstractDatasetAdapter
+from gulpio2.adapters import AbstractDatasetAdapter
+
+
+def create_image(shape, val=1, dtype=np.uint8):
+    return PIL.Image.fromarray(np.ones(shape, dtype=dtype) * val)
 
 
 class FSBase(unittest.TestCase):
@@ -127,7 +132,7 @@ class TestCalculateChunks(unittest.TestCase):
 
 class GulpChunkElement(FSBase):
 
-    @mock.patch('gulpio.fileio.json_serializer')
+    @mock.patch('gulpio2.fileio.json_serializer')
     def setUp(self, mock_json_serializer):
         super().setUp()
         self.mock_json_serializer = mock_json_serializer
@@ -228,8 +233,8 @@ class TestGulpChunk(GulpChunkElement):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': [{'test': 'ANY'}],
                                            'frame_info': [[1, 2, 3]]}}
         self.gulp_chunk.fp = bio
-        with mock.patch('cv2.imencode') as imencode_mock:
-            imencode_mock.return_value = '', np.ones((1,), dtype='uint8')
+        with mock.patch('gulpio2.fileio.img_to_jpeg_bytes') as img_to_jpeg_bytes_mock:
+            img_to_jpeg_bytes_mock.return_value = np.ones(1, np.uint8).tobytes()
             self.gulp_chunk._write_frame(0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {'0': {'meta_data': [{'test': 'ANY'}],
@@ -240,8 +245,8 @@ class TestGulpChunk(GulpChunkElement):
         bio = BytesIO()
         self.gulp_chunk.meta_dict = {}
         self.gulp_chunk.fp = bio
-        with mock.patch('cv2.imencode') as imencode_mock:
-            imencode_mock.return_value = '', np.ones((1,), dtype='uint8')
+        with mock.patch('gulpio2.fileio.img_to_jpeg_bytes') as img_to_jpeg_bytes_mock:
+            img_to_jpeg_bytes_mock.return_value = np.ones((1,), dtype='uint8').tobytes()
             self.gulp_chunk._write_frame(0, None)
             self.assertEqual(b'\x01\x00\x00\x00', bio.getvalue())
             expected = {'0': {'meta_data': [],
@@ -251,7 +256,7 @@ class TestGulpChunk(GulpChunkElement):
     def test_get_frame_infos(self):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': [{'meta': 'ANY_META'}],
                                            'frame_info': [[1, 2, 3]]}}
-        with mock.patch('gulpio.fileio.GulpChunk.open'):
+        with mock.patch('gulpio2.fileio.GulpChunk.open'):
             output = self.gulp_chunk._get_frame_infos('0')
         expected = ([ImgInfo(loc=1, pad=2, length=3)], {'meta': 'ANY_META'})
         self.assertEqual(expected, output)
@@ -259,14 +264,14 @@ class TestGulpChunk(GulpChunkElement):
     def test_contains(self):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': [{}],
                                            'frame_info': []}}
-        with mock.patch('gulpio.fileio.GulpChunk.open'):
+        with mock.patch('gulpio2.fileio.GulpChunk.open'):
             output = 0 in self.gulp_chunk
         self.assertTrue(output)
 
     def test_contains_if_id_not_in_chunk(self):
         self.gulp_chunk.meta_dict = {'0': {'meta_data': [{}],
                                            'frame_info': []}}
-        with mock.patch('gulpio.fileio.GulpChunk.open'):
+        with mock.patch('gulpio2.fileio.GulpChunk.open'):
             output = 1 in self.gulp_chunk
         self.assertFalse(output)
 
@@ -274,29 +279,24 @@ class TestGulpChunk(GulpChunkElement):
         # use 'write_frame' to write a single image
         self.gulp_chunk.meta_dict = OrderedDict()
         self.gulp_chunk.fp = BytesIO()
-        image = np.ones((3, 3, 3), dtype='uint8')
+        image = create_image((3, 3, 3))
         self.gulp_chunk._write_frame(0, image)
         self.gulp_chunk.meta_dict['0']['meta_data'].append({})
 
         # recover the single frame using 'read'
         frames, meta = self.gulp_chunk.read_frames('0')
-        npt.assert_array_equal(image, np.array(frames[0]))
+        npt.assert_array_equal(np.asarray(image), np.array(frames[0]))
         self.assertEqual({}, meta)
 
     def test_read_frames_fixed_length(self):
         # use 'write_frame' to write a single image
         self.gulp_chunk.meta_dict = OrderedDict()
         self.gulp_chunk.fp = BytesIO()
-        image = np.ones((1, 4), dtype='uint8')
-        with mock.patch('cv2.imencode') as imencode_mock:
-            imencode_mock.return_value = '', np.ones((1, 4), dtype='uint8')
-            self.gulp_chunk._write_frame(0, image)
+        image = create_image((1, 4))
+        self.gulp_chunk._write_frame(0, image)
         self.gulp_chunk.meta_dict['0']['meta_data'].append({})
-        with mock.patch('cv2.imdecode', lambda x, y:
-                        np.array(x).reshape((1, 4))):
-            with mock.patch('cv2.cvtColor', lambda x, y: x):
-                # recover the single frame using 'read'
-                frames, meta = self.gulp_chunk.read_frames('0')
+        # recover the single frame using 'read'
+        frames, meta = self.gulp_chunk.read_frames('0')
         npt.assert_array_equal(image, np.array(frames[0]))
         self.assertEqual({}, meta)
 
@@ -387,7 +387,7 @@ class TestChunkWriter(ChunkWriterElement):
         self.assertEqual(self.adapter,
                          self.chunk_writer.adapter)
 
-    @mock.patch('gulpio.fileio.GulpChunk')
+    @mock.patch('gulpio2.fileio.GulpChunk')
     def test_write_chunk(self, mock_gulp):
         def mock_iter_data(input_slice):
             yield {'id': 0,
@@ -402,7 +402,7 @@ class TestChunkWriter(ChunkWriterElement):
 
 class GulpIngestorElement(FSBase):
 
-    @mock.patch('gulpio.adapters.AbstractDatasetAdapter')
+    @mock.patch('gulpio2.adapters.AbstractDatasetAdapter')
     def setUp(self, mock_adapter):
         super().setUp()
         self.adapter = mock_adapter
@@ -424,8 +424,8 @@ class TestGulpIngestor(GulpIngestorElement):
                          self.gulp_ingestor.videos_per_chunk)
         self.assertEqual(self.num_workers, self.gulp_ingestor.num_workers)
 
-    @mock.patch('gulpio.fileio.ChunkWriter')
-    @mock.patch('gulpio.fileio.ProcessPoolExecutor')
+    @mock.patch('gulpio2.fileio.ChunkWriter')
+    @mock.patch('gulpio2.fileio.ProcessPoolExecutor')
     def test_ingest(self,
                     mock_process_pool,
                     mock_chunk_writer,
@@ -462,7 +462,7 @@ class DummyVideosAdapter(AbstractDatasetAdapter):
         for id_ in self.ids[slice_element]:
             yield {
                 'meta': {'id': id_},
-                'frames': [np.zeros((1, 1, 3))],
+                'frames': [PIL.Image.fromarray(np.zeros((1, 1, 3), dtype=np.uint8))],
                 'id': id_,
             }
 
@@ -478,18 +478,18 @@ class RoundTripAdapter(AbstractDatasetAdapter):
         self.result2 = {
             'meta': {'name': 'bunch of numpy arrays'},
             'frames': [
-                np.ones((4, 1, 3), dtype='uint8'),
-                np.ones((3, 1, 3), dtype='uint8'),
-                np.ones((2, 1, 3), dtype='uint8'),
-                np.ones((1, 1, 3), dtype='uint8'),
+                create_image((4, 1, 3)),
+                create_image((3, 1, 3)),
+                create_image((2, 1, 3)),
+                create_image((1, 1, 3)),
             ],
             'id': ids[1],
         }
         self.result3 = {
             'meta': {'name': 'shorter_video'},
             'frames': [
-                np.ones((4, 1, 3), dtype='uint8'),
-                np.ones((3, 1, 3), dtype='uint8'),
+                create_image((4, 1, 3)),
+                create_image((3, 1, 3)),
             ],
             'id': ids[2],
         }
@@ -583,14 +583,14 @@ class TestGulpDirectory(FSBase):
 
         # check that random_access works
         expected_frames = [
-            np.ones((4, 1, 3), dtype='uint8'),
-            np.ones((3, 1, 3), dtype='uint8'),
-            np.ones((2, 1, 3), dtype='uint8'),
-            np.ones((1, 1, 3), dtype='uint8'),
+            create_image((4, 1, 3)),
+            create_image((3, 1, 3)),
+            create_image((2, 1, 3)),
+            create_image((1, 1, 3)),
         ]
         received_frames, received_meta = gulp_directory[1]
         for ef, rf in zip(expected_frames, received_frames):
-            npt.assert_array_equal(ef, np.array(rf))
+            npt.assert_array_equal(np.asarray(ef), np.asarray(rf))
         self.assertEqual(expected_meta[0], received_meta)
 
         # now append/extend the gulps

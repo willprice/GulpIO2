@@ -9,7 +9,7 @@ import io
 import unittest
 import unittest.mock as mock
 
-from gulpio.sanity_utils import (check_meta_file_size_larger_zero,
+from gulpio2.sanity_utils import (check_meta_file_size_larger_zero,
                                  check_data_file_size_larger_zero,
                                  check_data_file_size,
                                  check_for_duplicate_ids,

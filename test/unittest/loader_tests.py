@@ -3,9 +3,10 @@ import json
 import unittest
 import numpy as np
 import tempfile
-from gulpio.loader import DataLoader
-from gulpio.dataset import GulpVideoDataset, GulpImageDataset
-from gulpio.fileio import GulpChunk
+from gulpio2.loader import DataLoader
+from gulpio2.dataset import GulpVideoDataset, GulpImageDataset
+from gulpio2.fileio import GulpChunk
+from fileio_tests import create_image
 
 
 class SimpleDataset(object):
@@ -56,14 +57,14 @@ class TestGulpVideoDataset(unittest.TestCase):
                 break
 
     def create_chunk(self):
-        self.temp_dir = tempfile.mkdtemp(prefix='gulpio-loader-test-')
+        self.temp_dir = tempfile.mkdtemp(prefix='gulpio2-loader-test-')
         self.chunk_path = os.path.join(self.temp_dir, 'data_0.gulp')
         self.meta_path = os.path.join(self.temp_dir, 'meta_0.gmeta')
         self.json_path = os.path.join(self.temp_dir, 'label2idx.json')
         label2dict = {"0": 1, "1": 2, "2": 2}
         json.dump(label2dict, open(self.json_path, 'w'))
         meta_info = {"label": "0"}
-        frame = np.zeros([100, 100, 3])  # create a zero pixels image
+        frame = create_image([100, 100, 3], val=0)  # create a zero pixels image
         chunk = GulpChunk(self.chunk_path, self.meta_path)
         with chunk.open('wb'):
             for i in range(128):  # 128 videos
@@ -103,14 +104,14 @@ class TestGulpImageDataset(unittest.TestCase):
                 break
 
     def create_chunk(self):
-        self.temp_dir = tempfile.mkdtemp(prefix='gulpio-loader-test-')
+        self.temp_dir = tempfile.mkdtemp(prefix='gulpio2-loader-test-')
         self.chunk_path = os.path.join(self.temp_dir, 'data_0.gulp')
         self.meta_path = os.path.join(self.temp_dir, 'meta_0.gmeta')
         self.json_path = os.path.join(self.temp_dir, 'label2idx.json')
         label2dict = {"0": 1, "1": 2, "2": 2}
         json.dump(label2dict, open(self.json_path, 'w'))
         meta_info = {"label": "0"}
-        frame = np.zeros([100, 100, 3])  # create a zero pixels image
+        frame = create_image([100, 100, 3], val=0)  # create a zero pixels image
         chunk = GulpChunk(self.chunk_path, self.meta_path)
         with chunk.open('wb'):
             for i in range(128):  # 128 videos

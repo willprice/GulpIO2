@@ -7,7 +7,7 @@ import numpy as np
 import unittest
 import unittest.mock as mock
 
-from gulpio.utils import (check_ffmpeg_exists,
+from gulpio2.utils import (check_ffmpeg_exists,
                           burst_video_into_frames,
                           resize_by_short_edge,
                           resize_images,
@@ -17,8 +17,9 @@ from gulpio.utils import (check_ffmpeg_exists,
                           remove_entries_with_duplicate_ids,
                           _remove_duplicates_in_metadict,
                           )
-from gulpio.fileio import GulpIngestor
+from gulpio2.fileio import GulpIngestor
 from fileio_tests import DummyVideosAdapter
+from fileio_tests import create_image
 
 
 class FSBase(unittest.TestCase):
@@ -74,10 +75,10 @@ class TestBurstVideoIntoFrames(unittest.TestCase):
 
 class TestResizeImages(unittest.TestCase):
 
-    @mock.patch('cv2.imread')
-    @mock.patch('gulpio.utils.resize_by_short_edge')
-    def test(self, mock_resize, mock_imread):
-        mock_imread.side_effect = ['READ_IMAGE1',
+    @mock.patch('PIL.Image.open')
+    @mock.patch('gulpio2.utils.resize_by_short_edge')
+    def test(self, mock_resize, mock_image_open):
+        mock_image_open.side_effect = ['READ_IMAGE1',
                                    'READ_IMAGE2',
                                    'READ_IMAGE3']
         mock_resize.side_effect = ['RESIZED_IMAGE1',
@@ -96,16 +97,16 @@ class TestResizeImages(unittest.TestCase):
 class TestResizeByShortEdge(unittest.TestCase):
 
     def test_resize_first_edge_shorter(self):
-        input_image = np.zeros((6, 10))
+        input_image = create_image((6, 10), val=0)
         size = 3
-        correct_result = np.zeros((3, 5))
+        correct_result = create_image((3, 5), val=0)
         result = resize_by_short_edge(input_image, size)
         np.testing.assert_array_equal(correct_result, result)
 
     def test_resize_second_edge_shorter(self):
-        input_image = np.zeros((10, 6))
+        input_image = create_image((10, 6))
         size = 3
-        correct_result = np.zeros((5, 3))
+        correct_result = create_image((5, 3))
         result = resize_by_short_edge(input_image, size)
         np.testing.assert_array_equal(correct_result, result)
 

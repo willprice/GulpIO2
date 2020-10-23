@@ -117,7 +117,7 @@ def resize_by_short_edge(
 
 def remove_entries_with_duplicate_ids(output_directory, meta_dict):
     meta_dict = _remove_duplicates_in_metadict(meta_dict)
-    from gulpio.fileio import GulpDirectory
+    from gulpio2.fileio import GulpDirectory
     gulp_directory = GulpDirectory(output_directory)
     existing_ids = list(gulp_directory.merged_meta_dict.keys())
     # this assumes no duplicates in existing_ids

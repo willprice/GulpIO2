@@ -38,8 +38,8 @@ Options:
 
 from docopt import docopt
 
-from gulpio.adapters import VideoFolderAdapter
-from gulpio.fileio import GulpIngestor
+from gulpio2.adapters import VideoFolderAdapter
+from gulpio2.fileio import GulpIngestor
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)

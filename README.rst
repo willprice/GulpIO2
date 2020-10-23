@@ -2,6 +2,15 @@
 GulpIO
 ======
 
+Fork notice
+===========
+
+This is a fork of TwentyBN's `gulpio <https://github.com/TwentyBN/GulpIO>`_.
+The main differences are this is rebuilt to use Pillow as the JPEG manipulation
+backend which when used in combination with Pillow-SIMD built against libjpeg-turbo
+yields significant improvements in read speed.
+It also supports more flexible frame access, not only ``slice`` accesses.
+
 About
 =====
 
@@ -10,7 +19,7 @@ Binary storage format for deep learning on videos.
 Status
 ======
     
-.. image:: https://travis-ci.org/TwentyBN/GulpIO.svg?branch=master
+.. image:: https://travis-ci.org/willprice/GulpIO.svg?branch=master
     :target: https://travis-ci.org/TwentyBN/GulpIO
 
 Install

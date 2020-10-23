@@ -12,8 +12,8 @@ Arguments:
 
 from docopt import docopt
 
-from gulpio.fileio import GulpDirectory
-from gulpio.sanity_utils import (check_meta_file_size_larger_zero,
+from gulpio2.fileio import GulpDirectory
+from gulpio2.sanity_utils import (check_meta_file_size_larger_zero,
                                  check_data_file_size_larger_zero,
                                  check_data_file_size,
                                  check_for_duplicate_ids,

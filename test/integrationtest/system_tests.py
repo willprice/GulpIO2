@@ -8,11 +8,11 @@ import shutil
 import numpy as np
 import numpy.testing as npt
 
-from gulpio import GulpDirectory
+from gulpio2 import GulpDirectory
 
 # step 0: setup
 
-temp_dir = tempfile.mkdtemp(prefix='gulpio-integration-test-')
+temp_dir = tempfile.mkdtemp(prefix='gulpio2-integration-test-')
 print(temp_dir)
 atexit.register(shutil.rmtree, temp_dir)
 output_dir = os.path.join(temp_dir, 'output')

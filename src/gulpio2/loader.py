@@ -4,7 +4,8 @@ import sys
 import traceback
 import threading
 from multiprocessing import SimpleQueue, Process
-from gulpio.sampler import SequentialSampler, RandomSampler, BatchSampler
+from gulpio2.sampler import SequentialSampler, RandomSampler, BatchSampler
+import PIL.Image
 # import queue
 string_classes = (str, bytes)
 
@@ -47,6 +48,8 @@ def default_collate(batch):
             return np.stack(batch, 0)
         if elem.shape == ():  # scalars
             return batch
+    elif isinstance(batch[0], PIL.Image.Image):
+        return np.stack(batch)
     elif isinstance(batch[0], int) or isinstance(batch[0], float):
         return batch
     elif isinstance(batch[0], collections.Sequence):
