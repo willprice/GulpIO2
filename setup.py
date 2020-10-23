@@ -10,6 +10,7 @@ import sys
 from shutil import rmtree
 
 from setuptools import setup, Command, find_packages
+from pathlib import Path
 
 _here = os.path.dirname(__file__)
 print(_here)
@@ -102,6 +103,9 @@ setup(
     url=about["__url__"],
     package_dir={"": "src"},
     packages=find_packages(where="src"),
+    scripts=[
+        str(script_path) for script_path in Path('src/gulpio2/scripts').iterdir()
+    ],
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
     # entry_points={
