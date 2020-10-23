@@ -2,9 +2,10 @@ language: python
 cache: pip
 
 python:
-  - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7"
+  - "3.8"
 
 before_install:
   - git fetch --unshallow || true
@@ -21,22 +22,23 @@ install:
   - ./ffmpeg -version
   - export PATH=".:$PATH"
 
-  - pip install -U pip setuptools
-  - pip install --pre pybuilder
-  - pyb -X install_dependencies
+  - pip install -U pip setuptools pytest
+  - pip install -r requirements.txt
+  - python setup.py install
 
 script:
-  - pyb -X
+  - pytest tests/unit
+  - python test/integration/system_tests.py
 
-deploy:
-  provider: pypi
-  user: twentybn-machine-user
-  server: https://upload.pypi.org/legacy/
-  distributions: sdist
-  skip_cleanup: true
-  password:
-    secure: "ROzurtqXVZT6lI6kO5utzdp5u1TH9B9JKrOy+lzndrgn7MLaUo+IdJ760nBBEH+VUZH2erYeS/IKQR6JyDkosLDecHgPZaHdfy/CqqnX4AaokpVxgp0V+pghkLZrCCcCAowWWxrn1FPFLqBpWHwfQhlaPWXw7DXo5Ih/eA/xfvkBXRzoqK88ItP832D1GaeIToKHwTl3CHhMxZO8hYK6qjhagGRQlLQ/iZDCGHQcN18iL8+pg2qLskrYxD66AZFyrLuaqPnlOPryl7LCjuqDWrqg41DLX00+0ao0x8N4WGhPaowxMcT230xjH57g/TcvW/wSAokLoQ9/cpOXa6DPhwQqlMQxBwi4FzszJSdI1XtUwXqDM2OqOrwypvNOFFTNUhMei4fNpDS/1ZZ97yEg8EYHSXsJ610z1bjGzRx36BhQ1zjT5NhG27NYW+4tnXXzX/8hEuTuKD7lSe2fOTeH0nMDvyrgURJiKdnWR0HL65Mzur5a9ouTDf0v0pIrNw4RvD1ucR571GphLEBTKaBAXskDNSMzPht1ztHnaIK2HeMURBl0ooVrvS+6503gNR+QDX2dsPCmNwNVLt44X5BeoukxVxJovZV2q7D0v6OLcpGoRWXJTt/JRg40GySLbwNEeRSVFdeToU/ASadN2yLmRihQzArzuXlU9frzZyQx0HQ="
-  on:
-    repo: TwentyBN/GulpIO
-    python: '3.6'
-    branch: master
+#deploy:
+#  provider: pypi
+#  user: twentybn-machine-user
+#  server: https://upload.pypi.org/legacy/
+#  distributions: sdist
+#  skip_cleanup: true
+#  password:
+#    secure: "ROzurtqXVZT6lI6kO5utzdp5u1TH9B9JKrOy+lzndrgn7MLaUo+IdJ760nBBEH+VUZH2erYeS/IKQR6JyDkosLDecHgPZaHdfy/CqqnX4AaokpVxgp0V+pghkLZrCCcCAowWWxrn1FPFLqBpWHwfQhlaPWXw7DXo5Ih/eA/xfvkBXRzoqK88ItP832D1GaeIToKHwTl3CHhMxZO8hYK6qjhagGRQlLQ/iZDCGHQcN18iL8+pg2qLskrYxD66AZFyrLuaqPnlOPryl7LCjuqDWrqg41DLX00+0ao0x8N4WGhPaowxMcT230xjH57g/TcvW/wSAokLoQ9/cpOXa6DPhwQqlMQxBwi4FzszJSdI1XtUwXqDM2OqOrwypvNOFFTNUhMei4fNpDS/1ZZ97yEg8EYHSXsJ610z1bjGzRx36BhQ1zjT5NhG27NYW+4tnXXzX/8hEuTuKD7lSe2fOTeH0nMDvyrgURJiKdnWR0HL65Mzur5a9ouTDf0v0pIrNw4RvD1ucR571GphLEBTKaBAXskDNSMzPht1ztHnaIK2HeMURBl0ooVrvS+6503gNR+QDX2dsPCmNwNVLt44X5BeoukxVxJovZV2q7D0v6OLcpGoRWXJTt/JRg40GySLbwNEeRSVFdeToU/ASadN2yLmRihQzArzuXlU9frzZyQx0HQ="
+#  on:
+#    repo: TwentyBN/GulpIO
+#    python: '3.6'
+#    branch: master
