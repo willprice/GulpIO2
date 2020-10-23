@@ -15,23 +15,25 @@ _here = os.path.dirname(__file__)
 print(_here)
 os.system("ls " + _here)
 about = {}  # type: ignore
-with open(os.path.join(_here, "src", "torchvideo", "__version__.py")) as f:
+with open(os.path.join(_here, "src", "gulpio2", "__version__.py")) as f:
     exec(f.read(), about)
 
 # Package meta-data.
-REQUIRES_PYTHON = ">=3.5.0"
+REQUIRES_PYTHON = ">=3.6.0"
 
 # What packages are required for this module to be executed?
 REQUIRED = [
     # 'requests', 'maya', 'records',
+    "Pillow",
+    "docopt",
+    "jinja2",
     "numpy",
-    "torch>=1.2.0",
-    "torchvision>=0.4.0",
-    "gulpio>=540.66",
+    "sh",
+    "tqdm",
 ]
 
 # What packages are optional?
-EXTRAS = {"visualisation": ["moviepy>=1.0.0"], "csv": ["pandas"]}
+EXTRAS = {}
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------
@@ -43,7 +45,7 @@ EXTRAS = {"visualisation": ["moviepy>=1.0.0"], "csv": ["pandas"]}
 # Note: this will only work if 'README.md' is present in your MANIFEST.in file!
 try:
     with io.open(
-        os.path.join(_here, "README.md"), encoding="utf-8"
+        os.path.join(_here, "README.rst"), encoding="utf-8"
     ) as f:  # type: ignore
         long_description = "\n" + f.read()
 except FileNotFoundError:
@@ -108,15 +110,16 @@ setup(
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
-    license="MPL2+",
+    license="MIT",
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
-        "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+        "License :: OSI Approved :: MIT",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
     # $ setup.py publish support.

@@ -27,7 +27,7 @@ install:
   - python setup.py install
 
 script:
-  - pytest tests/unit
+  - python -m pytest tests/unit
   - python test/integration/system_tests.py
 
 #deploy:

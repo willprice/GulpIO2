@@ -1,5 +1,5 @@
 __title__ = "gulpio2"
-__version__ = "v1.0.0rc1"
+__version__ = "v0.0.1"
 __description__ = "Binary storage format for deep learning on videos."
 __author__ = """\
 Eren Golge (eren.golge@twentybn.com)
@@ -13,3 +13,4 @@ Valentin Haenel (valentin.haenel@twentybn.com)
 Will Price (will.price94+dev@gmail.com)
 """
 __author_email__ = "will.price94+gulpio@gmail.com"
+__url__= "https://github.com/willprice/GulpIO"

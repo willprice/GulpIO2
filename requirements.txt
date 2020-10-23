@@ -1,0 +1,6 @@
+Pillow-SIMD==7.0.0.post3
+docopt==0.6.2
+jinja2==2.11.2
+numpy==1.19.2
+sh==1.14.0
+tqdm==4.50.2
