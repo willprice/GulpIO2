@@ -449,8 +449,9 @@ class TestGulpIngestor(GulpIngestorElement):
 
 class DummyVideosAdapter(AbstractDatasetAdapter):
 
-    def __init__(self, num_videos):
+    def __init__(self, num_videos, num_frames=1):
         self.num_videos = num_videos
+        self.num_frames = num_frames
         self.ids = [str(i) for i in range(num_videos)]
         np.random.shuffle(self.ids)
 
@@ -462,7 +463,10 @@ class DummyVideosAdapter(AbstractDatasetAdapter):
         for id_ in self.ids[slice_element]:
             yield {
                 'meta': {'id': id_},
-                'frames': [PIL.Image.fromarray(np.zeros((1, 1, 3), dtype=np.uint8))],
+                'frames': [
+                    PIL.Image.fromarray(np.ones((1, 1, 3), dtype=np.uint8) * i)
+                    for i in range(self.num_frames)
+                ],
                 'id': id_,
             }
 
@@ -630,3 +634,29 @@ class TestGulpDirectory(FSBase):
                 img, meta = gulp_directory[id_]
                 # check the meta id match
                 self.assertEqual(meta['id'], id_)
+
+    def test_random_access_with_sparse_frames(self):
+        # ingest dummy videos
+        adapter = DummyVideosAdapter(num_videos=5, num_frames=10)
+        output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
+        ingestor = GulpIngestor(adapter, output_directory, 2, 1)
+        ingestor()
+
+        # create gulp directory
+        gulp_directory = GulpDirectory(output_directory)
+
+        # check all videos can be accessed
+        for id_ in adapter.ids:
+            with self.subTest(id_=id_):
+                # check img id is in the lookup table
+                self.assertTrue(id_ in gulp_directory.chunk_lookup)
+                # check the img can be accessed
+                frame_idxs = [0, 5, 9]
+                frames, meta = gulp_directory[id_, frame_idxs]
+                # check the meta id match
+                self.assertEqual(meta['id'], id_)
+                for frame_idx, frame in zip(frame_idxs, frames):
+                    # DummyVideosAdapter yields frames filled with the frame index
+                    # as their value
+                    assert (np.asarray(frame) == frame_idx).all()
+
