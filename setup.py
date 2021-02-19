@@ -25,6 +25,7 @@ REQUIRES_PYTHON = ">=3.6.0"
 # What packages are required for this module to be executed?
 REQUIRED = [
     # 'requests', 'maya', 'records',
+    "simplejpeg>=1.0.0",
     "Pillow",
     "docopt",
     "jinja2",

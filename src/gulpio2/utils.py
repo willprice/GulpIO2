@@ -2,12 +2,13 @@
 
 import os
 from io import BytesIO
+import PIL.Image
 
+import numpy as np
 import sh
 import random
 import shutil
 import glob
-import PIL.Image
 from contextlib import contextmanager
 
 ###############################################################################
@@ -15,10 +16,15 @@ from contextlib import contextmanager
 ###############################################################################
 from typing import Iterable, Iterator, Union
 
+import simplejpeg
+
 
 class FFMPEGNotFound(Exception):
     pass
 
+
+# If you update this, then the system_tests.py expected sizes will likely change.
+_JPEG_WRITE_QUALITY = 90
 
 def check_ffmpeg_exists():
     return os.system('ffmpeg -version > /dev/null') == 0
@@ -33,14 +39,12 @@ def temp_dir_for_bursting(shm_dir_path='/dev/shm'):
     shutil.rmtree(temp_dir)
 
 
-def img_to_jpeg_bytes(img: PIL.Image.Image) -> bytes:
-    with BytesIO() as f:
-        img.save(f, format='JPEG')
-        return f.getvalue()
+def img_to_jpeg_bytes(img: np.ndarray) -> bytes:
+    return simplejpeg.encode_jpeg(img, quality=_JPEG_WRITE_QUALITY)
 
 
-def jpeg_bytes_to_img(jpeg_bytes: bytes) -> PIL.Image.Image:
-    return PIL.Image.open(BytesIO(jpeg_bytes))
+def jpeg_bytes_to_img(jpeg_bytes: bytes) -> np.ndarray:
+    return simplejpeg.decode_jpeg(jpeg_bytes, fastdct=True, fastupsample=True)
 
 
 def burst_frames_to_shm(vid_path, temp_burst_dir, frame_rate=None):
@@ -81,7 +85,7 @@ class DuplicateIdException(Exception):
     pass
 
 
-def resize_images(imgs: Iterable[str], img_size=-1) -> Iterator[PIL.Image.Image]:
+def resize_images(imgs: Iterable[str], img_size=-1) -> Iterator[np.ndarray]:
     for img in imgs:
         img_path = img
         img = PIL.Image.open(img_path)
@@ -89,20 +93,24 @@ def resize_images(imgs: Iterable[str], img_size=-1) -> Iterator[PIL.Image.Image]
             raise ImageNotFound("Image is  None from path:{}".format(img_path))
         if img_size > 0:
             img = resize_by_short_edge(img, img_size)
+        else:
+            img = np.asarray(img)
         yield img
 
 
 def resize_by_short_edge(
-    img: Union[str, PIL.Image.Image],
+    img: Union[str, PIL.Image.Image, np.ndarray],
     size: int
-) -> PIL.Image.Image:
-    if isinstance(img, str):
+) -> np.ndarray:
+    if isinstance(img, np.ndarray):
+        img = PIL.Image.fromarray(img)
+    elif isinstance(img, str):
         img_path = img
         img = PIL.Image.open(img_path)
         if img is None:
             raise ImageNotFound("Image read None from path ", img_path)
     if size < 1:
-        return img
+        return np.asarray(img)
     w, h = img.width, img.height
     if h < w:
         scale = w / float(h)
@@ -112,7 +120,7 @@ def resize_by_short_edge(
         scale = h / float(w)
         new_height = int(size * scale)
         img = img.resize((size, new_height), PIL.Image.BILINEAR)
-    return img
+    return np.asarray(img)
 
 
 def remove_entries_with_duplicate_ids(output_directory, meta_dict):

@@ -3,7 +3,6 @@ import tempfile
 import shutil
 import json
 import pickle
-import PIL.Image
 
 from collections import OrderedDict
 from io import BytesIO
@@ -14,6 +13,7 @@ import numpy.testing as npt
 import unittest
 import unittest.mock as mock
 
+import gulpio2.utils
 from gulpio2.fileio import (GulpChunk,
                            ChunkWriter,
                            GulpIngestor,
@@ -26,13 +26,17 @@ from gulpio2.fileio import (GulpChunk,
                            )
 from gulpio2.adapters import AbstractDatasetAdapter
 
+# If we don't set JPEG write quality to 100%, then the frames we write out can have
+# different values from the arrays that were converted to JPEG. So for testing purposes
+# we dial quality up to 100%, but for real world usage we default to a lower value.
+gulpio2.utils._JPEG_WRITE_QUALITY = 100
 
-def create_image(shape, val=1, dtype=np.uint8):
-    return PIL.Image.fromarray(np.ones(shape, dtype=dtype) * val)
+
+def create_image(shape, val=1, dtype=np.uint8) -> np.ndarray:
+    return np.ones(shape, dtype=dtype) * val
 
 
 class FSBase(unittest.TestCase):
-
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp(prefix='fileio-test-')
 
@@ -41,7 +45,6 @@ class FSBase(unittest.TestCase):
 
 
 class TestJSONSerializer(FSBase):
-
     def test_dump(self):
         filename = os.path.join(self.temp_dir, 'ANY_JSON.json')
         content = {'ANY_KEY': 'ANY_CONTENT'}
@@ -59,7 +62,6 @@ class TestJSONSerializer(FSBase):
 
 
 class TestPickleSerializer(FSBase):
-
     def test_dump(self):
         filename = os.path.join(self.temp_dir, 'ANY_PICKLE.pickle')
         content = {'ANY_KEY': 'ANY_CONTENT'}
@@ -77,7 +79,6 @@ class TestPickleSerializer(FSBase):
 
 
 class TestExtractInputForGetitem(unittest.TestCase):
-
     def test_input_int(self):
         id_ = 1
         res_id, res_slice = extract_input_for_getitem(id_)
@@ -102,7 +103,6 @@ class TestExtractInputForGetitem(unittest.TestCase):
 
 
 class TestCalculateChunks(unittest.TestCase):
-
     def test_one_video_in_chunk(self):
         expected = [slice(0, 1), slice(1, 2)]
         result = calculate_chunk_slices(1, 2)
@@ -144,7 +144,6 @@ class GulpChunkElement(FSBase):
 
 
 class TestGulpChunk(GulpChunkElement):
-
     def test_initializer(self):
         self.assertEqual(self.data_file_path,
                          self.gulp_chunk.data_file_path)
@@ -292,7 +291,7 @@ class TestGulpChunk(GulpChunkElement):
         # use 'write_frame' to write a single image
         self.gulp_chunk.meta_dict = OrderedDict()
         self.gulp_chunk.fp = BytesIO()
-        image = create_image((1, 4))
+        image = create_image((4, 4, 3))
         self.gulp_chunk._write_frame(0, image)
         self.gulp_chunk.meta_dict['0']['meta_data'].append({})
         # recover the single frame using 'read'
@@ -372,7 +371,6 @@ class TestGulpChunk(GulpChunkElement):
 
 
 class ChunkWriterElement(FSBase):
-
     def setUp(self):
         super().setUp()
         self.adapter = mock.MagicMock()
@@ -382,7 +380,6 @@ class ChunkWriterElement(FSBase):
 
 
 class TestChunkWriter(ChunkWriterElement):
-
     def test_initialization(self):
         self.assertEqual(self.adapter,
                          self.chunk_writer.adapter)
@@ -416,7 +413,6 @@ class GulpIngestorElement(FSBase):
 
 
 class TestGulpIngestor(GulpIngestorElement):
-
     def test_initialization(self):
         self.assertEqual(self.adapter, self.gulp_ingestor.adapter)
         self.assertEqual(self.output_folder, self.gulp_ingestor.output_folder)
@@ -448,7 +444,6 @@ class TestGulpIngestor(GulpIngestorElement):
 
 
 class DummyVideosAdapter(AbstractDatasetAdapter):
-
     def __init__(self, num_videos, num_frames=1):
         self.num_videos = num_videos
         self.num_frames = num_frames
@@ -464,7 +459,7 @@ class DummyVideosAdapter(AbstractDatasetAdapter):
             yield {
                 'meta': {'id': id_},
                 'frames': [
-                    PIL.Image.fromarray(np.ones((1, 1, 3), dtype=np.uint8) * i)
+                    np.ones((1, 1, 3), dtype=np.uint8) * i
                     for i in range(self.num_frames)
                 ],
                 'id': id_,
@@ -472,7 +467,6 @@ class DummyVideosAdapter(AbstractDatasetAdapter):
 
 
 class RoundTripAdapter(AbstractDatasetAdapter):
-
     def __init__(self, ids=[0, 1, 2]):
         self.result1 = {
             'meta': {'name': 'empty video'},
@@ -513,7 +507,6 @@ class RoundTripAdapter(AbstractDatasetAdapter):
 
 
 class TestGulpDirectory(FSBase):
-
     def test_init(self):
         adapter = RoundTripAdapter()
         output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
@@ -525,18 +518,18 @@ class TestGulpDirectory(FSBase):
         expected_all_meta_dicts = [
             OrderedDict([('1',
                          OrderedDict([('frame_info',
-                                      [[0, 1, 632],
-                                       [632, 1, 632],
-                                       [1264, 1, 632],
-                                       [1896, 1, 632]]),
+                                      [[0, 3, 632],
+                                       [632, 3, 632],
+                                       [1264, 3, 632],
+                                       [1896, 3, 632]]),
                                       ('meta_data',
                                        [OrderedDict(
                                            [('name',
                                              'bunch of numpy arrays')])])]))]),
             OrderedDict([('2',
                         OrderedDict([('frame_info',
-                                     [[0, 1, 632],
-                                      [632, 1, 632]]),
+                                     [[0, 3, 632],
+                                      [632, 3, 632]]),
                                     ('meta_data',
                                      [OrderedDict(
                                         [('name', 'shorter_video')])])]))])]
@@ -547,17 +540,17 @@ class TestGulpDirectory(FSBase):
 
         expected_merged_meta_dict = {
             '1': OrderedDict([('frame_info',
-                              [[0, 1, 632],
-                               [632, 1, 632],
-                               [1264, 1, 632],
-                               [1896, 1, 632]]),
+                              [[0, 3, 632],
+                               [632, 3, 632],
+                               [1264, 3, 632],
+                               [1896, 3, 632]]),
                               ('meta_data',
                                [OrderedDict(
                                    [('name',
                                      'bunch of numpy arrays')])])]),
             '2': OrderedDict([('frame_info',
-                              [[0, 1, 632],
-                               [632, 1, 632]]),
+                              [[0, 3, 632],
+                               [632, 3, 632]]),
                               ('meta_data',
                                [OrderedDict([('name',
                                               'shorter_video')])])])}
@@ -637,7 +630,7 @@ class TestGulpDirectory(FSBase):
 
     def test_random_access_with_sparse_frames(self):
         # ingest dummy videos
-        adapter = DummyVideosAdapter(num_videos=5, num_frames=10)
+        adapter = DummyVideosAdapter(num_videos=5, num_frames=100)
         output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
         ingestor = GulpIngestor(adapter, output_directory, 2, 1)
         ingestor()
@@ -658,5 +651,7 @@ class TestGulpDirectory(FSBase):
                 for frame_idx, frame in zip(frame_idxs, frames):
                     # DummyVideosAdapter yields frames filled with the frame index
                     # as their value
-                    assert (np.asarray(frame) == frame_idx).all()
-
+                    expected_frame = np.ones((1, 1, 3), dtype=np.uint8) * frame_idx
+                    # We allow some tolerance in the pixel values since we use
+                    # lossy compression and fast variants of the JPEG decoder.
+                    npt.assert_allclose(frame, expected_frame, atol=4)

@@ -107,10 +107,14 @@ expected_files = [
 ]
 assert expected_files == files
 
+# WARNING: The following checks can fail if the value of the JPEG quality has changed
+# in utils._JPEG_WRITE_QUALITY
 sizes = [os.path.getsize(os.path.join(output_dir, f)) for f in files]
-expected_sizes = [659200, 659200, 197760, 302, 15059, 15083, 4430]
-print(expected_sizes, sizes)
+expected_sizes = [739200, 739200, 221760, 302, 15074, 15098, 4445]
+print("expected sizes: ", expected_sizes)
+print("actual sizes:   ", sizes)
 assert expected_sizes == sizes
+print("----")
 
 # step 4: ungulp the videos and check the result
 
@@ -147,9 +151,11 @@ expected_files = [
 assert expected_files == files
 
 sizes = [os.path.getsize(os.path.join(output_dir, f)) for f in files]
-expected_sizes = [659200, 659200, 197760, 131840, 330, 15059, 15083, 4430, 2907]
-print(expected_sizes, sizes)
+expected_sizes = [739200, 739200, 221760, 147840, 330, 15074, 15098, 4445, 2922]
+print("expected sizes: ", expected_sizes)
+print("actual sizes:   ", sizes)
 assert expected_sizes == sizes
+print("----")
 
 # step 8: ungulp the videos (from the extended files) and check the result
 
