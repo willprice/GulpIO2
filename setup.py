@@ -26,7 +26,7 @@ REQUIRES_PYTHON = ">=3.6.0"
 REQUIRED = [
     # 'requests', 'maya', 'records',
     "simplejpeg>=1.0.0",
-    "Pillow",
+    "Pillow-SIMD",
     "docopt",
     "jinja2",
     "numpy",
