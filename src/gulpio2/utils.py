@@ -40,11 +40,20 @@ def temp_dir_for_bursting(shm_dir_path='/dev/shm'):
 
 
 def img_to_jpeg_bytes(img: np.ndarray) -> bytes:
-    return simplejpeg.encode_jpeg(img, quality=_JPEG_WRITE_QUALITY)
+    if img.ndim == 2:
+        colorspace = "GRAY"
+    elif img.ndim == 3:
+        colorspace = "RGB"
+    else:
+        raise ValueError("Unsupported img shape: {}".format(img.shape))
+    return simplejpeg.encode_jpeg(img, quality=_JPEG_WRITE_QUALITY, colorspace=colorspace)
 
 
-def jpeg_bytes_to_img(jpeg_bytes: bytes) -> np.ndarray:
-    return simplejpeg.decode_jpeg(jpeg_bytes, fastdct=True, fastupsample=True)
+def jpeg_bytes_to_img(jpeg_bytes: bytes, colorspace: str = "RGB") -> np.ndarray:
+    img = simplejpeg.decode_jpeg(jpeg_bytes, fastdct=True, fastupsample=True,
+                                  colorspace=colorspace)
+    img = np.squeeze(img, axis=-1)
+    return img
 
 
 def burst_frames_to_shm(vid_path, temp_burst_dir, frame_rate=None):

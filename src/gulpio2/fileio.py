@@ -76,6 +76,8 @@ class GulpDirectory(object):
     ----------
     output_dir: (str)
         Path to the directory containing the files.
+    colorspace: (str)
+        Colorspace, one of ``"RGB"`` or ``"GRAY"`` depending on the type of gulped data.
 
     Attributes
     ----------
@@ -90,7 +92,8 @@ class GulpDirectory(object):
 
     """
 
-    def __init__(self, output_dir):
+    def __init__(self, output_dir, colorspace: str = "RGB"):
+        self.colorspace = colorspace
         self.output_dir = output_dir
         self.chunk_objs_lookup = OrderedDict(zip(self._chunk_ids(), self._chunks()))
         self.all_meta_dicts = [c.meta_dict for c in self.chunk_objs_lookup.values()]
@@ -116,7 +119,8 @@ class GulpDirectory(object):
         return self.__iter__()
 
     def _chunks(self):
-        return (GulpChunk(*paths) for paths in self._existing_file_paths())
+        return (GulpChunk(*paths, colorspace=self.colorspace) for paths in
+                self._existing_file_paths())
 
     def new_chunks(self, total_new_chunks):
         """ Return a generator over freshly setup GulpChunk objects which are ready
@@ -127,7 +131,7 @@ class GulpDirectory(object):
         total_new_chunks: (int)
             The total number of new chunks to initialize.
         """
-        return ((GulpChunk(*paths) for paths in
+        return ((GulpChunk(*paths, colorspace=self.colorspace) for paths in
                  self._allocate_new_file_paths(total_new_chunks)))
 
     def __getitem__(self, element):
@@ -200,7 +204,8 @@ class GulpChunk(object):
     """
 
     def __init__(self, data_file_path, meta_file_path,
-                 serializer=json_serializer):
+                 serializer=json_serializer, colorspace: str = "RGB"):
+        self.colorspace = colorspace
         self.serializer = serializer
         self.data_file_path = data_file_path
         self.meta_file_path = meta_file_path
@@ -343,7 +348,7 @@ class GulpChunk(object):
             self.fp.seek(frame_info.loc)
             record = self.fp.read(frame_info.length)
             img_str = record[:len(record)-frame_info.pad]
-            img = jpeg_bytes_to_img(img_str)
+            img = jpeg_bytes_to_img(img_str, colorspace=self.colorspace)
             return img
         if isinstance(slice_element, (list, np.ndarray)):
             selected_frame_infos = [frame_infos[idx] for idx in slice_element]
