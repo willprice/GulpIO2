@@ -112,24 +112,34 @@ Transformations are applied to each instance on the fly.
 
 
     class GulpImageDataset:
-        def __init__(self, gulp_dir):
+        def __init__(self, gulp_dir: GulpDirectory, transform=None):
             self.gulp_dir = gulp_dir
+            self.transform = transform if transform is not None else lambda x: x
+            self.example_ids = list(gulp_dir.merged_meta_dict.keys())
+
+        def __getitem__(self, idx):
+            if isinstance(idx, int):
+                example_id = self.example_ids[idx]
+            else:
+                example_id = idx
+            imgs, meta = self.gulp_dir[example_id]
+            return self.transform(imgs[0]), meta
 
         def __len__(self):
-            return len(self.gulp_dir.merged_metadict)
+            return len(self.gulp_dir.merged_meta_dict)
 
     # define data augmentations. Notice that there are different functions for videos and images
-    transforms = Compose([
+    transform = Compose([
         Resize(120),
         CenterCrop(112),
         Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
     ])
 
     # define dataset wrapper and pick this up by the data loader interface.
-    dataset = GulpDirectory('/path/to/train_data', transform=transforms)
+    dataset = GulpImageDataset(GulpDirectory('/path/to/train_data'), transform=transforms)
     loader = DataLoader(dataset, batch_size=256, shuffle=True, num_workers=0, drop_last=True)
 
-    dataset_val = GulpImageDataset('/path/to/validation_data/', transform=transforms)
+    dataset_val = GulpImageDataset(GulpDirectory('/path/to/validation_data/'), transform=transforms)
     loader_val = DataLoader(dataset_val, batch_size=256, shuffle=False, num_workers=0, drop_last=True)
 
 Here we iterate through the dataset we loaded. Iterator returns data and label as numpy arrays. You might need to cast these into the format of you
