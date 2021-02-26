@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-"""gulp_sanity_check
+"""gulp2_sanity_check
 
 Usage:
-    gulp_sanity_check <gulp_directory>
+    gulp2_sanity_check <gulp_directory>
 
 Arguments:
     gulp_directory      Directory where the Gulp-Files are located
