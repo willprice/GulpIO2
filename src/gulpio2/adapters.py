@@ -348,7 +348,7 @@ class ImageFolderAdapter(AbstractDatasetAdapter):
         for extension in self.file_extensions:
             search_pattern = os.path.join(folder+"**/*{}".format(extension))
             paths = glob.glob(search_pattern, recursive=True)
-        img_paths.extend(paths)
+            img_paths.extend(paths)
         img_paths = sorted(img_paths)
         data = []
         for img_path in img_paths:
