@@ -19,8 +19,8 @@ Binary storage format for deep learning on videos.
 Status
 ======
     
-.. image:: https://travis-ci.org/willprice/GulpIO.svg?branch=master
-    :target: https://travis-ci.org/TwentyBN/GulpIO
+.. image:: https://github.com/willprice/GulpIO2/actions/workflows/test.yml/badge.svg
+    :target: https://github.com/willprice/GulpIO2/actions
 
 Install
 =======
@@ -110,7 +110,9 @@ following snippet:
     # import the main interface for reading
     from gulpio import GulpDirectory
     # instantiate the GulpDirectory
-    gulp_directory = GulpDirectory('/tmp/something_something_gulps')
+    # You can either read greyscale (`colorspace="GRAY"`) or RGB (`colorspace="RGB"`)
+    # images.
+    gulp_directory = GulpDirectory('/tmp/something_something_gulps', colorspace="RGB")
     # iterate over all chunks
     for chunk in gulp_directory:
         # for each 'video' get the metadata and all frames
