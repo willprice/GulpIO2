@@ -41,7 +41,8 @@ def temp_dir_for_bursting(shm_dir_path='/dev/shm'):
 
 def img_to_jpeg_bytes(img: np.ndarray) -> bytes:
     if img.ndim == 2:
-        colorspace = "GRAY"
+        colorspace = "Gray"
+        img = img[..., None]
     elif img.ndim == 3:
         colorspace = "RGB"
     else:
@@ -50,8 +51,9 @@ def img_to_jpeg_bytes(img: np.ndarray) -> bytes:
 
 
 def jpeg_bytes_to_img(jpeg_bytes: bytes, colorspace: str = "RGB") -> np.ndarray:
-    img = simplejpeg.decode_jpeg(jpeg_bytes, fastdct=True, fastupsample=True,
-                                  colorspace=colorspace)
+    img = simplejpeg.decode_jpeg(
+            jpeg_bytes, fastdct=True, fastupsample=True, colorspace=colorspace
+    )
     if img.shape[-1] == 1:
         img = np.squeeze(img, axis=-1)
     return img
