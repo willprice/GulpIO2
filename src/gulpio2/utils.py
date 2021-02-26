@@ -52,7 +52,8 @@ def img_to_jpeg_bytes(img: np.ndarray) -> bytes:
 def jpeg_bytes_to_img(jpeg_bytes: bytes, colorspace: str = "RGB") -> np.ndarray:
     img = simplejpeg.decode_jpeg(jpeg_bytes, fastdct=True, fastupsample=True,
                                   colorspace=colorspace)
-    img = np.squeeze(img, axis=-1)
+    if img.shape[-1] == 1:
+        img = np.squeeze(img, axis=-1)
     return img
 
 
