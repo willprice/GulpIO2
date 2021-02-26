@@ -17,9 +17,10 @@ Fork notice
 
 This is a fork of TwentyBN's `gulpio <https://github.com/TwentyBN/GulpIO>`_.
 Key differences:
-- **faster**: Uses ``simplejpeg`` for JPEG decoding by default (a wrapper around
+
+* **faster**: Uses ``simplejpeg`` for JPEG decoding by default (a wrapper around
   libjpeg-turbo) and replaces OpenCV with Pillow-SIMD for resizing images.
-- **more flexible**: More frame access patterns are supported, not only ``slice``
+* **more flexible**: More frame access patterns are supported, not only ``slice``
   accesses.
 
 Installation
