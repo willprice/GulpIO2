@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""gulp_video_folder
+"""gulp2_video_folder
 
 Gulp an video dataset that is in the following format;
 
@@ -13,14 +13,14 @@ video_directory
         ...
 
 Usage:
-    gulp_video_folder [--videos_per_chunk <videos_per_chunk>]
+    gulp2_video_folder [--videos_per_chunk <videos_per_chunk>]
                       [--num_workers <num_workers>]
                       [--frame_size <frame_size>]
                       [--shm_dir <shm_dir>]
                       [--shuffle]
                       <video_directory> <output_directory>
-    gulp_video_folder (-h | --help)
-    gulp_video_folder --version
+    gulp2_video_folder (-h | --help)
+    gulp2_video_folder --version
 
 Arguments:
     video_directory:                        Base directory for video files

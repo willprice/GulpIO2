@@ -74,20 +74,20 @@ class GulpDirectory(object):
 
     Parameters
     ----------
-    output_dir: (str)
+    output_dir: str
         Path to the directory containing the files.
-    colorspace: (str)
+    colorspace: str
         Colorspace, one of ``"RGB"`` or ``"GRAY"`` depending on the type of gulped data.
 
     Attributes
     ----------
-    all_meta_dicts: (list of dicts)
+    all_meta_dicts: list of dicts
         All meta dicts from all chunks as a list.
-    chunk_lookup: (dict: int -> str)
+    chunk_lookup: dict: int -> str
         Mapping element id to chunk index.
-    chunk_objs_lookup: (dict: int -> GulpChunk)
+    chunk_objs_lookup: dict: int -> GulpChunk
         Mapping element id to chunk index.
-    merged_meta_dict: (dict: id -> meta dict)
+    merged_meta_dict: dict: id -> meta dict
         all meta dicts merged
 
     """
@@ -128,7 +128,7 @@ class GulpDirectory(object):
 
         Parameters
         ----------
-        total_new_chunks: (int)
+        total_new_chunks: int
             The total number of new chunks to initialize.
         """
         return ((GulpChunk(*paths, colorspace=self.colorspace) for paths in
@@ -194,11 +194,11 @@ class GulpChunk(object):
 
     Parameters
     ----------
-    data_file_path: (str)
+    data_file_path: str
         Path to the *.gulp file.
-    meta_file_path: (str)
+    meta_file_path: str
         Path to the *.gmeta file.
-    serializer: (subclass of AbstractSerializer)
+    serializer: subclass of AbstractSerializer
         The type of serializer to use.
 
     """
@@ -283,7 +283,7 @@ class GulpChunk(object):
 
         Parameters
         ----------
-        flag: (str)
+        flag: str
             'rb': Read binary
             'wb': Write binary
             'ab': Append to binary
@@ -313,11 +313,11 @@ class GulpChunk(object):
 
         Parameters
         ----------
-        id_ : (str)
+        id_ : str
             The ID of the item
-        meta_data: (dict)
+        meta_data: dict
             The meta-data associated with the item.
-        frames: (list of numpy arrays)
+        frames: list of numpy arrays
             The frames of the item as a list of numpy dictionaries consisting
             of image pixel values.
 
@@ -330,10 +330,11 @@ class GulpChunk(object):
 
         Parameters
         ----------
-        id_: (str)
+        id_: str
             The ID of the item
-        slice_: (slice or list of ints):
+        slice_: slice or list of ints:
             A slice or list of indices with which to select frames.
+
         Returns
         -------
         frames (int), meta(dict)
@@ -363,9 +364,9 @@ class GulpChunk(object):
 
         Parameters
         ----------
-        accepted_ids: (list of str)
+        accepted_ids: list of str
             A filter for accepted ids.
-        shuffle: Boolean
+        shuffle: bool
             Shuffle the items or not.
 
         Returns
@@ -396,7 +397,7 @@ class ChunkWriter(object):
 
     Parameters
     ----------
-    adapter: (subclass of AbstractDatasetAdapter)
+    adapter: subclass of AbstractDatasetAdapter
        The adapter to get items from.
 
     """
@@ -409,9 +410,9 @@ class ChunkWriter(object):
 
         Parameters
         ----------
-        output_chunk: (GulpChunk)
+        output_chunk: GulpChunk
            The chunk to write to
-        input_slice: (slice)
+        input_slice: slice
            The slice to use from the adapter.
 
         """
@@ -432,9 +433,9 @@ def calculate_chunk_slices(items_per_chunk, num_items):
 
     Parameters
     ----------
-    items_per_chunk: (int)
+    items_per_chunk: int
         Approximate number of items per chunk.
-    num_items: (int)
+    num_items: int
         Total number of items.
 
     Returns
@@ -453,13 +454,13 @@ class GulpIngestor(object):
 
     Parameters
     ----------
-    adapter: (subclass of AbstractDatasetAdapter)
+    adapter: subclass of AbstractDatasetAdapter
         The adapter to ingest from.
-    output_folder: (str)
+    output_folder: str
         The folder/directory to write to.
-    videos_per_chunk: (int)
+    videos_per_chunk: int
         The total number of items per chunk.
-    num_workers: (int)
+    num_workers: int
         The level of parallelism.
 
     """

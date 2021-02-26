@@ -1,5 +1,6 @@
 __title__ = "gulpio2"
-__version__ = "v0.0.1"
+__version__ = "0.0.2"
+__copyright__ = 'Copyright 2021 Will Price & TwentyBN'
 __description__ = "Binary storage format for deep learning on videos."
 __author__ = """\
 Eren Golge (eren.golge@twentybn.com)
@@ -12,5 +13,5 @@ Florian Letsch (florian.letsch@twentybn.com)
 Valentin Haenel (valentin.haenel@twentybn.com)
 Will Price (will.price94+dev@gmail.com)
 """
-__author_email__ = "will.price94+gulpio@gmail.com"
-__url__= "https://github.com/willprice/GulpIO"
+__author_email__ = "will.price94+gulpio2@gmail.com"
+__url__= "https://github.com/willprice/GulpIO2"

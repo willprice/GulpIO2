@@ -86,7 +86,7 @@ with open(os.path.join(temp_dir, 'videos.json'), 'w') as fp:
 # step 2: run the gulping
 
 # PATH=src/main/scripts:$PATH PYTHONPATH=src/main/python
-command = sh.gulp_20bn_json_videos(
+command = sh.gulp2_20bn_json_videos(
     '--videos_per_chunk',  '10',
     os.path.join(temp_dir, 'videos.json'),
     temp_dir,
@@ -127,7 +127,7 @@ with open(os.path.join(temp_dir, 'videos_extend.json'), 'w') as fp:
 
 # step 6: extend the existing gulps
 
-command = sh.gulp_20bn_json_videos(
+command = sh.gulp2_20bn_json_videos(
     '--videos_per_chunk',  '10',
     os.path.join(temp_dir, 'videos_extend.json'),
     temp_dir,
