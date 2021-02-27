@@ -13,8 +13,6 @@ from setuptools import setup, Command, find_packages
 from pathlib import Path
 
 _here = os.path.dirname(__file__)
-print(_here)
-os.system("ls " + _here)
 about = {}  # type: ignore
 with open(os.path.join(_here, "src", "gulpio2", "__version__.py")) as f:
     exec(f.read(), about)
@@ -44,7 +42,7 @@ EXTRAS = {}
 
 
 # Import the README and use it as the long-description.
-# Note: this will only work if 'README.md' is present in your MANIFEST.in file!
+# Note: this will only work if 'README.rst' is present in your MANIFEST.in file!
 try:
     with io.open(
         os.path.join(_here, "README.rst"), encoding="utf-8"
@@ -52,6 +50,7 @@ try:
         long_description = "\n" + f.read()
 except FileNotFoundError:
     long_description = about["__description__"]
+
 
 
 class UploadCommand(Command):
@@ -81,6 +80,9 @@ class UploadCommand(Command):
         self.status("Building Source and Wheel (universal) distribution…")
         os.system("{0} setup.py sdist bdist_wheel --universal".format(sys.executable))
 
+        self.status("Checking packages")
+        os.system("twine check dist/*")
+
         self.status("Uploading the package to PyPI via Twine…")
         os.system("twine upload dist/*")
 
@@ -96,8 +98,8 @@ setup(
     name=about["__title__"],
     version=about["__version__"],
     description=about["__description__"],
+    long_description_content_type="text/x-rst",
     long_description=long_description,
-    long_description_content_type="text/markdown",
     author=about["__author__"],
     author_email=about["__author_email__"],
     python_requires=REQUIRES_PYTHON,
@@ -119,7 +121,7 @@ setup(
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
-        "License :: OSI Approved :: MIT",
+        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
