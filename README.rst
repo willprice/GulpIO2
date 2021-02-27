@@ -42,5 +42,7 @@ Prior Art
 License
 =======
 
-All code is Copyright (c) Twenty Billion Neurons and
+All original gulpio code is Copyright (c) Twenty Billion Neurons and
 licensed under the MIT License, see the file ``LICENSE.txt`` for details.
+Subsequent code is Copyright (c) Will Price, and is also licensed under the MIT
+License.
