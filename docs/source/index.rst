@@ -16,7 +16,7 @@ Installation
 
 .. code::
 
-    pip install "git+https://github.com/willprice/GulpIO2.git"
+    pip install gulpio2
 
 
 Indices and tables
