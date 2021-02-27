@@ -50,7 +50,12 @@ def img_to_jpeg_bytes(img: np.ndarray) -> bytes:
     return simplejpeg.encode_jpeg(img, quality=_JPEG_WRITE_QUALITY, colorspace=colorspace)
 
 
-def jpeg_bytes_to_img(jpeg_bytes: bytes, colorspace: str = "RGB") -> np.ndarray:
+def jpeg_bytes_to_img(jpeg_bytes: bytes) -> np.ndarray:
+    colorspace = simplejpeg.decode_jpeg_header(jpeg_bytes)[2]
+    # 3-channel jpegs are internally encoded as YCbCr and we have to impose our desired
+    # colorspace conversion which we assume is RGB.
+    if colorspace == "YCbCr":
+        colorspace = "RGB"
     img = simplejpeg.decode_jpeg(
             jpeg_bytes, fastdct=True, fastupsample=True, colorspace=colorspace
     )

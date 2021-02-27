@@ -40,7 +40,7 @@ class TestReadingAndWritingJpegs(unittest.TestCase):
         img[..., 1] = 127
         img[..., 2] = 255
         npt.assert_allclose(
-            jpeg_bytes_to_img(img_to_jpeg_bytes(img)), img, atol=3
+                jpeg_bytes_to_img(img_to_jpeg_bytes(img)), img, atol=3
         )
 
     def test_gray_image_round_trip(self):
@@ -48,7 +48,7 @@ class TestReadingAndWritingJpegs(unittest.TestCase):
         img[5:5] = 128
         img[10:15] = 256
         npt.assert_allclose(
-            jpeg_bytes_to_img(img_to_jpeg_bytes(img), colorspace="Gray"), img, atol=3
+                jpeg_bytes_to_img(img_to_jpeg_bytes(img)), img, atol=3
         )
 
 
