@@ -76,6 +76,8 @@ class GulpDirectory(object):
     ----------
     output_dir: str
         Path to the directory containing the files.
+    jpeg_decoder: callable that takes a JPEG stored as :py:class:`bytes` and returns
+        the desired decoded image format (e.g. np.ndarray)
 
     Attributes
     ----------
@@ -90,8 +92,9 @@ class GulpDirectory(object):
 
     """
 
-    def __init__(self, output_dir):
+    def __init__(self, output_dir, jpeg_decoder=jpeg_bytes_to_img):
         self.output_dir = output_dir
+        self.jpeg_decoder = jpeg_decoder
         self.chunk_objs_lookup = OrderedDict(zip(self._chunk_ids(), self._chunks()))
         self.all_meta_dicts = [c.meta_dict for c in self.chunk_objs_lookup.values()]
         self.num_chunks = len(self.chunk_objs_lookup)
@@ -116,7 +119,7 @@ class GulpDirectory(object):
         return self.__iter__()
 
     def _chunks(self):
-        return (GulpChunk(*paths) for paths in
+        return (GulpChunk(*paths, jpeg_decoder=self.jpeg_decoder) for paths in
                 self._existing_file_paths())
 
     def new_chunks(self, total_new_chunks):
@@ -128,7 +131,7 @@ class GulpDirectory(object):
         total_new_chunks: int
             The total number of new chunks to initialize.
         """
-        return ((GulpChunk(*paths) for paths in
+        return ((GulpChunk(*paths, jpeg_decoder=self.jpeg_decoder) for paths in
                  self._allocate_new_file_paths(total_new_chunks)))
 
     def __getitem__(self, element):
@@ -197,15 +200,18 @@ class GulpChunk(object):
         Path to the *.gmeta file.
     serializer: subclass of AbstractSerializer
         The type of serializer to use.
-
+    jpeg_decoder: callable that takes a JPEG stored as :py:class:`bytes` and returns
+        the desired decoded image format (e.g. np.ndarray)
     """
 
     def __init__(self, data_file_path, meta_file_path,
-                 serializer=json_serializer):
+                 serializer=json_serializer, jpeg_decoder=jpeg_bytes_to_img):
+        self.jpeg_decoder = jpeg_decoder
         self.serializer = serializer
         self.data_file_path = data_file_path
         self.meta_file_path = meta_file_path
         self.meta_dict = self._get_or_create_dict()
+
         self._img_info = {}
         self.fp = None
 
@@ -345,7 +351,7 @@ class GulpChunk(object):
             self.fp.seek(frame_info.loc)
             record = self.fp.read(frame_info.length)
             img_str = record[:len(record)-frame_info.pad]
-            img = jpeg_bytes_to_img(img_str)
+            img = self.jpeg_decoder(img_str)
             return img
         if isinstance(slice_element, (list, np.ndarray)):
             selected_frame_infos = [frame_infos[idx] for idx in slice_element]

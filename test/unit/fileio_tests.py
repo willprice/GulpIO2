@@ -655,3 +655,31 @@ class TestGulpDirectory(FSBase):
                     # We allow some tolerance in the pixel values since we use
                     # lossy compression and fast variants of the JPEG decoder.
                     npt.assert_allclose(frame, expected_frame, atol=4)
+
+    def test_custom_jpeg_decoder(self):
+        n_frames = 5
+        adapter = DummyVideosAdapter(num_videos=2, num_frames=n_frames)
+        output_directory = os.path.join(self.temp_dir, "ANY_OUTPUT_DIR")
+        ingestor = GulpIngestor(adapter, output_directory, 2, 1)
+        ingestor()
+
+        class MockJpegDecoder:
+            def __init__(self):
+                self.n_calls = 0
+
+            def __call__(self, jpeg_bytes):
+                ret_val = self.n_calls
+                self.n_calls += 1
+                return ret_val
+
+            def reset(self):
+                self.n_calls = 0
+
+        mock_jpeg_decoder = MockJpegDecoder()
+        # create gulp directory
+        gulp_directory = GulpDirectory(output_directory, jpeg_decoder=mock_jpeg_decoder)
+        for id_ in adapter.ids:
+            mock_jpeg_decoder.reset()
+            frames, meta = gulp_directory[id_, :]
+            self.assertEqual(n_frames, mock_jpeg_decoder.n_calls)
+            self.assertEqual(list(range(n_frames)), frames)
