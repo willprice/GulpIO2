@@ -5,3 +5,7 @@ export PYTHONNOUSERSITE=1
 test:
 	python -m pytest test/unit
 	python test/integration/system_tests.py
+
+.PHONY: docs
+docs:
+	$(MAKE) -C docs html
