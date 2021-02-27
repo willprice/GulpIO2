@@ -1,5 +1,5 @@
 __title__ = "gulpio2"
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 __copyright__ = 'Copyright 2021 Will Price & TwentyBN'
 __description__ = "Binary storage format for deep learning on videos."
 __author__ = """\
