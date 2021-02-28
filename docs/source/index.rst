@@ -19,6 +19,12 @@ Installation
     pip install gulpio2
 
 
+Migrating from gulpio
+=====================
+
+If you've been using `gulpio <https://github.com/TwentyBN/GulpIO>`_, then you can use ``gulpio2`` as a drop-in replacement. Simply replace all ``import gulpio ...`` statements with ``import gulpio2 ...``.
+
+
 Indices and tables
 ==================
 
