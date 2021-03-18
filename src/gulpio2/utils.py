@@ -71,7 +71,7 @@ def burst_frames_to_shm(vid_path, temp_burst_dir, frame_rate=None):
       during parallelization
     - Returns path to directory containing frames for the specific video
     """
-    target_mask = os.path.join(temp_burst_dir, '%04d.jpg')
+    target_mask = os.path.join(temp_burst_dir, '%010d.jpg')
     if not check_ffmpeg_exists():
         raise FFMPEGNotFound()
     try:

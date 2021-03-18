@@ -1,2 +1,3 @@
 include README.rst
 include src/gulpio2/template.jinja
+include CHANGELOG.md
